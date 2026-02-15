@@ -1,15 +1,15 @@
 import React from "react";
-import reactIcon from "../images/react_icon.png";
-import nextjsIcon from "../images/next.js-icon.png";
+
+type TechIcon = string | { src: string };
 
 export default function Skills() {
-  const technologies = [
-    { name: "HTML5", icon: "html", level: 95 },
-    { name: "CSS3", icon: "css", level: 90 },
-    { name: "JavaScript", icon: "javascript", level: 85 },
-    { name: "TypeScript", icon: "typescript", level: 80 },
-    { name: "React", icon: reactIcon, level: 85 },
-    { name: "Next.js", icon: nextjsIcon, level: 75 },
+  const technologies: { name: string; icon: TechIcon }[] = [
+    { name: "HTML5", icon: "html" },
+    { name: "CSS3", icon: "css" },
+    { name: "JavaScript", icon: "javascript" },
+    { name: "TypeScript", icon: "typescript" },
+    { name: "React", icon: "react" },
+    { name: "Next.js", icon: "nextjs" },
   ];
 
   return (
@@ -17,7 +17,7 @@ export default function Skills() {
       <div className="skills-header">
         <h2 className="skills-title">Techs</h2>
         <p className="skills-subtitle">
-          Skills that I've worked with
+          Néhány technológia, amelyekkel dolgozom:
         </p>
       </div>
 
@@ -40,15 +40,6 @@ export default function Skills() {
               </div>
             )}
             <h3 className="skill-name">{tech.name}</h3>
-            <div className="skill-level">
-              <div className="skill-progress">
-                <div
-                  className="skill-progress-bar"
-                  style={{ width: `${tech.level}%` }}
-                ></div>
-              </div>
-              <span className="skill-percentage">{tech.level}%</span>
-            </div>
           </div>
         ))}
       </div>

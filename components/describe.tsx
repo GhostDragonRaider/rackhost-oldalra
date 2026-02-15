@@ -6,7 +6,7 @@ export default function Descirbe() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const describeMessage =
-    "I am a full-stack developer passionate about creating modern, responsive, and visually engaging websites and web applications. I constantly learn and improve, building projects that combine clean code with creative design. My goal is to turn ideas into digital experiences that inspire and deliver real value.";
+    "Modern weboldalak, online rendszerek, automatizálás, egyedi igények megvalósítása. Célom, hogy az online jelenlét ne csak szép és menő legyen, hanem valós üzleti értéket nyújtson. ";
 
   const observerOptions = {
     root: null,

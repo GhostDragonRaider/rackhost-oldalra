@@ -4,6 +4,7 @@ import TypeWriter from "../components/Typewriter";
 import Describe from "../components/describe";
 import Skills from "../components/skills";
 import Projects from "../components/Projects";
+import Footer from "../components/footer";
 
 export default function Home() {
   return (
@@ -17,14 +18,15 @@ export default function Home() {
         <h1 className="home-page-title">AntiCode</h1>
         <span className="home-page-message">
           <TypeWriter
-            text="Full-Stack Developer, Build your digital future."
-            speed={150}
+            text="Online rendszerek, amelyek ügyfeleket hoznak és időt takarítanak meg."
+            speed={50}
           />
         </span>
       </div>
       <Describe />
       <Skills />
       <Projects />
+      <Footer />
     </div>
   );
 }
