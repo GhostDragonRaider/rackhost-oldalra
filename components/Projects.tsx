@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Projects() {
   const projects = [
-    { name: "Project 1", image: "placeholder", link: "../projects/project-1/project-1.html" },
+    { name: "Project 1", image: "placeholder", link: "/projects/project-1/project-1.html" },
     { name: "Project 2", image: "placeholder", link: "#" },
     { name: "Project 3", image: "placeholder", link: "#" },
     { name: "Project 4", image: "placeholder", link: "#" },
