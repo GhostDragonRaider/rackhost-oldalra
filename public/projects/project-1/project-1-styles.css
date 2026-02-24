@@ -246,6 +246,7 @@ main.hero {
     padding: 4rem 2rem;
     margin: 0 auto;
     color: #e5e5e5;
+    text-align: center;
 }
 
 .about-title {
