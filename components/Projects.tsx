@@ -6,7 +6,7 @@ export default function Projects() {
   const projects = [
     { name: "Project 1", image: "/projects/project-1/preview.png", link: "/projects/project-1/project-1.html" },
     { name: "Project 2", image: "/projects/project-2/preview.png", link: "/projects/project-2/" },
-    { name: "Project 3", image: "placeholder", link: "#" },
+    { name: "Project 3", image: "/projects/project-3/preview.png", link: "/projects/project-3/" },
     { name: "Project 4", image: "placeholder", link: "#" },
     { name: "Project 5", image: "placeholder", link: "#" },
     { name: "Project 6", image: "placeholder", link: "#" },
@@ -21,7 +21,7 @@ export default function Projects() {
 
       <div className="projects-grid">
         {projects
-          .filter((p) => p.name === "Project 1" || p.name === "Project 2")
+          .filter((p) => p.name === "Project 1" || p.name === "Project 2" || p.name === "Project 3")
           .map((project, index) => (
           <a
             key={index}
