@@ -11,6 +11,7 @@ yarn-error.log*
 
 # Next.js
 .next/
+out/
 
 # Production
 build/
