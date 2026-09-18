@@ -1,5 +1,6 @@
 import React, {
   FormEvent,
+  Fragment,
   KeyboardEvent,
   useCallback,
   useEffect,
@@ -12,6 +13,7 @@ import {
   DECK_CARDS,
   FAQ_ITEMS,
   NAV_LINKS,
+  PRICING_GROUPS,
   REFERENCE_PROJECTS,
 } from "./projectData";
 
@@ -511,7 +513,7 @@ export default function LandingPage() {
                 Komplex — több funkcióhoz vagy nagyobb tartalomhoz
               </span>
             </div>
-            <div className="pricing-table-wrap">
+            <div className="pricing-table-wrap" aria-hidden="false">
               <table className="pricing-table">
                 <thead>
                   <tr>
@@ -522,109 +524,56 @@ export default function LandingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="group">
-                    <td colSpan={4}>WEBOLDALAK ÉS ÉRTÉKESÍTÉS</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Start oldal
-                      <span className="detail">Egyoldalas, fókuszált bemutatkozás</span>
-                    </td>
-                    <td className="start">99 000 Ft</td>
-                    <td className="standard">103 000 Ft</td>
-                    <td className="complex">143 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Üzleti weboldal
-                      <span className="detail">Többoldalas szolgáltatói jelenlét</span>
-                    </td>
-                    <td className="start">159 000 Ft</td>
-                    <td className="standard">223 000 Ft</td>
-                    <td className="complex">312 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Weboldal megújítás
-                      <span className="detail">
-                        Tartalom, struktúra és felület újragondolása
-                      </span>
-                    </td>
-                    <td className="start">103 000 Ft</td>
-                    <td className="standard">159 000 Ft</td>
-                    <td className="complex">239 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Webshop
-                      <span className="detail">Katalógus, termékek és vásárlási út</span>
-                    </td>
-                    <td className="start">239 000 Ft</td>
-                    <td className="standard">319 000 Ft</td>
-                    <td className="complex">439 000 Ft</td>
-                  </tr>
-                  <tr className="group">
-                    <td colSpan={4}>EGYEDI FUNKCIÓK</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Ajánlatkérő vagy jelentkezési rendszer
-                      <span className="detail">
-                        Űrlap, fájlfeltöltés, értesítési folyamat
-                      </span>
-                    </td>
-                    <td className="start">49 000 Ft</td>
-                    <td className="standard">79 000 Ft</td>
-                    <td className="complex">103 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Védett adminfelület
-                      <span className="detail">Belépés, szerepkörök és adatkezelés</span>
-                    </td>
-                    <td className="start">99 000 Ft</td>
-                    <td className="standard">127 000 Ft</td>
-                    <td className="complex">199 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Egyedi funkció vagy integráció
-                      <span className="detail">
-                        Külső szolgáltatás, automatizmus vagy egyedi logika
-                      </span>
-                    </td>
-                    <td className="start">29 000 Ft</td>
-                    <td className="standard">59 000 Ft</td>
-                    <td className="complex">Egyedi becslés</td>
-                  </tr>
-                  <tr className="group">
-                    <td colSpan={4}>FOLYAMATOS TÁMOGATÁS</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Havi karbantartás
-                      <span className="detail">
-                        Frissítések, mentések és kisebb módosítások
-                      </span>
-                    </td>
-                    <td className="start">15 000 Ft / hó</td>
-                    <td className="standard">25 000 Ft / hó</td>
-                    <td className="complex">45 000 Ft / hó</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Tartalmi és technikai fejlesztési nap
-                      <span className="detail">
-                        Előre egyeztetett fejlesztési feladatokra
-                      </span>
-                    </td>
-                    <td className="start">25 000 Ft</td>
-                    <td className="standard">35 000 Ft</td>
-                    <td className="complex">50 000 Ft</td>
-                  </tr>
+                  {PRICING_GROUPS.map((group) => (
+                    <Fragment key={group.title}>
+                      <tr className="group">
+                        <td colSpan={4}>{group.title}</td>
+                      </tr>
+                      {group.items.map((item) => (
+                        <tr key={item.name}>
+                          <td className="service">
+                            {item.name}
+                            <span className="detail">{item.detail}</span>
+                          </td>
+                          <td className="start">{item.start}</td>
+                          <td className="standard">{item.standard}</td>
+                          <td className="complex">{item.complex}</td>
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
                 </tbody>
               </table>
             </div>
+
+            <div className="pricing-mobile" aria-label="Árkatalógus mobil nézet">
+              {PRICING_GROUPS.map((group) => (
+                <div className="pricing-mobile-group" key={group.title}>
+                  <div className="pricing-mobile-group-title">{group.title}</div>
+                  {group.items.map((item) => (
+                    <article className="pricing-mobile-card" key={item.name}>
+                      <h3>{item.name}</h3>
+                      <p>{item.detail}</p>
+                      <dl>
+                        <div>
+                          <dt>Induló</dt>
+                          <dd className="start">{item.start}</dd>
+                        </div>
+                        <div>
+                          <dt>Jellemző</dt>
+                          <dd className="standard">{item.standard}</dd>
+                        </div>
+                        <div>
+                          <dt>Komplex</dt>
+                          <dd className="complex">{item.complex}</dd>
+                        </div>
+                      </dl>
+                    </article>
+                  ))}
+                </div>
+              ))}
+            </div>
+
             <div className="price-callout">
               <p>
                 <strong>Így olvasd az árakat:</strong> az „Induló” egy tiszta,

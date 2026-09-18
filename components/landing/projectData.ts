@@ -92,6 +92,103 @@ export const DECK_CARDS = [
   },
 ] as const;
 
+export type PricingTier = {
+  start: string;
+  standard: string;
+  complex: string;
+};
+
+export type PricingItem = {
+  name: string;
+  detail: string;
+} & PricingTier;
+
+export type PricingGroup = {
+  title: string;
+  items: PricingItem[];
+};
+
+export const PRICING_GROUPS: PricingGroup[] = [
+  {
+    title: "WEBOLDALAK ÉS ÉRTÉKESÍTÉS",
+    items: [
+      {
+        name: "Start oldal",
+        detail: "Egyoldalas, fókuszált bemutatkozás",
+        start: "99 000 Ft",
+        standard: "103 000 Ft",
+        complex: "143 000 Ft",
+      },
+      {
+        name: "Üzleti weboldal",
+        detail: "Többoldalas szolgáltatói jelenlét",
+        start: "159 000 Ft",
+        standard: "223 000 Ft",
+        complex: "312 000 Ft",
+      },
+      {
+        name: "Weboldal megújítás",
+        detail: "Tartalom, struktúra és felület újragondolása",
+        start: "103 000 Ft",
+        standard: "159 000 Ft",
+        complex: "239 000 Ft",
+      },
+      {
+        name: "Webshop",
+        detail: "Katalógus, termékek és vásárlási út",
+        start: "239 000 Ft",
+        standard: "319 000 Ft",
+        complex: "439 000 Ft",
+      },
+    ],
+  },
+  {
+    title: "EGYEDI FUNKCIÓK",
+    items: [
+      {
+        name: "Ajánlatkérő vagy jelentkezési rendszer",
+        detail: "Űrlap, fájlfeltöltés, értesítési folyamat",
+        start: "49 000 Ft",
+        standard: "79 000 Ft",
+        complex: "103 000 Ft",
+      },
+      {
+        name: "Védett adminfelület",
+        detail: "Belépés, szerepkörök és adatkezelés",
+        start: "99 000 Ft",
+        standard: "127 000 Ft",
+        complex: "199 000 Ft",
+      },
+      {
+        name: "Egyedi funkció vagy integráció",
+        detail: "Külső szolgáltatás, automatizmus vagy egyedi logika",
+        start: "29 000 Ft",
+        standard: "59 000 Ft",
+        complex: "Egyedi becslés",
+      },
+    ],
+  },
+  {
+    title: "FOLYAMATOS TÁMOGATÁS",
+    items: [
+      {
+        name: "Havi karbantartás",
+        detail: "Frissítések, mentések és kisebb módosítások",
+        start: "15 000 Ft / hó",
+        standard: "25 000 Ft / hó",
+        complex: "45 000 Ft / hó",
+      },
+      {
+        name: "Tartalmi és technikai fejlesztési nap",
+        detail: "Előre egyeztetett fejlesztési feladatokra",
+        start: "25 000 Ft",
+        standard: "35 000 Ft",
+        complex: "50 000 Ft",
+      },
+    ],
+  },
+];
+
 export const FAQ_ITEMS = [
   {
     q: "Mennyi idő alatt készül el egy weboldal?",

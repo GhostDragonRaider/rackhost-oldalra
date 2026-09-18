@@ -140,7 +140,67 @@ body.landing-active * {
   }
   .price{font-size:2.15rem}
   .price-card{padding:22px}
-  .pricing-table{min-width:640px}
+  .pricing-table-wrap{display:none}
+  .pricing-mobile{display:grid;gap:18px}
+  .pricing-dashboard{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .pricing-stat{
+    min-height:0;
+    padding:14px 16px;
+    text-align:left;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .pricing-stat b{
+    font-size:1.35rem;
+    display:inline;
+  }
+  .pricing-legend{
+    flex-direction:column;
+    gap:8px;
+    font-size:.84rem;
+  }
+  .price-callout{
+    padding:18px 16px;
+    border-radius:16px;
+  }
+  .price-callout .btn{
+    width:100%;
+    justify-content:center;
+  }
+  .card{
+    min-height:0;
+    padding:20px 18px;
+  }
+  .card .num{
+    margin-bottom:18px;
+    font-size:.72rem;
+    letter-spacing:.04em;
+    line-height:1.35;
+    word-break:break-word;
+  }
+  .card h3{font-size:1.2rem}
+  .step{padding:18px}
+  .faq details{padding:0 14px}
+  .faq summary{
+    padding:16px 0;
+    font-size:.98rem;
+    line-height:1.35;
+  }
+  .faq summary:after{
+    margin-left:10px;
+  }
+  .lead-form{
+    min-width:0;
+    width:100%;
+  }
+  .contact-inner .btn{
+    width:100%;
+    justify-content:center;
+  }
   .contact-inner{
     padding:24px 18px;
     border-radius:20px;
@@ -291,11 +351,86 @@ body.landing-active * {
   color:inherit;
 }
 .footer-brand:hover .cap.accent{color:#22c983}
+
+/* Pricing: desktop table, mobile cards */
+.pricing-mobile{display:none}
+.pricing-mobile-group{display:grid;gap:12px}
+.pricing-mobile-group-title{
+  color:var(--blue-2);
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.1em;
+  padding:4px 2px;
+}
+.pricing-mobile-card{
+  padding:18px 16px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--surface);
+}
+.pricing-mobile-card h3{
+  margin:0 0 6px;
+  font-size:1.12rem;
+  letter-spacing:-.03em;
+  line-height:1.25;
+}
+.pricing-mobile-card > p{
+  margin:0 0 14px;
+  color:var(--muted);
+  font-size:.88rem;
+  line-height:1.4;
+}
+.pricing-mobile-card dl{
+  margin:0;
+  display:grid;
+  gap:8px;
+}
+.pricing-mobile-card dl > div{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:color-mix(in srgb,var(--surface-2) 80%,transparent);
+  border:1px solid color-mix(in srgb,var(--line) 70%,transparent);
+}
+.pricing-mobile-card dt{
+  color:var(--muted);
+  font-size:.78rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.pricing-mobile-card dd{
+  margin:0;
+  font-weight:900;
+  font-size:.95rem;
+  text-align:right;
+  white-space:nowrap;
+}
+.pricing-mobile-card dd.start{color:#22c983}
+.pricing-mobile-card dd.standard{color:var(--text)}
+.pricing-mobile-card dd.complex{color:var(--blue-2)}
+
 @media(max-width:850px){
   .showcase.showcase-face{padding:24px}
   .showcase-preview-img{max-height:200px;min-height:140px}
+  .pricing-table-wrap{
+    margin:0 -4px;
+    border-radius:16px;
+  }
+  .pricing-table{
+    min-width:680px;
+  }
+  .pricing-table th,
+  .pricing-table td{
+    padding:12px 12px;
+  }
 }
 @media(max-width:640px){
+  .pricing-table-wrap{display:none!important}
+  .pricing-mobile{display:grid}
   .showcase.showcase-face{
     padding:20px 16px;
     overflow:hidden;
