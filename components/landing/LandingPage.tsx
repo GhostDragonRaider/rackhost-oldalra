@@ -661,7 +661,6 @@ export default function LandingPage() {
                   </article>
                   <article className="showcase showcase-face showcase-face-back">
                     <div className="tag">{activeProject.tag}</div>
-                    <h3 className="showcase-preview-title">Oldal előnézet</h3>
                     <a
                       className="showcase-preview-link"
                       href={activeProject.demoHref}
@@ -671,7 +670,7 @@ export default function LandingPage() {
                     >
                       <img
                         src={activeProject.preview}
-                        alt=""
+                        alt={`${activeProject.tabLabel} előnézet`}
                         className="showcase-preview-img"
                       />
                     </a>
