@@ -4,12 +4,21 @@ export default function Projects() {
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   const projects = [
-    { name: "Project 1", image: "/projects/project-1/preview.png", link: "/projects/project-1/project-1.html" },
-    { name: "Project 2", image: "/projects/project-2/preview.png", link: "/projects/project-2/" },
-    { name: "Project 3", image: "/projects/project-3/preview.png", link: "/projects/project-3/" },
-    { name: "Project 4", image: "placeholder", link: "#" },
-    { name: "Project 5", image: "placeholder", link: "#" },
-    { name: "Project 6", image: "placeholder", link: "#" },
+    {
+      name: "Corporate Website",
+      image: "/projects/project-1/preview.png",
+      link: "/projects/project-1/project-1.html",
+    },
+    {
+      name: "Időpontfoglaló",
+      image: "/projects/project-2/preview.png",
+      link: "/projects/project-2/",
+    },
+    {
+      name: "NovaDrive Motors",
+      image: "/projects/project-3/preview.png",
+      link: "/projects/project-3/",
+    },
   ];
 
   return (
@@ -20,11 +29,9 @@ export default function Projects() {
       </div>
 
       <div className="projects-grid">
-        {projects
-          .filter((p) => p.name === "Project 1" || p.name === "Project 2" || p.name === "Project 3")
-          .map((project, index) => (
+        {projects.map((project, index) => (
           <a
-            key={index}
+            key={project.link}
             href={project.link}
             target="_blank"
             rel="noopener noreferrer"
@@ -32,14 +39,16 @@ export default function Projects() {
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className="project-image">
-              {project.image === "placeholder" || imageErrors[index] ? (
+              {imageErrors[index] ? (
                 <span className="project-placeholder">Project Preview</span>
               ) : (
                 <img
                   src={project.image}
                   alt={`${project.name} előnézet`}
                   className="project-preview-img"
-                  onError={() => setImageErrors((prev) => ({ ...prev, [index]: true }))}
+                  onError={() =>
+                    setImageErrors((prev) => ({ ...prev, [index]: true }))
+                  }
                 />
               )}
             </div>
