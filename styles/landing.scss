@@ -316,13 +316,41 @@ body.landing-active * {
   display:block;
 }
 .showcase.showcase-face{
-  align-items:stretch;
+  align-items:center;
+  text-align:center;
 }
 .showcase-face .tag,
 .showcase-face h3,
 .showcase-face p,
 .showcase-face .case-brief{
-  align-self:stretch;
+  align-self:center;
+  text-align:center;
+}
+.showcase-face h3,
+.showcase-face p{
+  max-width:36rem;
+  margin-left:auto;
+  margin-right:auto;
+}
+.showcase-face .case-brief{
+  width:100%;
+  max-width:36rem;
+  margin-left:auto;
+  margin-right:auto;
+  justify-items:center;
+}
+.showcase-face .case-brief div{
+  width:100%;
+  text-align:center;
+}
+.showcase-face .case-brief b,
+.showcase-face .case-brief span{
+  text-align:center;
+}
+.showcase-preview-link{
+  align-self:center;
+  width:100%;
+  max-width:100%;
 }
 .showcase-demo{
   position:relative;
