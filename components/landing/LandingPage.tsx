@@ -299,6 +299,7 @@ export default function LandingPage() {
           name="description"
           content="Anticode — üzletszerző weboldalak, webshopok és egyedi digitális rendszerek szolgáltató vállalkozásoknak. Átlátható folyamat és projektkeret."
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="robots" content="index,follow" />
         <meta name="theme-color" content="#081426" />
         <meta property="og:locale" content="hu_HU" />
