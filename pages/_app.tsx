@@ -6,21 +6,25 @@ import "../styles/landing.scss";
 import NavBar from "../components/Navbar";
 import { LangProvider } from "../components/lang_context";
 import { AuthProvider } from "../components/auth_context";
+import { SERVICE_PATHS } from "../lib/site";
+
+const LANDING_PATHS = new Set<string>(["/", ...SERVICE_PATHS]);
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isProjectPage = router.pathname.startsWith("/projects/");
   const isHomePage = router.pathname === "/";
+  const isLandingShell = LANDING_PATHS.has(router.pathname);
 
   useEffect(() => {
-    document.body.classList.toggle("landing-active", isHomePage);
-    if (!isHomePage) {
+    document.body.classList.toggle("landing-active", isLandingShell);
+    if (!isLandingShell) {
       document.documentElement.removeAttribute("data-theme");
     }
     return () => {
       document.body.classList.remove("landing-active");
     };
-  }, [isHomePage]);
+  }, [isLandingShell]);
 
   // Homepage load / refresh always starts at the top
   useEffect(() => {
@@ -54,7 +58,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <LangProvider>
       <AuthProvider>
         <div className={isProjectPage ? "project-page" : ""}>
-          {!isProjectPage && !isHomePage && <NavBar />}
+          {!isProjectPage && !isLandingShell && <NavBar />}
           <Component {...pageProps} />
         </div>
       </AuthProvider>

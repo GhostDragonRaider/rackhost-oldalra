@@ -1,0 +1,113 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { SITE_EMAIL, SITE_NAME } from "../../lib/site";
+
+type Body = {
+  name?: string;
+  email?: string;
+  service?: string;
+  message?: string;
+  website?: string; // honeypot
+};
+
+const SERVICES = new Set([
+  "Üzletszerző weboldal",
+  "Webshop vagy egyedi rendszer",
+  "Meglévő oldal megújítása",
+  "Még egyeztetném",
+]);
+
+function bad(res: NextApiResponse, status: number, error: string) {
+  return res.status(status).json({ ok: false, error });
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return bad(res, 405, "Csak POST kérés engedélyezett.");
+  }
+
+  const body = (req.body || {}) as Body;
+
+  // Honeypot: bots fill hidden field
+  if (body.website && String(body.website).trim()) {
+    return res.status(200).json({ ok: true });
+  }
+
+  const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim();
+  const service = String(body.service || "").trim();
+  const message = String(body.message || "").trim();
+
+  if (name.length < 2 || name.length > 100) {
+    return bad(res, 400, "Add meg a neved (legalább 2 karakter).");
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    return bad(res, 400, "Érvényes e-mail címet adj meg.");
+  }
+  if (!SERVICES.has(service)) {
+    return bad(res, 400, "Válassz egy szolgáltatási irányt.");
+  }
+  if (message.length < 10 || message.length > 2000) {
+    return bad(res, 400, "Írj röviden a projektről (legalább 10 karakter).");
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return bad(
+      res,
+      503,
+      "Az űrlap küldése átmenetileg nem elérhető. Írj közvetlenül a info@anticode.hu címre."
+    );
+  }
+
+  const text = [
+    `Név: ${name}`,
+    `E-mail: ${email}`,
+    `Szolgáltatás: ${service}`,
+    "",
+    "Projekt:",
+    message,
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || `${SITE_NAME} <onboarding@resend.dev>`,
+        to: [process.env.CONTACT_TO || SITE_EMAIL],
+        reply_to: email,
+        subject: `Projektindítás — ${service}`,
+        text,
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      console.error("Resend error:", response.status, detail);
+      return bad(
+        res,
+        502,
+        "Nem sikerült elküldeni az üzenetet. Próbáld újra, vagy írj a info@anticode.hu címre."
+      );
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem.",
+    });
+  } catch (err) {
+    console.error("Contact API error:", err);
+    return bad(
+      res,
+      500,
+      "Váratlan hiba történt. Írj közvetlenül a info@anticode.hu címre."
+    );
+  }
+}

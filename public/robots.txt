@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Host: https://anticode.hu
+Sitemap: https://anticode.hu/sitemap.xml

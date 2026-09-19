@@ -7,13 +7,25 @@ import React, {
   useRef,
   useState,
 } from "react";
-import Head from "next/head";
+import Link from "next/link";
+import BrandMark from "./BrandMark";
+import SeoHead from "./SeoHead";
 import {
   DECK_CARDS,
   FAQ_ITEMS,
+  HOME_PRICE_CATEGORIES,
+  INTAKE_STEPS,
   NAV_LINKS,
   REFERENCE_PROJECTS,
 } from "./projectData";
+import {
+  absoluteUrl,
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  SITE_EMAIL,
+  SITE_NAME,
+  SITE_URL,
+} from "../../lib/site";
 
 type Theme = "dark" | "light";
 
@@ -67,6 +79,8 @@ export default function LandingPage() {
   const [showcaseFade, setShowcaseFade] = useState(false);
   const [showcaseFace, setShowcaseFace] = useState<"desc" | "preview">("desc");
   const [formStatus, setFormStatus] = useState("");
+  const [formError, setFormError] = useState("");
+  const [formSending, setFormSending] = useState(false);
   const [openFaq, setOpenFaq] = useState<Record<string, boolean>>({});
   const [year] = useState(() => new Date().getFullYear());
 
@@ -336,63 +350,130 @@ export default function LandingPage() {
     buttons[nextIndex]?.focus();
   };
 
-  const onLeadSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onLeadSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
-    if (!form.reportValidity()) return;
+    setFormError("");
+    setFormStatus("");
+    if (!form.reportValidity()) {
+      setFormError("Kérlek, javítsd a jelölt mezőket, majd küldd újra.");
+      return;
+    }
+
     const formData = new FormData(form);
-    const subject = encodeURIComponent(`Projektindítás — ${formData.get("service")}`);
-    const body = encodeURIComponent(
-      `Név: ${formData.get("name")}\nE-mail: ${formData.get("email")}\n\nMire van szükség:\n${formData.get("service")}\n\nProjekt röviden:\n${formData.get("message")}`
-    );
-    setFormStatus(
-      "Az üzenet előkészül az e-mail alkalmazásodban. Küldés előtt még ellenőrizheted."
-    );
-    window.location.href = `mailto:info@anticode.hu?subject=${subject}&body=${body}`;
+    const payload = {
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      service: String(formData.get("service") || "").trim(),
+      message: String(formData.get("message") || "").trim(),
+      website: String(formData.get("website") || ""),
+    };
+
+    setFormSending(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string; message?: string };
+      if (!res.ok || !data.ok) {
+        setFormError(
+          data.error ||
+            `Nem sikerült elküldeni. Írj közvetlenül a ${SITE_EMAIL} címre.`
+        );
+        return;
+      }
+      setFormStatus(
+        data.message ||
+          "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem."
+      );
+      form.reset();
+    } catch {
+      setFormError(
+        `Hálózati hiba. Próbáld újra, vagy írj a ${SITE_EMAIL} címre.`
+      );
+    } finally {
+      setFormSending(false);
+    }
   };
 
   const closeMenu = () => setMenuOpen(false);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    name: "AntiCode",
-    email: "info@anticode.hu",
-    description:
-      "Üzletszerző weboldalak, webshopok és egyedi digitális rendszerek vállalkozásoknak.",
-    serviceType: [
-      "Weboldal készítés",
-      "Webshop fejlesztés",
-      "Egyedi webes rendszerek",
-    ],
-  };
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      name: SITE_NAME,
+      url: SITE_URL,
+      email: SITE_EMAIL,
+      description: DEFAULT_DESCRIPTION,
+      areaServed: "HU",
+      image: absoluteUrl("/favicon.svg"),
+      serviceType: [
+        "Weboldal készítés",
+        "Webshop fejlesztés",
+        "Egyedi webes rendszerek",
+        "Weboldal karbantartás",
+      ],
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "AntiCode szolgáltatások",
+        itemListElement: [
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Weboldal készítés",
+              url: absoluteUrl("/weboldal-keszites"),
+            },
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Webshop készítés",
+              url: absoluteUrl("/webshop-keszites"),
+            },
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Egyedi webfejlesztés",
+              url: absoluteUrl("/egyedi-webfejlesztes"),
+            },
+          },
+        ],
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: "Anti",
+      jobTitle: "Alapító és fejlesztő",
+      worksFor: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+      email: SITE_EMAIL,
+      url: SITE_URL,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      inLanguage: "hu-HU",
+      publisher: { "@type": "Organization", name: SITE_NAME },
+    },
+  ];
 
   return (
     <div className="landing-page">
-      <Head>
-        <title>AntiCode — Üzletszerző weboldalak és egyedi rendszerek</title>
-        <meta
-          name="description"
-          content="Anticode — üzletszerző weboldalak, webshopok és egyedi digitális rendszerek szolgáltató vállalkozásoknak. Átlátható folyamat és projektkeret."
-        />
-        <meta name="robots" content="index,follow" />
-        <meta name="theme-color" content="#081426" />
-        <meta property="og:locale" content="hu_HU" />
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:title"
-          content="AntiCode — Üzletszerző weboldalak és egyedi rendszerek"
-        />
-        <meta
-          property="og:description"
-          content="Weboldalak, webshopok és célzott webes rendszerek szolgáltató vállalkozásoknak."
-        />
-        <meta name="twitter:card" content="summary" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </Head>
+      <SeoHead
+        title={DEFAULT_TITLE}
+        description={DEFAULT_DESCRIPTION}
+        path="/"
+        jsonLd={jsonLd}
+      />
 
       <a className="skip-link" href="#tartalom">
         Ugrás a tartalomra
@@ -410,9 +491,7 @@ export default function LandingPage() {
           }}
         >
           <span className="nav-glass" aria-hidden="true" ref={glassRef} />
-          <a href="#tartalom" className="brand" aria-label="AntiCode kezdőlap">
-            <span className="cap">A</span>nti<span className="cap accent">C</span>ode
-          </a>
+          <BrandMark href="#tartalom" />
           <nav className="links" aria-label="Fő navigáció">
             {NAV_LINKS.map((link) => (
               <a key={link.href} href={link.href}>
@@ -429,7 +508,7 @@ export default function LandingPage() {
               title="Téma váltása"
               onClick={toggleTheme}
             >
-              {theme === "dark" ? "☀" : "☾"}
+              <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
             </button>
             <a className="btn" href="#kapcsolat">
               <span className="btn-label">Ajánlatot kérek</span>{" "}
@@ -438,12 +517,12 @@ export default function LandingPage() {
             <button
               className="menu"
               type="button"
-              aria-label="Menü megnyitása"
+              aria-label={menuOpen ? "Menü bezárása" : "Menü megnyitása"}
               aria-controls="mobile-nav"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
             >
-              ☰
+              <span aria-hidden="true">☰</span>
             </button>
           </div>
         </div>
@@ -453,9 +532,15 @@ export default function LandingPage() {
         className={`mobile-nav${menuOpen ? " open" : ""}`}
         id="mobile-nav"
         aria-label="Mobil navigáció"
+        aria-hidden={!menuOpen}
       >
         {NAV_LINKS.map((link) => (
-          <a key={link.href} href={link.href} onClick={closeMenu}>
+          <a
+            key={link.href}
+            href={link.href}
+            onClick={closeMenu}
+            tabIndex={menuOpen ? undefined : -1}
+          >
             {link.label}
           </a>
         ))}
@@ -464,6 +549,9 @@ export default function LandingPage() {
       <main id="tartalom" className="landing-main" tabIndex={-1}>
         <section className="hero container">
           <div>
+            <p className="seo-kicker">
+              Weboldal készítés szolgáltató vállalkozásoknak
+            </p>
             <div className="eyebrow">Szolgáltató vállalkozásoknak</div>
             <h1>Ne csak jelen legyél online. Legyen okod, hogy téged válasszanak.</h1>
             <p>
@@ -473,7 +561,7 @@ export default function LandingPage() {
             </p>
             <div className="actions">
               <a className="btn" href="#kapcsolat">
-                Kérek ajánlatot <span>→</span>
+                Kérek ajánlatot <span aria-hidden="true">→</span>
               </a>
               <a className="btn secondary" href="#referenciak">
                 Munkáim
@@ -485,14 +573,14 @@ export default function LandingPage() {
               <span>Reszponzív megvalósítás</span>
             </div>
           </div>
-          <div className="deck" id="heroDeck" ref={deckRef} aria-label="Anticode projektkártyák">
+          <div className="deck" id="heroDeck" ref={deckRef} aria-label="AntiCode projektkártyák">
             {DECK_CARDS.map((card) => (
               <article className="browser deck-card" key={card.kicker}>
                 <div className="bar">
-                  <i className="dot" />
-                  <i className="dot" />
-                  <i className="dot" />
-                  <div className="url" />
+                  <i className="dot" aria-hidden="true" />
+                  <i className="dot" aria-hidden="true" />
+                  <i className="dot" aria-hidden="true" />
+                  <div className="url" aria-hidden="true" />
                 </div>
                 <div className="mock">
                   <small>{card.kicker}</small>
@@ -529,7 +617,9 @@ export default function LandingPage() {
             <div className="cards">
               <article className="card">
                 <span className="num">01 / BEMUTATKOZÁS ÉS LEAD</span>
-                <h3>Üzletszerző weboldalak</h3>
+                <h3>
+                  <Link href="/weboldal-keszites">Üzletszerző weboldalak</Link>
+                </h3>
                 <p>
                   Üzenet, oldalszerkezet és CTA-k, amelyek a bizonytalan érdeklődőt
                   kapcsolatfelvétel felé terelik.
@@ -537,7 +627,9 @@ export default function LandingPage() {
               </article>
               <article className="card">
                 <span className="num">02 / ONLINE ÉRTÉKESÍTÉS</span>
-                <h3>Webshopok</h3>
+                <h3>
+                  <Link href="/webshop-keszites">Webshopok</Link>
+                </h3>
                 <p>
                   Átgondolt termékút, könnyen kezelhető admin és olyan vásárlási élmény,
                   amely nem akadályozza a döntést.
@@ -545,7 +637,9 @@ export default function LandingPage() {
               </article>
               <article className="card">
                 <span className="num">03 / HATÉKONYABB MŰKÖDÉS</span>
-                <h3>Egyedi webes rendszerek</h3>
+                <h3>
+                  <Link href="/egyedi-webfejlesztes">Egyedi webes rendszerek</Link>
+                </h3>
                 <p>
                   Űrlapok, védett adminfelületek és célzott eszközök, amelyek a saját
                   folyamataidhoz igazodnak.
@@ -559,164 +653,40 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Árkatalógus</div>
-                <h2>Válassz projektméretet, ne zsákbamacskát.</h2>
+                <div className="eyebrow">Árak</div>
+                <h2>Fő kategóriák, érthető belépő árakkal.</h2>
               </div>
               <p>
-                Szolgáltatásonként három keretet mutatok. A pontos ajánlatot a tartalom,
-                a funkciók és a határidő alapján állítom össze.
+                A részletes 3×9-es árkatalógus a{" "}
+                <Link href="/arak">/arak</Link> oldalon van. Itt a fő irányok
+                induló keretei — a pontos ajánlat mindig a feladathoz igazodik.
               </p>
             </div>
-            <div className="pricing-dashboard">
-              <div className="pricing-stat">
-                <b>9</b>szolgáltatási tétel
-              </div>
-              <div className="pricing-stat">
-                <b>3</b>projektkeret
-              </div>
-              <div className="pricing-stat">
-                <b>1</b>egyedi ajánlat minden projektre
-              </div>
-            </div>
-            <div className="pricing-legend">
-              <span>
-                <i style={{ background: "#22c983" }} />
-                Induló — egy világos, fókuszált feladathoz
-              </span>
-              <span>
-                <i style={{ background: "var(--blue)" }} />
-                Jellemző — a legtöbb üzleti igényhez
-              </span>
-              <span>
-                <i style={{ background: "var(--blue-2)" }} />
-                Komplex — több funkcióhoz vagy nagyobb tartalomhoz
-              </span>
-            </div>
-            <div className="pricing-table-wrap">
-              <table className="pricing-table">
-                <thead>
-                  <tr>
-                    <th>Szolgáltatás</th>
-                    <th className="start">Induló</th>
-                    <th className="standard">Jellemző</th>
-                    <th className="complex">Komplex</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="group">
-                    <td colSpan={4}>WEBOLDALAK ÉS ÉRTÉKESÍTÉS</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Start oldal
-                      <span className="detail">Egyoldalas, fókuszált bemutatkozás</span>
-                    </td>
-                    <td className="start">99 000 Ft</td>
-                    <td className="standard">103 000 Ft</td>
-                    <td className="complex">143 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Üzleti weboldal
-                      <span className="detail">Többoldalas szolgáltatói jelenlét</span>
-                    </td>
-                    <td className="start">127 000 Ft</td>
-                    <td className="standard">178 000 Ft</td>
-                    <td className="complex">250 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Weboldal megújítás
-                      <span className="detail">
-                        Tartalom, struktúra és felület újragondolása
-                      </span>
-                    </td>
-                    <td className="start">82 000 Ft</td>
-                    <td className="standard">127 000 Ft</td>
-                    <td className="complex">191 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Webshop
-                      <span className="detail">Katalógus, termékek és vásárlási út</span>
-                    </td>
-                    <td className="start">191 000 Ft</td>
-                    <td className="standard">255 000 Ft</td>
-                    <td className="complex">351 000 Ft</td>
-                  </tr>
-                  <tr className="group">
-                    <td colSpan={4}>EGYEDI FUNKCIÓK</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Ajánlatkérő vagy jelentkezési rendszer
-                      <span className="detail">
-                        Űrlap, fájlfeltöltés, értesítési folyamat
-                      </span>
-                    </td>
-                    <td className="start">49 000 Ft</td>
-                    <td className="standard">79 000 Ft</td>
-                    <td className="complex">103 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Védett adminfelület
-                      <span className="detail">Belépés, szerepkörök és adatkezelés</span>
-                    </td>
-                    <td className="start">99 000 Ft</td>
-                    <td className="standard">127 000 Ft</td>
-                    <td className="complex">199 000 Ft</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Egyedi funkció vagy integráció
-                      <span className="detail">
-                        Külső szolgáltatás, automatizmus vagy egyedi logika
-                      </span>
-                    </td>
-                    <td className="start">29 000 Ft</td>
-                    <td className="standard">59 000 Ft</td>
-                    <td className="complex">Egyedi becslés</td>
-                  </tr>
-                  <tr className="group">
-                    <td colSpan={4}>FOLYAMATOS TÁMOGATÁS</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Havi karbantartás
-                      <span className="detail">
-                        Frissítések, mentések és kisebb módosítások
-                      </span>
-                    </td>
-                    <td className="start">15 000 Ft / hó</td>
-                    <td className="standard">25 000 Ft / hó</td>
-                    <td className="complex">45 000 Ft / hó</td>
-                  </tr>
-                  <tr>
-                    <td className="service">
-                      Tartalmi és technikai fejlesztési nap
-                      <span className="detail">
-                        Előre egyeztetett fejlesztési feladatokra
-                      </span>
-                    </td>
-                    <td className="start">25 000 Ft</td>
-                    <td className="standard">35 000 Ft</td>
-                    <td className="complex">50 000 Ft</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="price-categories">
+              {HOME_PRICE_CATEGORIES.map((cat) => (
+                <article className="price-category" key={cat.href}>
+                  <h3>
+                    <Link href={cat.href}>{cat.title}</Link>
+                  </h3>
+                  <p className="price-from">{cat.from}</p>
+                  <p>{cat.text}</p>
+                </article>
+              ))}
             </div>
             <div className="price-callout">
               <p>
-                <strong>Így olvasd az árakat:</strong> az „Induló” egy tiszta,
-                körülhatárolt feladat belépő díja. A „Jellemző” a legtöbb vállalkozás
-                reális projektkerete. A „Komplex” több oldalt, több tartalmat vagy
-                összetettebb működést jelent. A tárhely, domain, fizetős bővítmények,
-                szövegírás és fotózás minden ajánlatban külön tételként szerepel.
+                <strong>Pontos díj:</strong> a tartalom, a funkciók és a határidő
+                alapján írásos ajánlatot kapsz. A tárhely, domain és külső szolgáltatások
+                külön tételként szerepelnek.
               </p>
-              <a className="btn" href="#kapcsolat">
-                Kérek pontos ajánlatot <span>→</span>
-              </a>
+              <div className="actions">
+                <Link className="btn secondary" href="/arak">
+                  Részletes árak <span aria-hidden="true">→</span>
+                </Link>
+                <a className="btn" href="#kapcsolat">
+                  Kérek ajánlatot <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -726,11 +696,11 @@ export default function LandingPage() {
             <div className="section-head">
               <div>
                 <div className="eyebrow">Munkáim</div>
-                <h2>Portfólió demók, amelyek megmutatják, hogyan dolgozom.</h2>
+                <h2>Mini esettanulmányok élő demóval.</h2>
               </div>
               <p>
-                Öt saját demó: corporate oldal, foglaló rendszer, autókatalógus,
-                virtual cockpit és képeskártyák — mindegyik élő előnézetben megnyitható.
+                Probléma → tervezési döntés → megoldás → élő demó. Öt saját példa:
+                corporate, foglaló, katalógus, cockpit és képeskártyák.
               </p>
             </div>
             <div className="slider">
@@ -802,8 +772,12 @@ export default function LandingPage() {
                     >
                       <img
                         src={activeProject.preview}
-                        alt=""
+                        alt={activeProject.previewAlt}
                         className="showcase-preview-img"
+                        width={960}
+                        height={600}
+                        loading="lazy"
+                        decoding="async"
                       />
                     </a>
                     <a
@@ -865,8 +839,9 @@ export default function LandingPage() {
             <div className="faq-list">
               {FAQ_COLUMNS.map((column, colIdx) => (
                 <div className="faq-column" key={colIdx}>
-                  {column.map((item) => {
+                  {column.map((item, itemIdx) => {
                     const isOpen = !!openFaq[item.q];
+                    const panelId = `faq-panel-${colIdx}-${itemIdx}`;
                     return (
                       <div
                         className={`faq-item${isOpen ? " is-open" : ""}`}
@@ -876,12 +851,20 @@ export default function LandingPage() {
                           type="button"
                           className="faq-trigger"
                           aria-expanded={isOpen}
+                          aria-controls={panelId}
+                          id={`faq-trigger-${colIdx}-${itemIdx}`}
                           onClick={() => toggleFaq(item.q)}
                         >
                           <span>{item.q}</span>
                           <span className="faq-icon" aria-hidden="true" />
                         </button>
-                        <div className="faq-panel" aria-hidden={!isOpen}>
+                        <div
+                          className="faq-panel"
+                          id={panelId}
+                          role="region"
+                          aria-labelledby={`faq-trigger-${colIdx}-${itemIdx}`}
+                          aria-hidden={!isOpen}
+                        >
                           <div className="faq-panel-inner">
                             <p>{item.a}</p>
                           </div>
@@ -897,16 +880,22 @@ export default function LandingPage() {
 
         <section id="rolam">
           <div className="container about">
-            <div className="about-card">
+            <div className="about-card about-card-person">
               <div className="eyebrow">Ki dolgozik a projekten</div>
-              <div className="identity">
-                <i>A</i>Anti / alapító és fejlesztő
+              <div className="about-person">
+                <div className="about-avatar" aria-hidden="true">
+                  A
+                </div>
+                <div className="identity">
+                  Anti — alapító és fejlesztő
+                </div>
               </div>
               <h2>Egy kapcsolattartó. Tiszta felelősség.</h2>
               <p>
-                Az első beszélgetéstől az éles indulásig közvetlenül velem dolgozol. A
-                döntések, a tervezés és a fejlesztés egy kézben maradnak, ezért a
-                visszajelzések gyorsan beépülnek.
+                Az első beszélgetéstől az éles indulásig közvetlenül velem dolgozol.
+                A döntések, a tervezés és a fejlesztés egy kézben maradnak, ezért a
+                visszajelzések gyorsan beépülnek. Nem ügynökségi rétegek — egy ember,
+                aki a projekt végéig elérhető.
               </p>
             </div>
             <div className="about-card">
@@ -917,6 +906,31 @@ export default function LandingPage() {
                 erősíti a bizalmat, és segít a látogatónak magabiztosan továbblépni.
               </p>
             </div>
+          </div>
+        </section>
+
+        <section className="intake-section" aria-labelledby="intake-heading">
+          <div className="container">
+            <div className="section-head">
+              <div>
+                <div className="eyebrow">Így indul a projekt</div>
+                <h2 id="intake-heading">Ajánlatkéréstől a projektindításig.</h2>
+              </div>
+              <p>
+                Átlátható lépések — kevesebb ismeretlen, professzionálisabb folyamat.
+              </p>
+            </div>
+            <ol className="intake-steps">
+              {INTAKE_STEPS.map((step, i) => (
+                <li key={step.title}>
+                  <span className="intake-num" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3>{step.title}</h3>
+                  <p>{step.text}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
@@ -933,23 +947,33 @@ export default function LandingPage() {
                 </p>
                 <p className="direct-email">
                   Inkább közvetlenül írnál?{" "}
-                  <a href="mailto:info@anticode.hu">info@anticode.hu</a>
+                  <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>
                 </p>
               </div>
-              <form className="lead-form" onSubmit={onLeadSubmit}>
-                <label>
+              <form
+                className="lead-form"
+                onSubmit={onLeadSubmit}
+                noValidate
+                aria-describedby="form-feedback"
+              >
+                <label htmlFor="lead-name">
                   Név
                   <input
+                    id="lead-name"
                     name="name"
                     autoComplete="name"
                     required
+                    minLength={2}
                     maxLength={100}
                     placeholder="Neved"
+                    aria-required="true"
+                    aria-invalid={!!formError}
                   />
                 </label>
-                <label>
+                <label htmlFor="lead-email">
                   E-mail
                   <input
+                    id="lead-email"
                     name="email"
                     type="email"
                     autoComplete="email"
@@ -957,11 +981,19 @@ export default function LandingPage() {
                     required
                     maxLength={254}
                     placeholder="email@ceged.hu"
+                    aria-required="true"
+                    aria-invalid={!!formError}
                   />
                 </label>
-                <label className="full">
+                <label className="full" htmlFor="lead-service">
                   Mire van szükséged?
-                  <select name="service" required defaultValue="">
+                  <select
+                    id="lead-service"
+                    name="service"
+                    required
+                    defaultValue=""
+                    aria-required="true"
+                  >
                     <option value="" disabled>
                       Válassz egy irányt
                     </option>
@@ -971,25 +1003,50 @@ export default function LandingPage() {
                     <option>Még egyeztetném</option>
                   </select>
                 </label>
-                <label className="full">
+                <label className="full" htmlFor="lead-message">
                   Röviden a projektről
                   <textarea
+                    id="lead-message"
                     name="message"
                     required
+                    minLength={10}
                     maxLength={2000}
                     placeholder="Mivel foglalkozol, mi nem működik most jól, és mit szeretnél elérni?"
+                    aria-required="true"
                   />
                 </label>
-                <button className="btn" type="submit">
-                  Előkészítem az üzenetet <span aria-hidden="true">→</span>
+                <div className="hp-field" aria-hidden="true">
+                  <label htmlFor="lead-website">
+                    Weboldal
+                    <input
+                      id="lead-website"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </label>
+                </div>
+                <button className="btn" type="submit" disabled={formSending}>
+                  {formSending ? "Küldés..." : "Üzenet küldése"}{" "}
+                  <span aria-hidden="true">→</span>
                 </button>
                 <p className="form-note">
-                  Az oldal nem tárolja az adataidat: elküldéskor az e-mail
-                  alkalmazásodban jön létre az üzenet a info@anticode.hu címre.
+                  Az adataidat csak az ajánlatkérés kezeléséhez használom. Válasz: 1
+                  munkanapon belül.
                 </p>
-                <p className="form-status" role="status" aria-live="polite">
-                  {formStatus}
-                </p>
+                <div id="form-feedback">
+                  {formError ? (
+                    <p className="form-status form-status-error" role="alert">
+                      {formError}
+                    </p>
+                  ) : null}
+                  {formStatus ? (
+                    <p className="form-status" role="status" aria-live="polite">
+                      {formStatus}
+                    </p>
+                  ) : null}
+                </div>
               </form>
             </div>
           </div>
@@ -999,11 +1056,10 @@ export default function LandingPage() {
       <footer>
         <div className="container footer">
           <p>
-            <span className="brand footer-brand" aria-label="AntiCode">
-              <span className="cap">A</span>nti
-              <span className="cap accent">C</span>ode
-            </span>{" "}
-            / weboldalak és egyedi rendszerek
+            <BrandMark className="brand footer-brand" asLink={false} /> /{" "}
+            <Link href="/weboldal-keszites">weboldal készítés</Link>
+            {" · "}
+            <Link href="/arak">árak</Link>
           </p>
           <p>© {year} AntiCode. Minden jog fenntartva.</p>
         </div>
