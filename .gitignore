@@ -67,5 +67,3 @@ jspm_packages/
 # Project Documentation
 PROJECT_DOCUMENTATION.md
 PROJECT_1_ANALYSIS.md
-.vercel
-.env*
