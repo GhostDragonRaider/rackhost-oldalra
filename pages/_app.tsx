@@ -1,5 +1,5 @@
 import type { AppProps } from "next/app";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/router";
 import "../styles/globals.scss";
 import "../styles/landing.scss";
@@ -16,7 +16,7 @@ export default function App({ Component, pageProps }: AppProps) {
   const isHomePage = router.pathname === "/";
   const isLandingShell = LANDING_PATHS.has(router.pathname);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.body.classList.toggle("landing-active", isLandingShell);
     if (!isLandingShell) {
       document.documentElement.removeAttribute("data-theme");

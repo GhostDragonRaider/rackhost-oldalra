@@ -91,6 +91,7 @@ export default function LandingPage() {
   const navContainerRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLSpanElement>(null);
   const processRef = useRef<HTMLDivElement>(null);
+  const intakeRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
   const glassTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeGlassTargetRef = useRef<HTMLElement | null>(null);
@@ -270,41 +271,65 @@ export default function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Process steps: sequential border + content reveal
+  // Process + intake steps: sequential border + content reveal
   useEffect(() => {
-    const process = processRef.current;
-    if (!process) return;
+    const strips = [processRef.current, intakeRef.current].filter(
+      (el): el is HTMLDivElement => !!el
+    );
+    if (!strips.length) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      process.classList.add("is-sequenced", "is-complete");
-      return;
-    }
+    const cleanups: Array<() => void> = [];
 
-    const onAnimationEnd = (event: AnimationEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (!target?.classList.contains("step-body")) return;
-      if (process.querySelector(".step:last-child .step-body") !== target) return;
-      process.classList.add("is-complete");
-    };
-    process.addEventListener("animationend", onAnimationEnd);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            process.classList.add("is-sequenced");
-            observer.unobserve(process);
-          }
+    strips.forEach((process) => {
+      if (reduced) {
+        process.classList.add("is-sequenced", "is-complete");
+        process.querySelectorAll(".step").forEach((step) => {
+          step.classList.add("is-ready");
         });
-      },
-      { threshold: 0.28 }
-    );
-    observer.observe(process);
-    return () => {
-      observer.disconnect();
-      process.removeEventListener("animationend", onAnimationEnd);
-    };
+        return;
+      }
+
+      const onAnimationEnd = (event: AnimationEvent) => {
+        const target = event.target as HTMLElement | null;
+        if (!target) return;
+
+        if (
+          target.classList.contains("step") &&
+          event.animationName.includes("processSurfaceIn")
+        ) {
+          target.classList.add("is-ready");
+        }
+
+        if (!target.classList.contains("step-body")) return;
+        if (process.querySelector(".step:last-child .step-body") !== target) return;
+        process.classList.add("is-complete");
+        process.querySelectorAll(".step").forEach((step) => {
+          step.classList.add("is-ready");
+        });
+      };
+      process.addEventListener("animationend", onAnimationEnd);
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              process.classList.add("is-sequenced");
+              observer.unobserve(process);
+            }
+          });
+        },
+        { threshold: 0.28 }
+      );
+      observer.observe(process);
+
+      cleanups.push(() => {
+        observer.disconnect();
+        process.removeEventListener("animationend", onAnimationEnd);
+      });
+    });
+
+    return () => cleanups.forEach((fn) => fn());
   }, []);
 
   const selectProject = (id: string) => {
@@ -605,7 +630,7 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Amiben segítek</div>
+                <div className="eyebrow eyebrow-premium">Amiben segítek</div>
                 <h2>Nem csak elkészül az oldal. Feladata is lesz.</h2>
               </div>
               <p>
@@ -800,7 +825,7 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head process-head">
               <div>
-                <div className="eyebrow">Munkamódszer</div>
+                <div className="eyebrow eyebrow-premium">Munkamódszer</div>
                 <h2>Átlátható folyamat. Kevesebb találgatás.</h2>
               </div>
               <p className="process-lead">
@@ -831,7 +856,7 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Gyakori kérdések</div>
+                <div className="eyebrow eyebrow-premium">Gyakori kérdések</div>
                 <h2>A fontos részletek még az ajánlatkérés előtt.</h2>
               </div>
               <p>Egyértelmű keretekkel gyorsabb a döntés és kevesebb a félreértés.</p>
@@ -909,28 +934,44 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="intake-section" aria-labelledby="intake-heading">
+        <section
+          className="process-section intake-section"
+          aria-labelledby="intake-heading"
+        >
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Így indul a projekt</div>
+                <div className="eyebrow eyebrow-premium">Így indul a projekt</div>
                 <h2 id="intake-heading">Ajánlatkéréstől a projektindításig.</h2>
               </div>
               <p>
                 Átlátható lépések — kevesebb ismeretlen, professzionálisabb folyamat.
               </p>
             </div>
-            <ol className="intake-steps">
-              {INTAKE_STEPS.map((step, i) => (
-                <li key={step.title}>
-                  <span className="intake-num" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3>{step.title}</h3>
-                  <p>{step.text}</p>
-                </li>
-              ))}
-            </ol>
+            <div className="process" role="list" ref={intakeRef}>
+              {INTAKE_STEPS.map((step, i) => {
+                const num = String(i + 1).padStart(2, "0");
+                return (
+                  <div
+                    className="step"
+                    role="listitem"
+                    key={step.title}
+                    data-step={num}
+                  >
+                    <svg className="step-outline" aria-hidden="true">
+                      <rect className="step-outline-path" pathLength={1} />
+                    </svg>
+                    <span className="step-ghost" aria-hidden="true">
+                      {num}
+                    </span>
+                    <div className="step-body">
+                      <h3>{step.title}</h3>
+                      <p>{step.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
