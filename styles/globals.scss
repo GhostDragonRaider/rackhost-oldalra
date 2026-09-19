@@ -17,18 +17,15 @@
 }
 
 body {
-  background-image: url("../images/Wallpaper.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-
+  background-color: #081426;
+  background-image: none;
   overflow-x: hidden;
   padding-top: 70px; /* MenuSystem navbar magassága */
 }
 
 /* New homepage landing: no wallpaper / old navbar offset */
 body.landing-active {
+  background-color: #081426;
   background-image: none;
   background-attachment: scroll;
   padding-top: 0;
