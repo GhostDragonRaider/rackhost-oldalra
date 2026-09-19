@@ -22,6 +22,34 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [isHomePage]);
 
+  // Homepage load / refresh always starts at the top
+  useEffect(() => {
+    if (!isHomePage) return;
+
+    const previous = history.scrollRestoration;
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    const goTop = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    goTop();
+    const frame = requestAnimationFrame(goTop);
+    const timer = window.setTimeout(goTop, 0);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = previous || "auto";
+      }
+    };
+  }, [isHomePage]);
+
   return (
     <LangProvider>
       <AuthProvider>

@@ -8,7 +8,7 @@ const nextConfig = {
 if (isProd) {
   nextConfig.output = "export";
 } else {
-  // next dev: API proxy a booking backend felé, SPA fallback a többi project-2/3 útvonalra.
+  // next dev: API proxy a booking backend felé, SPA fallback a többi project-2/3/4/5 útvonalra.
   // A public/ fájlok (main.js, static) előbb szolgálódnak ki, mint a rewrite.
   nextConfig.rewrites = async () => [
     {
@@ -38,6 +38,30 @@ if (isProd) {
     {
       source: "/projects/project-3/:path*",
       destination: "/projects/project-3/index.html",
+    },
+    {
+      source: "/projects/project-4",
+      destination: "/projects/project-4/index.html",
+    },
+    {
+      source: "/projects/project-4/",
+      destination: "/projects/project-4/index.html",
+    },
+    {
+      source: "/projects/project-4/:path*",
+      destination: "/projects/project-4/index.html",
+    },
+    {
+      source: "/projects/project-5",
+      destination: "/projects/project-5/index.html",
+    },
+    {
+      source: "/projects/project-5/",
+      destination: "/projects/project-5/index.html",
+    },
+    {
+      source: "/projects/project-5/:path*",
+      destination: "/projects/project-5/index.html",
     },
   ];
 }

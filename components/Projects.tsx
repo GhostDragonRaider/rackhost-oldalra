@@ -19,6 +19,16 @@ export default function Projects() {
       image: "/projects/project-3/preview.png",
       link: "/projects/project-3/",
     },
+    {
+      name: "Virtual Cockpit",
+      image: "/projects/project-4/preview.png",
+      link: "/projects/project-4/",
+    },
+    {
+      name: "Egyedi képeskártyák",
+      image: "/projects/project-5/preview.png",
+      link: "/projects/project-5/",
+    },
   ];
 
   return (

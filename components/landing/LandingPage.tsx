@@ -19,6 +19,39 @@ type Theme = "dark" | "light";
 
 const THEME_KEY = "anticode-theme";
 const DECK_LAYERS = ["deck-front", "deck-middle", "deck-back", "deck-last"] as const;
+const FAQ_MID = Math.ceil(FAQ_ITEMS.length / 2);
+const FAQ_COLUMNS = [
+  FAQ_ITEMS.slice(0, FAQ_MID),
+  FAQ_ITEMS.slice(FAQ_MID),
+] as const;
+
+const PROCESS_STEPS = [
+  {
+    num: "01",
+    title: "Tisztázás",
+    text: "Megértjük, mit kell eladnod, kinek, és mi akadályozza most a döntést.",
+  },
+  {
+    num: "02",
+    title: "Irány",
+    text: "Rögzítjük az oldalszerkezetet és azt az egy következő lépést, amit a látogatónak meg kell tennie.",
+  },
+  {
+    num: "03",
+    title: "Tervezés",
+    text: "Üzenet és felület ugyanarra a célra dolgozik — érthető, meggyőző, döntésre kész.",
+  },
+  {
+    num: "04",
+    title: "Építés",
+    text: "Gyors, reszponzív megvalósítás, amit később is biztonsággal kezelhetsz.",
+  },
+  {
+    num: "05",
+    title: "Élesítés",
+    text: "Ellenőrzött indulás, tiszta átadás és stabil működés az első naptól.",
+  },
+] as const;
 
 function applyTheme(next: Theme) {
   document.documentElement.dataset.theme = next;
@@ -34,10 +67,16 @@ export default function LandingPage() {
   const [showcaseFade, setShowcaseFade] = useState(false);
   const [showcaseFace, setShowcaseFace] = useState<"desc" | "preview">("desc");
   const [formStatus, setFormStatus] = useState("");
+  const [openFaq, setOpenFaq] = useState<Record<string, boolean>>({});
   const [year] = useState(() => new Date().getFullYear());
+
+  const toggleFaq = useCallback((question: string) => {
+    setOpenFaq((prev) => ({ ...prev, [question]: !prev[question] }));
+  }, []);
 
   const navContainerRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLSpanElement>(null);
+  const processRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
   const glassTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeGlassTargetRef = useRef<HTMLElement | null>(null);
@@ -215,6 +254,43 @@ export default function LandingPage() {
       if (item.classList.contains("reveal")) observer.observe(item);
     });
     return () => observer.disconnect();
+  }, []);
+
+  // Process steps: sequential border + content reveal
+  useEffect(() => {
+    const process = processRef.current;
+    if (!process) return;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      process.classList.add("is-sequenced", "is-complete");
+      return;
+    }
+
+    const onAnimationEnd = (event: AnimationEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.classList.contains("step-body")) return;
+      if (process.querySelector(".step:last-child .step-body") !== target) return;
+      process.classList.add("is-complete");
+    };
+    process.addEventListener("animationend", onAnimationEnd);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            process.classList.add("is-sequenced");
+            observer.unobserve(process);
+          }
+        });
+      },
+      { threshold: 0.28 }
+    );
+    observer.observe(process);
+    return () => {
+      observer.disconnect();
+      process.removeEventListener("animationend", onAnimationEnd);
+    };
   }, []);
 
   const selectProject = (id: string) => {
@@ -422,8 +498,14 @@ export default function LandingPage() {
                   <small>{card.kicker}</small>
                   <h3>{card.title}</h3>
                   <div className="mock-grid">
-                    <div className="mock-card" />
-                    <div className="mock-card" />
+                    <div className="mock-card mock-card-primary">
+                      <span className="mock-card-label">{card.primary.label}</span>
+                      <p className="mock-card-text">{card.primary.text}</p>
+                    </div>
+                    <div className="mock-card mock-card-accent">
+                      <span className="mock-card-label">{card.accent.label}</span>
+                      <p className="mock-card-text">{card.accent.text}</p>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -538,9 +620,9 @@ export default function LandingPage() {
                       Üzleti weboldal
                       <span className="detail">Többoldalas szolgáltatói jelenlét</span>
                     </td>
-                    <td className="start">159 000 Ft</td>
-                    <td className="standard">223 000 Ft</td>
-                    <td className="complex">312 000 Ft</td>
+                    <td className="start">127 000 Ft</td>
+                    <td className="standard">178 000 Ft</td>
+                    <td className="complex">250 000 Ft</td>
                   </tr>
                   <tr>
                     <td className="service">
@@ -549,18 +631,18 @@ export default function LandingPage() {
                         Tartalom, struktúra és felület újragondolása
                       </span>
                     </td>
-                    <td className="start">103 000 Ft</td>
-                    <td className="standard">159 000 Ft</td>
-                    <td className="complex">239 000 Ft</td>
+                    <td className="start">82 000 Ft</td>
+                    <td className="standard">127 000 Ft</td>
+                    <td className="complex">191 000 Ft</td>
                   </tr>
                   <tr>
                     <td className="service">
                       Webshop
                       <span className="detail">Katalógus, termékek és vásárlási út</span>
                     </td>
-                    <td className="start">239 000 Ft</td>
-                    <td className="standard">319 000 Ft</td>
-                    <td className="complex">439 000 Ft</td>
+                    <td className="start">191 000 Ft</td>
+                    <td className="standard">255 000 Ft</td>
+                    <td className="complex">351 000 Ft</td>
                   </tr>
                   <tr className="group">
                     <td colSpan={4}>EGYEDI FUNKCIÓK</td>
@@ -647,8 +729,8 @@ export default function LandingPage() {
                 <h2>Portfólió demók, amelyek megmutatják, hogyan dolgozom.</h2>
               </div>
               <p>
-                Három saját demó: corporate oldal, foglaló rendszer és
-                autókatalógus — mindegyik élő előnézetben megnyitható.
+                Öt saját demó: corporate oldal, foglaló rendszer, autókatalógus,
+                virtual cockpit és képeskártyák — mindegyik élő előnézetben megnyitható.
               </p>
             </div>
             <div className="slider">
@@ -711,7 +793,6 @@ export default function LandingPage() {
                   </article>
                   <article className="showcase showcase-face showcase-face-back">
                     <div className="tag">{activeProject.tag}</div>
-                    <h3 className="showcase-preview-title">Oldal előnézet</h3>
                     <a
                       className="showcase-preview-link"
                       href={activeProject.demoHref}
@@ -741,44 +822,33 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="folyamat">
+        <section className="process-section" id="folyamat">
           <div className="container">
-            <div className="section-head">
+            <div className="section-head process-head">
               <div>
                 <div className="eyebrow">Munkamódszer</div>
                 <h2>Átlátható folyamat. Kevesebb találgatás.</h2>
               </div>
-              <p>
+              <p className="process-lead">
                 A jó eredmény nem a fejlesztéssel kezdődik, hanem azzal, hogy közösen
                 tisztázzuk, kinek és mit kell elérnie az oldalnak.
               </p>
             </div>
-            <div className="process">
-              <div className="step">
-                <span>01</span>
-                <h3>Felfedezés</h3>
-                <p>Célok, célcsoport, ajánlat és meglévő akadályok.</p>
-              </div>
-              <div className="step">
-                <span>02</span>
-                <h3>Irány</h3>
-                <p>Oldaltérkép, prioritások és a látogató következő lépése.</p>
-              </div>
-              <div className="step">
-                <span>03</span>
-                <h3>Tervezés</h3>
-                <p>Tartalom és felület egy közös, tesztelhető rendszerben.</p>
-              </div>
-              <div className="step">
-                <span>04</span>
-                <h3>Építés</h3>
-                <p>Reszponzív, gyors és kezelhető megvalósítás.</p>
-              </div>
-              <div className="step">
-                <span>05</span>
-                <h3>Élesítés</h3>
-                <p>Ellenőrzés, átadás és stabil indulás.</p>
-              </div>
+            <div className="process" role="list" ref={processRef}>
+              {PROCESS_STEPS.map((step) => (
+                <div className="step" role="listitem" key={step.num} data-step={step.num}>
+                  <svg className="step-outline" aria-hidden="true">
+                    <rect className="step-outline-path" pathLength={1} />
+                  </svg>
+                  <span className="step-ghost" aria-hidden="true">
+                    {step.num}
+                  </span>
+                  <div className="step-body">
+                    <h3>{step.title}</h3>
+                    <p>{step.text}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -793,11 +863,33 @@ export default function LandingPage() {
               <p>Egyértelmű keretekkel gyorsabb a döntés és kevesebb a félreértés.</p>
             </div>
             <div className="faq-list">
-              {FAQ_ITEMS.map((item) => (
-                <details key={item.q}>
-                  <summary>{item.q}</summary>
-                  <p>{item.a}</p>
-                </details>
+              {FAQ_COLUMNS.map((column, colIdx) => (
+                <div className="faq-column" key={colIdx}>
+                  {column.map((item) => {
+                    const isOpen = !!openFaq[item.q];
+                    return (
+                      <div
+                        className={`faq-item${isOpen ? " is-open" : ""}`}
+                        key={item.q}
+                      >
+                        <button
+                          type="button"
+                          className="faq-trigger"
+                          aria-expanded={isOpen}
+                          onClick={() => toggleFaq(item.q)}
+                        >
+                          <span>{item.q}</span>
+                          <span className="faq-icon" aria-hidden="true" />
+                        </button>
+                        <div className="faq-panel" aria-hidden={!isOpen}>
+                          <div className="faq-panel-inner">
+                            <p>{item.a}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               ))}
             </div>
           </div>
