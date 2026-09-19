@@ -577,7 +577,7 @@ export default function LandingPage() {
             <p className="seo-kicker">
               Weboldal készítés szolgáltató vállalkozásoknak
             </p>
-            <div className="eyebrow">Szolgáltató vállalkozásoknak</div>
+            <div className="eyebrow eyebrow-premium">Szolgáltató vállalkozásoknak</div>
             <h1>Ne csak jelen legyél online. Legyen okod, hogy téged válasszanak.</h1>
             <p>
               Üzletszerző weboldalakat és célzott webes rendszereket készítek olyan
@@ -678,7 +678,7 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Árak</div>
+                <div className="eyebrow eyebrow-premium">Árak</div>
                 <h2>Fő kategóriák, érthető belépő árakkal.</h2>
               </div>
               <p>
@@ -720,7 +720,7 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Munkáim</div>
+                <div className="eyebrow eyebrow-premium">Munkáim</div>
                 <h2>Mini esettanulmányok élő demóval.</h2>
               </div>
               <p>
