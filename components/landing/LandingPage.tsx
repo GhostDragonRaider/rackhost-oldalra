@@ -11,6 +11,7 @@ import React, {
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import LangSwitcher from "./LangSwitcher";
+import { navSlotFromHref } from "./navSlots";
 import SeoHead from "./SeoHead";
 import { REFERENCE_PROJECTS } from "./projectData";
 import { useLocale } from "../../lib/i18n/LocaleContext";
@@ -462,7 +463,11 @@ export default function LandingPage() {
           <BrandMark href="#tartalom" />
           <nav className="links" aria-label={t.chrome.navAria}>
             {t.nav.map((link) => (
-              <a key={link.href} href={link.href}>
+              <a
+                key={link.href}
+                href={link.href}
+                data-nav-slot={navSlotFromHref(link.href)}
+              >
                 {link.label}
               </a>
             ))}
