@@ -796,11 +796,11 @@ body.landing-active .nav-actions .btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:12rem;
-  min-width:12rem;
-  max-width:12rem;
+  width:11.25rem;
+  min-width:11.25rem;
+  max-width:11.25rem;
   height:2.75rem;
-  padding:0 14px;
+  padding:0 12px;
   gap:0.45em;
   flex-shrink:0;
   white-space:nowrap;
@@ -841,6 +841,7 @@ body.landing-active .links a[data-nav-slot]{
   line-height:1;
   text-align:center;
   flex:0 0 auto;
+  padding:10px 6px;
 }
 body.landing-active .hero .actions .btn{
   box-sizing:border-box;
@@ -872,25 +873,25 @@ body.landing-active .subpage-hero .actions .btn.secondary{
 
 /* Nav labels: fixed width = longest HU/EN/DE label per slot (no jump on locale switch) */
 body.landing-active .links a[data-nav-slot="services"]{
-  width:7.6rem; min-width:7.6rem; max-width:7.6rem;
+  width:6.9rem; min-width:6.9rem; max-width:6.9rem;
 }
 body.landing-active .links a[data-nav-slot="pricing"]{
-  width:4.6rem; min-width:4.6rem; max-width:4.6rem;
+  width:4rem; min-width:4rem; max-width:4rem;
 }
 body.landing-active .links a[data-nav-slot="knowledge"]{
-  width:8.4rem; min-width:8.4rem; max-width:8.4rem;
+  width:7.4rem; min-width:7.4rem; max-width:7.4rem;
 }
 body.landing-active .links a[data-nav-slot="work"]{
-  width:6.6rem; min-width:6.6rem; max-width:6.6rem;
+  width:5.8rem; min-width:5.8rem; max-width:5.8rem;
 }
 body.landing-active .links a[data-nav-slot="process"]{
-  width:9.4rem; min-width:9.4rem; max-width:9.4rem;
+  width:8.5rem; min-width:8.5rem; max-width:8.5rem;
 }
 body.landing-active .links a[data-nav-slot="about"]{
-  width:6rem; min-width:6rem; max-width:6rem;
+  width:5.4rem; min-width:5.4rem; max-width:5.4rem;
 }
 body.landing-active .links a[data-nav-slot="contact"]{
-  width:5.6rem; min-width:5.6rem; max-width:5.6rem;
+  width:5.1rem; min-width:5.1rem; max-width:5.1rem;
 }
 
 /* Reserve space so locale switches don’t reflow the page */
@@ -1002,51 +1003,61 @@ body.landing-active .nav .container{
   display:grid !important;
   grid-template-columns:auto minmax(0,1fr) auto;
   align-items:center;
-  column-gap:20px;
+  column-gap:16px;
   max-width:100%;
   min-width:0;
   box-sizing:border-box;
-  width:min(1180px,calc(100% - 40px)) !important;
+  /* Wider than page content so fixed nav slots + CTA fit without overlap */
+  width:min(1280px,calc(100% - 32px)) !important;
 }
 body.landing-active .nav .brand{
   justify-self:start;
   flex-shrink:0;
   z-index:2;
+  position:relative;
 }
 body.landing-active .links{
-  justify-self:center;
+  justify-self:stretch;
   justify-content:center;
+  align-items:center;
   min-width:0;
+  width:100%;
   max-width:100%;
-  width:max-content;
   flex-wrap:nowrap;
-  gap:2px;
+  gap:0;
+  overflow:hidden; /* never paint over brand / actions */
+  position:relative;
+  z-index:1;
 }
 body.landing-active .nav-actions{
   justify-self:end;
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   flex-shrink:0;
   min-width:max-content;
   z-index:2;
+  position:relative;
 }
 body.landing-active .nav-actions .lang-switcher{
   flex-shrink:0;
 }
 
-/* Wide desktop: keep airy gutters. */
+/* Page content container stays narrower; nav uses its own wider rule above. */
 @media(max-width:1400px){
   body.landing-active .container{
     width:min(1180px,calc(100% - 64px));
   }
+  body.landing-active .nav .container{
+    width:min(1280px,calc(100% - 32px)) !important;
+  }
 }
 
 /*
-  Fixed-width nav slots + CTA need ~1280px.
-  Below that: hamburger (keep theme). Do NOT shrink slot widths — that causes locale jump.
+  Fixed-width slots + CTA need ~1200px free.
+  Below that: hamburger (keep theme). Never shrink slot widths — locale jump.
 */
-@media(max-width:1280px) and (min-width:851px){
+@media(max-width:1240px) and (min-width:851px){
   body.landing-active .container{
     width:min(1180px,calc(100% - 48px));
   }
@@ -1056,6 +1067,7 @@ body.landing-active .nav-actions .lang-switcher{
   body.landing-active .nav .container{
     grid-template-columns:1fr auto !important;
     column-gap:12px;
+    width:min(1180px,calc(100% - 32px)) !important;
   }
   body.landing-active .links,
   body.landing-active .nav-actions .btn,
