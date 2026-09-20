@@ -103,20 +103,35 @@ export function requireAdmin(
   return session;
 }
 
-export function setSessionCookie(res: NextApiResponse, token: string) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+export function setSessionCookie(
+  res: NextApiResponse,
+  token: string,
+  req?: NextApiRequest
+) {
+  const secure = cookieSecureSuffix(req);
   res.setHeader(
     "Set-Cookie",
     `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${MAX_AGE_SEC}${secure}`
   );
 }
 
-export function clearSessionCookie(res: NextApiResponse) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+export function clearSessionCookie(res: NextApiResponse, req?: NextApiRequest) {
+  const secure = cookieSecureSuffix(req);
   res.setHeader(
     "Set-Cookie",
     `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`
   );
+}
+
+/** Set Secure only on real HTTPS (or explicit override) so local `next start` over HTTP works. */
+function cookieSecureSuffix(req?: NextApiRequest): string {
+  if (process.env.ADMIN_COOKIE_SECURE === "true") return "; Secure";
+  if (process.env.ADMIN_COOKIE_SECURE === "false") return "";
+  const xf = req?.headers?.["x-forwarded-proto"];
+  const proto =
+    typeof xf === "string" ? xf.split(",")[0].trim().toLowerCase() : "";
+  if (proto === "https") return "; Secure";
+  return "";
 }
 
 /** Simple in-memory login rate limit per IP. */

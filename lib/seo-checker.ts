@@ -415,18 +415,24 @@ export async function runSeoCheck(options?: {
   const sitemap = await fetchPage(`${origin}/sitemap.xml`);
   if (sitemap.ok && /<urlset[\s>]/i.test(sitemap.html)) {
     sitemapOk = true;
-    const missingInSitemap = monitored.filter((u) => {
-      const loc = u.replace(/\/$/, "") || `${origin}`;
-      const variants = [loc, `${loc}/`, u];
-      return !variants.some((v) => sitemap.html.includes(`<loc>${v}</loc>`));
-    });
-    // Home may be listed as https://anticode.hu/
-    const stillMissing = missingInSitemap.filter((u) => {
-      const bare = u.replace(/\/$/, "");
-      return (
-        !sitemap.html.includes(`<loc>${bare}</loc>`) &&
-        !sitemap.html.includes(`<loc>${bare}/</loc>`)
-      );
+    const sitemapPaths = new Set<string>();
+    const locRe = /<loc>\s*([^<]+)\s*<\/loc>/gi;
+    let locMatch: RegExpExecArray | null;
+    while ((locMatch = locRe.exec(sitemap.html))) {
+      try {
+        const p = new URL(locMatch[1].trim()).pathname.replace(/\/$/, "") || "/";
+        sitemapPaths.add(p);
+      } catch {
+        /* ignore */
+      }
+    }
+    const stillMissing = monitored.filter((u) => {
+      try {
+        const p = new URL(u).pathname.replace(/\/$/, "") || "/";
+        return !sitemapPaths.has(p);
+      } catch {
+        return true;
+      }
     });
     if (stillMissing.length > 0) {
       issues.push({

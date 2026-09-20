@@ -31,12 +31,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const token = createSessionToken(user);
-    setSessionCookie(res, token);
+    setSessionCookie(res, token, req);
     return res.status(200).json({ ok: true, user });
   }
 
   if (req.method === "DELETE") {
-    clearSessionCookie(res);
+    clearSessionCookie(res, req);
     return res.status(200).json({ ok: true });
   }
 
