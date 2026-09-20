@@ -476,7 +476,7 @@ body.landing-active .mock-card-accent .mock-card-text{
   opacity:0;
 }
 .process-section .process.is-sequenced:before{
-  animation:processLineDraw 5.2s cubic-bezier(.22,1,.36,1) .55s forwards;
+  animation:processLineDraw 2.6s cubic-bezier(.22,1,.36,1) .28s forwards;
 }
 .process-section .step{
   position:relative;
@@ -573,16 +573,17 @@ body.landing-active .mock-card-accent .mock-card-text{
 }
 @keyframes processSurfaceIn{
   from{
-    background:transparent;
+    background-color:transparent;
+    background-image:none;
     box-shadow:none;
   }
   to{
-    background:
-      linear-gradient(
-        165deg,
-        color-mix(in srgb,var(--surface) 88%,rgba(255,255,255,.06)),
-        color-mix(in srgb,var(--surface-2) 82%,transparent)
-      );
+    background-color:var(--surface);
+    background-image:linear-gradient(
+      165deg,
+      var(--surface),
+      var(--surface-2)
+    );
     box-shadow:
       inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent),
       0 14px 34px color-mix(in srgb,var(--bg) 22%,transparent);
@@ -598,70 +599,70 @@ body.landing-active .mock-card-accent .mock-card-text{
   to{opacity:1;transform:none}
 }
 
-/* 1: content → stroke (both ways) → surface; then 2+: stroke → content */
+/* Surface covers the connector line as soon as each step appears */
 .process-section .process.is-sequenced .step:nth-child(1) .step-body{
-  animation:processContentIn .55s cubic-bezier(.22,1,.36,1) 0s forwards;
+  animation:processContentIn .28s cubic-bezier(.22,1,.36,1) 0s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(1) .step-ghost{
-  animation:processGhostIn .7s cubic-bezier(.22,1,.36,1) .08s forwards;
-}
-.process-section .process.is-sequenced .step:nth-child(1) .step-outline-path{
-  animation:processStrokeDraw 1.35s cubic-bezier(.4,0,.2,1) .55s forwards;
+  animation:processGhostIn .35s cubic-bezier(.22,1,.36,1) .04s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(1){
-  animation:processSurfaceIn .65s cubic-bezier(.22,1,.36,1) 1.35s forwards;
+  animation:processSurfaceIn .33s cubic-bezier(.22,1,.36,1) 0s forwards;
+}
+.process-section .process.is-sequenced .step:nth-child(1) .step-outline-path{
+  animation:processStrokeDraw .68s cubic-bezier(.4,0,.2,1) .28s forwards;
 }
 
 .process-section .process.is-sequenced .step:nth-child(2) .step-outline-path{
-  animation:processStrokeDraw 1.35s cubic-bezier(.4,0,.2,1) 1.95s forwards;
+  animation:processStrokeDraw .68s cubic-bezier(.4,0,.2,1) .98s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(2){
-  animation:processSurfaceIn .65s cubic-bezier(.22,1,.36,1) 2.75s forwards;
+  animation:processSurfaceIn .33s cubic-bezier(.22,1,.36,1) .98s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(2) .step-body{
-  animation:processContentIn .55s cubic-bezier(.22,1,.36,1) 2.95s forwards;
+  animation:processContentIn .28s cubic-bezier(.22,1,.36,1) 1.48s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(2) .step-ghost{
-  animation:processGhostIn .7s cubic-bezier(.22,1,.36,1) 3.05s forwards;
+  animation:processGhostIn .35s cubic-bezier(.22,1,.36,1) 1.53s forwards;
 }
 
 .process-section .process.is-sequenced .step:nth-child(3) .step-outline-path{
-  animation:processStrokeDraw 1.35s cubic-bezier(.4,0,.2,1) 3.4s forwards;
+  animation:processStrokeDraw .68s cubic-bezier(.4,0,.2,1) 1.7s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(3){
-  animation:processSurfaceIn .65s cubic-bezier(.22,1,.36,1) 4.2s forwards;
+  animation:processSurfaceIn .33s cubic-bezier(.22,1,.36,1) 1.7s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(3) .step-body{
-  animation:processContentIn .55s cubic-bezier(.22,1,.36,1) 4.4s forwards;
+  animation:processContentIn .28s cubic-bezier(.22,1,.36,1) 2.2s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(3) .step-ghost{
-  animation:processGhostIn .7s cubic-bezier(.22,1,.36,1) 4.5s forwards;
+  animation:processGhostIn .35s cubic-bezier(.22,1,.36,1) 2.25s forwards;
 }
 
 .process-section .process.is-sequenced .step:nth-child(4) .step-outline-path{
-  animation:processStrokeDraw 1.35s cubic-bezier(.4,0,.2,1) 4.85s forwards;
+  animation:processStrokeDraw .68s cubic-bezier(.4,0,.2,1) 2.43s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(4){
-  animation:processSurfaceIn .65s cubic-bezier(.22,1,.36,1) 5.65s forwards;
+  animation:processSurfaceIn .33s cubic-bezier(.22,1,.36,1) 2.43s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(4) .step-body{
-  animation:processContentIn .55s cubic-bezier(.22,1,.36,1) 5.85s forwards;
+  animation:processContentIn .28s cubic-bezier(.22,1,.36,1) 2.93s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(4) .step-ghost{
-  animation:processGhostIn .7s cubic-bezier(.22,1,.36,1) 5.95s forwards;
+  animation:processGhostIn .35s cubic-bezier(.22,1,.36,1) 2.98s forwards;
 }
 
 .process-section .process.is-sequenced .step:nth-child(5) .step-outline-path{
-  animation:processStrokeDraw 1.35s cubic-bezier(.4,0,.2,1) 6.3s forwards;
+  animation:processStrokeDraw .68s cubic-bezier(.4,0,.2,1) 3.15s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(5){
-  animation:processSurfaceIn .65s cubic-bezier(.22,1,.36,1) 7.1s forwards;
+  animation:processSurfaceIn .33s cubic-bezier(.22,1,.36,1) 3.15s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(5) .step-body{
-  animation:processContentIn .55s cubic-bezier(.22,1,.36,1) 7.3s forwards;
+  animation:processContentIn .28s cubic-bezier(.22,1,.36,1) 3.65s forwards;
 }
 .process-section .process.is-sequenced .step:nth-child(5) .step-ghost{
-  animation:processGhostIn .7s cubic-bezier(.22,1,.36,1) 7.4s forwards;
+  animation:processGhostIn .35s cubic-bezier(.22,1,.36,1) 3.7s forwards;
 }
 
 .process-section .process .step.is-ready:hover{
@@ -688,12 +689,12 @@ body.landing-active .mock-card-accent .mock-card-text{
   animation:none !important;
 }
 .process-section .process.is-complete .step{
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb,var(--surface) 88%,rgba(255,255,255,.06)),
-      color-mix(in srgb,var(--surface-2) 82%,transparent)
-    );
+  background-color:var(--surface);
+  background-image:linear-gradient(
+    165deg,
+    var(--surface),
+    var(--surface-2)
+  );
   box-shadow:
     inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent),
     0 14px 34px color-mix(in srgb,var(--bg) 22%,transparent);
@@ -748,12 +749,12 @@ body.landing-active .mock-card-accent .mock-card-text{
     animation:none !important;
   }
   .process-section .step{
-    background:
-      linear-gradient(
-        165deg,
-        color-mix(in srgb,var(--surface) 88%,rgba(255,255,255,.06)),
-        color-mix(in srgb,var(--surface-2) 82%,transparent)
-      );
+    background-color:var(--surface);
+    background-image:linear-gradient(
+      165deg,
+      var(--surface),
+      var(--surface-2)
+    );
     box-shadow:
       inset 0 1px 0 color-mix(in srgb,var(--text) 7%,transparent),
       0 14px 34px color-mix(in srgb,var(--bg) 22%,transparent);
@@ -825,27 +826,33 @@ body.landing-active .mock-card-accent .mock-card-text{
 .eyebrow.eyebrow-premium{
   display:inline-flex;
   align-items:center;
-  gap:10px;
+  gap:11px;
   margin:0;
-  padding:7px 2px 7px 0;
+  padding:7px 14px 7px 11px;
+  border-radius:9px;
   color:var(--blue-2);
   letter-spacing:.14em;
   background:
     linear-gradient(
-      90deg,
-      color-mix(in srgb,var(--blue) 22%,transparent),
-      transparent 72%
+      100deg,
+      color-mix(in srgb,var(--blue) 18%,transparent) 0%,
+      color-mix(in srgb,var(--blue) 8%,transparent) 42%,
+      transparent 86%
     );
-  text-shadow:0 0 28px color-mix(in srgb,var(--blue) 32%,transparent);
 }
 .eyebrow.eyebrow-premium:before{
   content:"";
-  width:18px;
+  width:14px;
   height:2px;
-  border-radius:1px;
-  background:linear-gradient(90deg,var(--blue-2),color-mix(in srgb,var(--blue) 40%,transparent));
-  box-shadow:0 0 12px color-mix(in srgb,var(--blue-2) 55%,transparent);
   flex-shrink:0;
+  border-radius:1px;
+  background:var(--blue-2);
+  opacity:.88;
+  /* Soft edge: avoid subpixel/jagged 1–3px bars */
+  box-shadow:
+    0 0 0.5px color-mix(in srgb,var(--blue-2) 70%,transparent),
+    6px 0 10px -2px color-mix(in srgb,var(--blue-2) 35%,transparent);
+  transform:translateZ(0);
 }
 
 .intake-section.process-section{
