@@ -6,7 +6,8 @@
     "dev": "node node_modules/next/dist/bin/next dev",
     "build": "node node_modules/next/dist/bin/next build",
     "start": "node node_modules/next/dist/bin/next start",
-    "lint": "node node_modules/next/dist/bin/next lint"
+    "lint": "node node_modules/next/dist/bin/next lint",
+    "forward-mail": "node scripts/forward-inbox-to-gmail.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -15,13 +16,17 @@
     "next": "^15.5.24",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "sass": "^1.93.1"
+    "sass": "^1.93.1",
+    "imapflow": "^2.0.5",
+    "mailparser": "^3.9.28",
+    "nodemailer": "^10.0.10"
   },
   "devDependencies": {
     "@emotion/babel-plugin": "^11.13.5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/nodemailer": "^8.0.2"
   }
 }

@@ -3,6 +3,8 @@ import { useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/router";
 import "../styles/globals.scss";
 import "../styles/landing.scss";
+import "../styles/admin.scss";
+import AnalyticsBeacon from "../components/AnalyticsBeacon";
 import NavBar from "../components/Navbar";
 import { LangProvider } from "../components/lang_context";
 import { AuthProvider } from "../components/auth_context";
@@ -28,16 +30,19 @@ export default function App({ Component, pageProps }: AppProps) {
   const isProjectPage = router.pathname.startsWith("/projects/");
   const isHomePage = router.pathname === "/";
   const isLandingShell = isLandingPath(router.pathname);
+  const isAdminPage = router.pathname === "/admin";
 
   useLayoutEffect(() => {
     document.body.classList.toggle("landing-active", isLandingShell);
+    document.body.classList.toggle("admin-active", isAdminPage);
     if (!isLandingShell) {
       document.documentElement.removeAttribute("data-theme");
     }
     return () => {
       document.body.classList.remove("landing-active");
+      document.body.classList.remove("admin-active");
     };
-  }, [isLandingShell]);
+  }, [isLandingShell, isAdminPage]);
 
   useEffect(() => {
     if (!isHomePage) return;
@@ -66,15 +71,22 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [isHomePage]);
 
+  const inner = (
+    <div className={isProjectPage ? "project-page" : ""}>
+      {!isProjectPage && !isLandingShell && !isAdminPage && <NavBar />}
+      <Component {...pageProps} />
+      {!isAdminPage && !isProjectPage && <AnalyticsBeacon />}
+    </div>
+  );
+
+  if (isAdminPage) {
+    return <AuthProvider>{inner}</AuthProvider>;
+  }
+
   return (
     <LocaleProvider>
       <LangProvider>
-        <AuthProvider>
-          <div className={isProjectPage ? "project-page" : ""}>
-            {!isProjectPage && !isLandingShell && <NavBar />}
-            <Component {...pageProps} />
-          </div>
-        </AuthProvider>
+        <AuthProvider>{inner}</AuthProvider>
       </LangProvider>
     </LocaleProvider>
   );

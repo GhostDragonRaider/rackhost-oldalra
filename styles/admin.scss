@@ -1,0 +1,265 @@
+body.admin-active {
+  padding-top: 0;
+  background-image: none;
+  overflow-x: hidden;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 24px 64px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(63, 95, 134, 0.16), transparent 42%),
+    linear-gradient(180deg, #f3f6fb 0%, #e8eef6 100%);
+  color: #0b1b36;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.admin-shell * {
+  box-sizing: border-box;
+}
+
+.admin-card,
+.admin-login {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 28px;
+  border: 1px solid #dce5f0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(16, 42, 77, 0.08);
+}
+
+.admin-login {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+}
+
+.admin-login h1,
+.admin-dash h1,
+.admin-card h2 {
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+
+.admin-login label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #52637a;
+}
+
+.admin-login input {
+  padding: 12px 14px;
+  border: 1px solid #dce5f0;
+  border-radius: 12px;
+  font: inherit;
+  color: #0b1b36;
+  background: #f8fbff;
+}
+
+.admin-login button,
+.admin-ghost,
+.admin-site-btn {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0b1b36;
+}
+
+.admin-login button {
+  background: #3f5f86;
+  color: #fff;
+}
+
+.admin-login button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.admin-ghost {
+  background: transparent;
+  border: 1px solid #dce5f0;
+  color: #0b1b36;
+}
+
+.admin-site-link {
+  text-align: center;
+  color: #3f5f86;
+  font-weight: 800;
+  text-decoration: none;
+  padding: 4px 0 0;
+}
+
+.admin-site-link:hover,
+.admin-site-btn:hover,
+.admin-ghost:hover {
+  border-color: #3f5f86;
+  color: #2a4a6e;
+}
+
+.admin-warn {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.admin-dash {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+
+.admin-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-top-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-muted {
+  margin: 6px 0 0;
+  color: #52637a;
+  font-size: 0.92rem;
+}
+
+.admin-error {
+  margin: 0;
+  color: #b42318;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.admin-kpis article {
+  padding: 20px 22px;
+  border: 1px solid #dce5f0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.admin-kpis span {
+  display: block;
+  color: #52637a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-kpis strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 2.2rem;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.admin-kpis em {
+  display: block;
+  margin-top: 8px;
+  font-style: normal;
+  color: #52637a;
+  font-size: 0.88rem;
+}
+
+.admin-chart {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 8px;
+  align-items: end;
+  min-height: 220px;
+  margin-top: 22px;
+  padding-top: 8px;
+}
+
+.admin-bar-col {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 6px;
+  min-height: 200px;
+  text-align: center;
+}
+
+.admin-bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 160px;
+}
+
+.admin-bar {
+  width: 100%;
+  max-width: 42px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(180deg, #5f84b0, #3f5f86);
+  transition: height 0.35s ease;
+}
+
+.admin-bar-val {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #0b1b36;
+}
+
+.admin-bar-label {
+  font-size: 0.68rem;
+  color: #52637a;
+  letter-spacing: 0.02em;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 10px;
+  border-top: 1px solid #dce5f0;
+  text-align: left;
+}
+
+.admin-table th {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #52637a;
+}
+
+@media (max-width: 800px) {
+  .admin-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-chart {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
