@@ -1285,3 +1285,20 @@ body.landing-active .lang-btn svg{
   box-shadow:0 0 0 1px rgba(0,0,0,.12);
 }
 
+
+/* Mobile portfolio list: always stacked (never horizontal scroll) */
+@media (max-width: 850px) {
+  body.landing-active .references .project-list {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    width: 100%;
+  }
+  body.landing-active .references .project-list .project {
+    min-width: 0 !important;
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
