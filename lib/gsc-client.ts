@@ -238,23 +238,29 @@ function deriveIndexed(args: {
   const coverage = (args.coverageState || "").toLowerCase();
   const verdict = (args.verdict || "").toUpperCase();
 
+  // English + Hungarian (languageCode may return either).
+  const notIndexed =
+    coverage.includes("not indexed") ||
+    coverage.includes("nincs indexelve") ||
+    coverage.includes("excluded") ||
+    coverage.includes("kizárva") ||
+    coverage.includes("unknown to google") ||
+    coverage.includes("nem ismeri az url") ||
+    coverage.includes("blocked") ||
+    coverage.includes("blokkolva");
+
+  if (notIndexed) return false;
+  if (verdict === "FAIL") return false;
+
   if (
     coverage.includes("submitted and indexed") ||
-    (coverage.includes("indexed") && !coverage.includes("not indexed"))
+    coverage.includes("elküldve és indexelve") ||
+    (coverage.includes("indexed") && !coverage.includes("not indexed")) ||
+    (coverage.includes("indexelve") && !coverage.includes("nincs indexelve"))
   ) {
     return true;
   }
   if (verdict === "PASS") return true;
-
-  if (
-    coverage.includes("not indexed") ||
-    coverage.includes("excluded") ||
-    coverage.includes("unknown to google") ||
-    coverage.includes("blocked")
-  ) {
-    return false;
-  }
-  if (verdict === "FAIL") return false;
 
   return null;
 }
@@ -298,7 +304,7 @@ async function inspectUrl(
       body: JSON.stringify({
         inspectionUrl,
         siteUrl,
-        languageCode: "hu-HU",
+        languageCode: "en-US",
       }),
     }
   );
