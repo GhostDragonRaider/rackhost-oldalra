@@ -1127,22 +1127,60 @@ body.landing-active .nav{
     text-align:left;
   }
   body.landing-active .mobile-nav{
-    display:none;
+    display:grid;
+    gap:14px;
     position:fixed;
     inset:68px 0 auto;
     background:var(--surface);
     border-bottom:1px solid var(--line);
     padding:20px;
     z-index:19;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(-8px);
+    transition:opacity .22s ease,visibility .22s ease,transform .22s ease;
   }
   body.landing-active .mobile-nav.open{
-    display:grid;
-    gap:14px;
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:none;
   }
   body.landing-active .mobile-nav a{
     padding:10px;
     color:var(--muted);
     font-weight:800;
+    opacity:0;
+    transform:translateY(10px);
+  }
+  body.landing-active .mobile-nav.open a{
+    animation:mobileNavItemIn .32s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  body.landing-active .mobile-nav.open a:nth-child(1){animation-delay:.03s}
+  body.landing-active .mobile-nav.open a:nth-child(2){animation-delay:.07s}
+  body.landing-active .mobile-nav.open a:nth-child(3){animation-delay:.11s}
+  body.landing-active .mobile-nav.open a:nth-child(4){animation-delay:.15s}
+  body.landing-active .mobile-nav.open a:nth-child(5){animation-delay:.19s}
+  body.landing-active .mobile-nav.open a:nth-child(6){animation-delay:.23s}
+  body.landing-active .mobile-nav.open a:nth-child(7){animation-delay:.27s}
+  body.landing-active .mobile-nav.open a:nth-child(8){animation-delay:.31s}
+}
+
+@keyframes mobileNavItemIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.landing-active .mobile-nav{
+    transition:none;
+    transform:none;
+  }
+  body.landing-active .mobile-nav.open a{
+    animation:none;
+    opacity:1;
+    transform:none;
   }
 }
 
