@@ -28,7 +28,6 @@ function isLandingPath(pathname: string) {
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isProjectPage = router.pathname.startsWith("/projects/");
-  const isHomePage = router.pathname === "/";
   const isLandingShell = isLandingPath(router.pathname);
   const isAdminPage = router.pathname === "/admin";
 
@@ -45,8 +44,6 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [isLandingShell, isAdminPage]);
 
   useEffect(() => {
-    if (!isHomePage) return;
-
     const previous = history.scrollRestoration;
     if ("scrollRestoration" in history) {
       history.scrollRestoration = "manual";
@@ -58,18 +55,39 @@ export default function App({ Component, pageProps }: AppProps) {
       document.body.scrollTop = 0;
     };
 
-    goTop();
-    const frame = requestAnimationFrame(goTop);
-    const timer = window.setTimeout(goTop, 0);
+    const shouldForceTop = (url?: string) => {
+      const hash = url?.includes("#")
+        ? url.slice(url.indexOf("#"))
+        : window.location.hash;
+      if (!hash || hash === "#" || hash === "#tartalom") return true;
+      const id = decodeURIComponent(hash.slice(1));
+      return !id || !document.getElementById(id);
+    };
+
+    const timers: number[] = [];
+    let frame = 0;
+    if (shouldForceTop()) {
+      goTop();
+      frame = requestAnimationFrame(goTop);
+      timers.push(window.setTimeout(goTop, 0));
+      timers.push(window.setTimeout(goTop, 50));
+      timers.push(window.setTimeout(goTop, 200));
+    }
+
+    const onRoute = (url: string) => {
+      if (shouldForceTop(url)) goTop();
+    };
+    router.events.on("routeChangeComplete", onRoute);
 
     return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
+      if (frame) cancelAnimationFrame(frame);
+      timers.forEach((id) => window.clearTimeout(id));
+      router.events.off("routeChangeComplete", onRoute);
       if ("scrollRestoration" in history) {
         history.scrollRestoration = previous || "auto";
       }
     };
-  }, [isHomePage]);
+  }, [router.events, router.asPath]);
 
   const inner = (
     <div className={isProjectPage ? "project-page" : ""}>
