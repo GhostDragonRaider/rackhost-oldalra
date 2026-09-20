@@ -982,7 +982,7 @@ body.landing-active .nav .container{
   display:grid !important;
   grid-template-columns:auto minmax(0,1fr) auto;
   align-items:center;
-  column-gap:16px;
+  column-gap:24px;
   max-width:100%;
   min-width:0;
   box-sizing:border-box;
@@ -1002,6 +1002,8 @@ body.landing-active .links{
   flex-wrap:nowrap;
   gap:2px;
   overflow:hidden;
+  padding-inline:4px 8px;
+  box-sizing:border-box;
 }
 body.landing-active .links a{
   flex:0 1 auto;
