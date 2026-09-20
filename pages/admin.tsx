@@ -56,6 +56,23 @@ type SeoReport = {
     warningCount: number;
   }>;
   gscConnected: boolean;
+  gsc: {
+    connected: boolean;
+    siteUrl: string | null;
+    rangeDays: number;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+    topQueries: Array<{
+      query: string;
+      clicks: number;
+      impressions: number;
+      ctr: number;
+      position: number;
+    }>;
+    error: string | null;
+  } | null;
 };
 
 const IDLE_MS = 5 * 60 * 1000;
@@ -415,9 +432,55 @@ export default function AdminPage() {
                     {seo.summary.avgResponseMs} ms · hiányzó/gyenge meta:{" "}
                     {seo.summary.missingMetaCount}
                     {seo.gscConnected
-                      ? " · GSC csatlakoztatva"
+                      ? seo.gsc?.error
+                        ? " · GSC: hiba"
+                        : " · GSC csatlakoztatva"
                       : " · GSC: nincs API (opcionális)"}
                   </p>
+
+                  {seo.gscConnected && seo.gsc && !seo.gsc.error ? (
+                    <div className="admin-gsc" aria-label="Google Search Console">
+                      <h3>Keresési forgalom (GSC · {seo.gsc.rangeDays} nap)</h3>
+                      <ul className="admin-seo-metrics">
+                        <li>
+                          Kattintás: <strong>{seo.gsc.clicks}</strong>
+                        </li>
+                        <li>
+                          Megjelenés: <strong>{seo.gsc.impressions}</strong>
+                        </li>
+                        <li>
+                          CTR: <strong>{(seo.gsc.ctr * 100).toFixed(1)}%</strong>
+                        </li>
+                        <li>
+                          Átl. pozíció: <strong>{seo.gsc.position}</strong>
+                        </li>
+                      </ul>
+                      {seo.gsc.topQueries.length > 0 ? (
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>Keresés</th>
+                              <th>Katt.</th>
+                              <th>Megj.</th>
+                              <th>Poz.</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {seo.gsc.topQueries.slice(0, 8).map((q) => (
+                              <tr key={q.query}>
+                                <td>{q.query}</td>
+                                <td>{q.clicks}</td>
+                                <td>{q.impressions}</td>
+                                <td>{q.position.toFixed(1)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p className="admin-muted">Még nincs keresési adat ebben az időszakban.</p>
+                      )}
+                    </div>
+                  ) : null}
 
                   {seo.issues.length > 0 ? (
                     <div className="admin-seo-issues">

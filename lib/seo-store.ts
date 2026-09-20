@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import type { GscTrafficSummary } from "./gsc-client";
 
 export type SeoIssueSeverity = "critical" | "warning" | "info";
 
@@ -52,6 +53,7 @@ export type SeoReport = {
   }>;
   alertSentAt: string | null;
   gscConnected: boolean;
+  gsc: GscTrafficSummary | null;
 };
 
 type Store = {
@@ -130,6 +132,7 @@ export function getSeoReport(): SeoReport {
     history: store.history,
     alertSentAt: store.alertSentAt,
     gscConnected: false,
+    gsc: null,
   };
 }
 

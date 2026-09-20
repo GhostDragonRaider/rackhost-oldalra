@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { fetchGscTrafficSummary } from "./gsc-client";
 import { SITE_EMAIL, SITE_URL } from "./site";
 import {
   getSeoReport,
@@ -487,9 +488,11 @@ export async function runSeoCheck(options?: {
     });
   }
 
+  const gsc = await fetchGscTrafficSummary(28);
   const gscConnected = Boolean(
     process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
   );
+
   if (!gscConnected) {
     issues.push({
       id: "gsc-not-connected",
@@ -497,7 +500,7 @@ export async function runSeoCheck(options?: {
       category: "gsc",
       title: "Google Search Console nincs csatlakoztatva",
       detail:
-        "A technikai ellenőrzés fut; a GSC lekérdezésekhez API kulcs kell (opcionális).",
+        "A technikai ellenőrzés fut; a GSC lekérdezésekhez service account kell (opcionális).",
     });
     issues.push({
       id: "traffic-gsc",
@@ -506,6 +509,26 @@ export async function runSeoCheck(options?: {
       title: "Keresési forgalom / lekérdezések",
       detail:
         "A keresőszavas forgalom a GSC csatlakoztatása után jelenik meg. Addig az admin látogatottsági adatai a belső forgalmat mutatják.",
+    });
+  } else if (gsc.error) {
+    issues.push({
+      id: "gsc-error",
+      severity: "warning",
+      category: "gsc",
+      title: "GSC API hiba",
+      detail: gsc.error,
+    });
+  } else {
+    issues.push({
+      id: "traffic-gsc-ok",
+      severity: "info",
+      category: "traffic",
+      title: `Keresési forgalom (utolsó ${gsc.rangeDays} nap)`,
+      detail: `${gsc.clicks} kattintás · ${gsc.impressions} megjelenés · CTR ${(
+        gsc.ctr * 100
+      ).toFixed(1)}% · átl. pozíció ${gsc.position}${
+        gsc.siteUrl ? ` · ${gsc.siteUrl}` : ""
+      }`,
     });
   }
 
@@ -544,6 +567,7 @@ export async function runSeoCheck(options?: {
     issues,
     pages,
     gscConnected,
+    gsc,
   };
 
   let alertSent = false;
