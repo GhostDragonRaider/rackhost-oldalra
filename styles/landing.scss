@@ -796,11 +796,11 @@ body.landing-active .nav-actions .btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:14.5rem;
-  min-width:14.5rem;
-  max-width:14.5rem;
+  width:auto;
+  min-width:0;
+  max-width:none;
   height:2.75rem;
-  padding:0 14px;
+  padding:0 16px;
   gap:0.45em;
   flex-shrink:0;
   white-space:nowrap;
