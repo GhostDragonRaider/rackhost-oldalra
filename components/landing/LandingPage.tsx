@@ -254,7 +254,7 @@ export default function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Process + intake steps: sequential border + content reveal
+  // Process + intake steps: staggered fade-in (same as hamburger menu items)
   useEffect(() => {
     const strips = [processRef.current, intakeRef.current].filter(
       (el): el is HTMLDivElement => !!el
@@ -275,21 +275,16 @@ export default function LandingPage() {
 
       const onAnimationEnd = (event: AnimationEvent) => {
         const target = event.target as HTMLElement | null;
-        if (!target) return;
+        if (!target?.classList.contains("step")) return;
+        if (!event.animationName.includes("processStepIn")) return;
 
-        if (
-          target.classList.contains("step") &&
-          event.animationName.includes("processSurfaceIn")
-        ) {
-          target.classList.add("is-ready");
+        target.classList.add("is-ready");
+        const steps = process.querySelectorAll(".step");
+        const last = process.querySelector(".step:last-child");
+        if (target === last) {
+          process.classList.add("is-complete");
+          steps.forEach((step) => step.classList.add("is-ready"));
         }
-
-        if (!target.classList.contains("step-body")) return;
-        if (process.querySelector(".step:last-child .step-body") !== target) return;
-        process.classList.add("is-complete");
-        process.querySelectorAll(".step").forEach((step) => {
-          step.classList.add("is-ready");
-        });
       };
       process.addEventListener("animationend", onAnimationEnd);
 
