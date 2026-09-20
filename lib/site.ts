@@ -19,6 +19,8 @@ export const SERVICE_PATHS = [
   "/webshop-keszites",
   "/egyedi-webfejlesztes",
   "/weboldal-karbantartas",
+  "/seo-optimalizalas",
+  "/auto-seo",
   "/arak",
 ] as const;
 
@@ -73,6 +75,8 @@ export function organizationJsonLd() {
       "Webshop fejlesztés",
       "Egyedi webes rendszerek",
       "Weboldal karbantartás",
+      "SEO optimalizálás",
+      "Auto SEO monitoring",
     ],
   };
 }

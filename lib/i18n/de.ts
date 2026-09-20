@@ -134,7 +134,7 @@ export const de: Dictionary = {
   homePricing: {
     eyebrow: "Preise",
     h2: "Hauptkategorien mit verständlichen Einstiegspreisen.",
-    leadBefore: "Der detaillierte 3×9-Preiskatalog steht auf der Seite ",
+    leadBefore: "Der detaillierte Preiskatalog steht auf der Seite ",
     leadAfter:
       ". Hier die Einstiegsrahmen der Hauptrichtungen — das genaue Angebot richtet sich immer nach der Aufgabe.",
     categories: [
@@ -149,6 +149,18 @@ export const de: Dictionary = {
         title: "Onlineshop",
         from: "ab 480 €",
         text: "Katalog, Produktweg und handhabbares Admin für den täglichen Verkauf.",
+      },
+      {
+        href: "/seo-optimalizalas",
+        title: "SEO-Optimierung",
+        from: "ab 99 €",
+        text: "Technisches Audit und Fixes — messbare Fehler, kein Keyword-Stuffing.",
+      },
+      {
+        href: "/auto-seo",
+        title: "Auto SEO",
+        from: "ab 30 € / Monat",
+        text: "Tägliche SEO-Checks, Status und Alarm, wenn etwas kaputtgeht.",
       },
       {
         href: "/egyedi-webfejlesztes",
@@ -360,6 +372,8 @@ export const de: Dictionary = {
     services: [
       { value: "Üzletszerző weboldal", label: "Leadgenerierende Website" },
       { value: "Webshop vagy egyedi rendszer", label: "Onlineshop oder individuelles System" },
+      { value: "SEO optimalizálás", label: "SEO-Optimierung" },
+      { value: "Auto SEO", label: "Auto SEO (monatliches Monitoring)" },
       { value: "Meglévő oldal megújítása", label: "Überarbeitung einer bestehenden Seite" },
       { value: "Még egyeztetném", label: "Noch abzustimmen" },
     ],
@@ -391,6 +405,8 @@ export const de: Dictionary = {
     related: [
       { href: "/weboldal-keszites", label: "Webseitenerstellung" },
       { href: "/webshop-keszites", label: "Onlineshop-Erstellung" },
+      { href: "/seo-optimalizalas", label: "SEO-Optimierung" },
+      { href: "/auto-seo", label: "Auto SEO" },
       { href: "/egyedi-webfejlesztes", label: "Individuelle Webentwicklung" },
       { href: "/weboldal-karbantartas", label: "Wartung" },
     ],
@@ -438,6 +454,13 @@ export const de: Dictionary = {
         complex: "880 €",
       },
       {
+        name: "SEO-Optimierung",
+        detail: "Technisches Audit, Meta, Struktur und Fixes",
+        start: "99 €",
+        standard: "175 €",
+        complex: "300 €",
+      },
+      {
         name: "Angebots- oder Bewerbungssystem",
         detail: "Formular, Datei-Upload, Benachrichtigungsablauf",
         start: "125 €",
@@ -464,6 +487,13 @@ export const de: Dictionary = {
         start: "40 € / Monat",
         standard: "65 € / Monat",
         complex: "115 € / Monat",
+      },
+      {
+        name: "Auto SEO",
+        detail: "Tägliche technische SEO-Checks + Alarm",
+        start: "30 € / Monat",
+        standard: "49 € / Monat",
+        complex: "75 € / Monat",
       },
       {
         name: "Inhaltlicher und technischer Entwicklungstag",
@@ -604,6 +634,66 @@ export const de: Dictionary = {
       ],
       schemaName: "Website-Wartung",
       schemaType: "Website-Wartung",
+    },
+    "/seo-optimalizalas": {
+      title: "SEO-Optimierung | AntiCode",
+      description:
+        "SEO-Optimierung: technisches Audit, Metadaten, Struktur und suchfreundliche Grundlagen — mit messbaren Fixes.",
+      eyebrow: "SEO-Optimierung",
+      h1: "SEO, das die technischen Grundlagen ordnet.",
+      lead:
+        "Ich prüfe Meta, Links, Sitemap und Performance — und behebe, was wirklich zählt. Kein Keyword-Stuffing, keine Massen-AI-Artikel.",
+      points: [
+        {
+          title: "Technisches Audit",
+          text: "404er, tote Links, fehlende Meta, langsame Seiten — priorisiert.",
+        },
+        {
+          title: "Fixes",
+          text: "Kritische Fehler behebe ich; Content-Entscheidungen treffen wir gemeinsam.",
+        },
+        {
+          title: "Messung",
+          text: "Statusbericht: was geändert wurde, was offen bleibt.",
+        },
+      ],
+      related: [
+        { href: "/auto-seo", label: "Auto SEO" },
+        { href: "/weboldal-karbantartas", label: "Wartung" },
+        { href: "/arak", label: "Preise" },
+      ],
+      schemaName: "SEO-Optimierung",
+      schemaType: "SEO-Audit und technische Optimierung",
+    },
+    "/auto-seo": {
+      title: "Auto SEO — kontinuierliches SEO-Monitoring | AntiCode",
+      description:
+        "Auto SEO: tägliche technische SEO-Checks, Status im Admin, Alarm wenn etwas kaputtgeht.",
+      eyebrow: "Auto SEO",
+      h1: "Kontinuierliche Prüfung, keine automatische Textproduktion.",
+      lead:
+        "Tägliche Checks auf 404, tote Links, Meta und Indexierung. Im Admin siehst du den SEO-Status — und wirst benachrichtigt, wenn etwas bricht.",
+      points: [
+        {
+          title: "Täglicher Check",
+          text: "404, tote Links, Meta, Performance, Sitemap.",
+        },
+        {
+          title: "Admin-Status",
+          text: "Punktzahl, kritische Fehler, Warnungen.",
+        },
+        {
+          title: "Alarm",
+          text: "E-Mail bei kritischen Fehlern — kein täglicher Login nötig.",
+        },
+      ],
+      related: [
+        { href: "/seo-optimalizalas", label: "SEO-Optimierung" },
+        { href: "/weboldal-karbantartas", label: "Wartung" },
+        { href: "/arak", label: "Preise" },
+      ],
+      schemaName: "Auto SEO",
+      schemaType: "Kontinuierliches SEO-Monitoring",
     },
   },
   footer: {

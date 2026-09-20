@@ -146,6 +146,22 @@ systemctl reload nginx
 
 echo ">>> Deployed. Public: https://anticode.hu/"
 pm2 status
+
+# Daily SEO Monitor cron (06:00) — requires SEO_CRON_SECRET in .env.local / .env.production.local
+if [ -f .env.production.local ] || [ -f .env.local ]; then
+  set -a
+  # shellcheck disable=SC1091
+  [ -f .env.production.local ] && . ./.env.production.local
+  [ -f .env.local ] && . ./.env.local
+  set +a
+fi
+if [ -n "${SEO_CRON_SECRET:-}" ]; then
+  CRON_LINE="0 6 * * * curl -fsS -H \"Authorization: Bearer ${SEO_CRON_SECRET}\" \"http://127.0.0.1:${APP_PORT}/api/cron/seo-check\" >/tmp/anticode-seo-cron.log 2>&1"
+  (crontab -l 2>/dev/null | grep -v 'api/cron/seo-check' || true; echo "$CRON_LINE") | crontab -
+  echo ">>> SEO daily cron installed (06:00)"
+else
+  echo ">>> SEO cron skipped (set SEO_CRON_SECRET on the VPS to enable daily checks)"
+fi
 REMOTE
 
 echo ">>> Done."

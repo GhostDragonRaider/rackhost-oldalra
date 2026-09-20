@@ -134,7 +134,7 @@ export const hu: Dictionary = {
   homePricing: {
     eyebrow: "Árak",
     h2: "Fő kategóriák, érthető belépő árakkal.",
-    leadBefore: "A részletes 3×9-es árkatalógus a ",
+    leadBefore: "A részletes árkatalógus a ",
     leadAfter:
       " oldalon van. Itt a fő irányok induló keretei — a pontos ajánlat mindig a feladathoz igazodik.",
     categories: [
@@ -149,6 +149,18 @@ export const hu: Dictionary = {
         title: "Webshop",
         from: "191 000 Ft-tól",
         text: "Katalógus, termékút és kezelhető admin a mindennapi értékesítéshez.",
+      },
+      {
+        href: "/seo-optimalizalas",
+        title: "SEO optimalizálás",
+        from: "39 000 Ft-tól",
+        text: "Technikai audit és javítás — mérhető hibákra, nem kulcsszó-halmozásra.",
+      },
+      {
+        href: "/auto-seo",
+        title: "Auto SEO",
+        from: "12 000 Ft / hó-tól",
+        text: "Napi SEO ellenőrzés, státusz és riasztás, ha valami elromlik.",
       },
       {
         href: "/egyedi-webfejlesztes",
@@ -360,6 +372,8 @@ export const hu: Dictionary = {
     services: [
       { value: "Üzletszerző weboldal", label: "Üzletszerző weboldal" },
       { value: "Webshop vagy egyedi rendszer", label: "Webshop vagy egyedi rendszer" },
+      { value: "SEO optimalizálás", label: "SEO optimalizálás" },
+      { value: "Auto SEO", label: "Auto SEO (havi monitor)" },
       { value: "Meglévő oldal megújítása", label: "Meglévő oldal megújítása" },
       { value: "Még egyeztetném", label: "Még egyeztetném" },
     ],
@@ -391,6 +405,8 @@ export const hu: Dictionary = {
     related: [
       { href: "/weboldal-keszites", label: "Weboldal készítés" },
       { href: "/webshop-keszites", label: "Webshop készítés" },
+      { href: "/seo-optimalizalas", label: "SEO optimalizálás" },
+      { href: "/auto-seo", label: "Auto SEO" },
       { href: "/egyedi-webfejlesztes", label: "Egyedi webfejlesztés" },
       { href: "/weboldal-karbantartas", label: "Karbantartás" },
     ],
@@ -438,6 +454,13 @@ export const hu: Dictionary = {
         complex: "351 000 Ft",
       },
       {
+        name: "SEO optimalizálás",
+        detail: "Technikai audit, meta, szerkezet és javítások",
+        start: "39 000 Ft",
+        standard: "69 000 Ft",
+        complex: "119 000 Ft",
+      },
+      {
         name: "Ajánlatkérő vagy jelentkezési rendszer",
         detail: "Űrlap, fájlfeltöltés, értesítési folyamat",
         start: "49 000 Ft",
@@ -464,6 +487,13 @@ export const hu: Dictionary = {
         start: "15 000 Ft / hó",
         standard: "25 000 Ft / hó",
         complex: "45 000 Ft / hó",
+      },
+      {
+        name: "Auto SEO",
+        detail: "Napi technikai SEO ellenőrzés + riasztás",
+        start: "12 000 Ft / hó",
+        standard: "19 000 Ft / hó",
+        complex: "29 000 Ft / hó",
       },
       {
         name: "Tartalmi és technikai fejlesztési nap",
@@ -604,6 +634,66 @@ export const hu: Dictionary = {
       ],
       schemaName: "Weboldal karbantartás",
       schemaType: "Weboldal karbantartás",
+    },
+    "/seo-optimalizalas": {
+      title: "SEO optimalizálás | AntiCode",
+      description:
+        "SEO optimalizálás: technikai audit, metaadatok, szerkezet és keresőbarát alapok — mérhető hibajavítással.",
+      eyebrow: "SEO optimalizálás",
+      h1: "SEO, ami a technikai alapokat rendbe teszi.",
+      lead:
+        "Átnézem a metát, a linkeket, a sitemapet és a teljesítményt — majd javítom, ami tényleg számít. Nem kulcsszó-halmozás, nem tömeges AI-cikk.",
+      points: [
+        {
+          title: "Technikai audit",
+          text: "404-ek, törött linkek, hiányzó meta, lassú oldalak — prioritással.",
+        },
+        {
+          title: "Javítás",
+          text: "A kritikus hibákat kijavítom; a tartalmi döntéseket együtt hozzuk.",
+        },
+        {
+          title: "Mérés",
+          text: "Státuszjelentés: mi változott, mi maradt nyitva.",
+        },
+      ],
+      related: [
+        { href: "/auto-seo", label: "Auto SEO" },
+        { href: "/weboldal-karbantartas", label: "Karbantartás" },
+        { href: "/arak", label: "Árak" },
+      ],
+      schemaName: "SEO optimalizálás",
+      schemaType: "SEO audit és technikai optimalizálás",
+    },
+    "/auto-seo": {
+      title: "Auto SEO — folyamatos SEO monitor | AntiCode",
+      description:
+        "Auto SEO: napi technikai SEO ellenőrzés, státusz az adminban, riasztás ha valami elromlik.",
+      eyebrow: "Auto SEO",
+      h1: "Folyamatos ellenőrzés, nem automatikus szövegírás.",
+      lead:
+        "Napi check 404-re, törött linkre, metára és indexelésre. Az adminban látod a SEO státuszt — ha valami eltörik, értesítünk.",
+      points: [
+        {
+          title: "Napi check",
+          text: "404, hibás linkek, meta, teljesítmény, sitemap.",
+        },
+        {
+          title: "Admin státusz",
+          text: "Pontszám, kritikus hibák, figyelmeztetések.",
+        },
+        {
+          title: "Riasztás",
+          text: "Kritikus hibánál e-mail — nem kell naponta belépned.",
+        },
+      ],
+      related: [
+        { href: "/seo-optimalizalas", label: "SEO optimalizálás" },
+        { href: "/weboldal-karbantartas", label: "Karbantartás" },
+        { href: "/arak", label: "Árak" },
+      ],
+      schemaName: "Auto SEO",
+      schemaType: "Folyamatos SEO monitoring",
     },
   },
   footer: {

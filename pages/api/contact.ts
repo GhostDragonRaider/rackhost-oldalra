@@ -13,6 +13,8 @@ type Body = {
 const SERVICES = new Set([
   "Üzletszerző weboldal",
   "Webshop vagy egyedi rendszer",
+  "SEO optimalizálás",
+  "Auto SEO",
   "Meglévő oldal megújítása",
   "Még egyeztetném",
 ]);

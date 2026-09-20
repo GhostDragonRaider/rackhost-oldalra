@@ -18,7 +18,74 @@ type Stats = {
   last7Days: Array<{ date: string; views: number; visitors: number }>;
 };
 
+type SeoIssue = {
+  id: string;
+  severity: "critical" | "warning" | "info";
+  category: string;
+  title: string;
+  detail: string;
+  url?: string;
+};
+
+type SeoReport = {
+  summary: {
+    score: number;
+    criticalCount: number;
+    warningCount: number;
+    infoCount: number;
+    sitemapOk: boolean;
+    indexingOk: boolean;
+    brokenLinkCount: number;
+    missingMetaCount: number;
+    pagesChecked: number;
+    avgResponseMs: number;
+    lastCheckedAt: string;
+  };
+  issues: SeoIssue[];
+  pages: Array<{
+    url: string;
+    status: number;
+    title: string | null;
+    description: string | null;
+    responseMs: number;
+  }>;
+  history: Array<{
+    at: string;
+    score: number;
+    criticalCount: number;
+    warningCount: number;
+  }>;
+  gscConnected: boolean;
+};
+
 const IDLE_MS = 5 * 60 * 1000;
+
+function formatCheckedAt(iso: string): string {
+  if (!iso) return "még nem futott";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const time = d.toLocaleTimeString("hu-HU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  if (sameDay) return `ma ${time}`;
+  return d.toLocaleString("hu-HU", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function statusOkLabel(ok: boolean): string {
+  return ok ? "rendben" : "figyelem";
+}
 
 export default function AdminPage() {
   const [checking, setChecking] = useState(true);
@@ -29,6 +96,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsError, setStatsError] = useState("");
+  const [seo, setSeo] = useState<SeoReport | null>(null);
+  const [seoError, setSeoError] = useState("");
+  const [seoRunning, setSeoRunning] = useState(false);
   const [idleNotice, setIdleNotice] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,6 +118,49 @@ export default function AdminPage() {
     setStats(data.stats as Stats);
   }, []);
 
+  const loadSeo = useCallback(async () => {
+    setSeoError("");
+    const res = await fetch("/api/admin/seo", { credentials: "same-origin" });
+    if (res.status === 401) {
+      setAuthed(false);
+      setSeo(null);
+      return;
+    }
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      setSeoError(data.error || "Nem sikerült betölteni az SEO jelentést.");
+      return;
+    }
+    setSeo(data.report as SeoReport);
+  }, []);
+
+  const runSeoCheck = useCallback(async () => {
+    setSeoRunning(true);
+    setSeoError("");
+    try {
+      const res = await fetch("/api/admin/seo", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sendAlert: true }),
+      });
+      if (res.status === 401) {
+        setAuthed(false);
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setSeoError(data.error || "Az SEO ellenőrzés sikertelen.");
+        return;
+      }
+      setSeo(data.report as SeoReport);
+    } catch {
+      setSeoError("Hálózati hiba az SEO ellenőrzésnél.");
+    } finally {
+      setSeoRunning(false);
+    }
+  }, []);
+
   const onLogout = useCallback(async (reason?: "idle") => {
     if (idleTimer.current) {
       clearTimeout(idleTimer.current);
@@ -59,6 +172,7 @@ export default function AdminPage() {
     });
     setAuthed(false);
     setStats(null);
+    setSeo(null);
     setIdleNotice(reason === "idle");
   }, []);
 
@@ -78,7 +192,9 @@ export default function AdminPage() {
         if (!cancelled && res.ok) {
           const data = await res.json();
           setAuthed(Boolean(data.authenticated));
-          if (data.authenticated) await loadStats();
+          if (data.authenticated) {
+            await Promise.all([loadStats(), loadSeo()]);
+          }
         }
       } catch {
         /* ignore */
@@ -89,7 +205,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadStats]);
+  }, [loadStats, loadSeo]);
 
   useEffect(() => {
     if (!authed) {
@@ -143,7 +259,7 @@ export default function AdminPage() {
       }
       setPassword("");
       setAuthed(true);
-      await loadStats();
+      await Promise.all([loadStats(), loadSeo()]);
     } catch {
       setError("Hálózati hiba a belépésnél.");
     } finally {
@@ -155,6 +271,15 @@ export default function AdminPage() {
     if (!stats?.weeks?.length) return 1;
     return Math.max(1, ...stats.weeks.map((w) => w.views));
   }, [stats]);
+
+  const scoreTone =
+    !seo?.summary.lastCheckedAt
+      ? "neutral"
+      : seo.summary.criticalCount > 0
+        ? "bad"
+        : seo.summary.warningCount > 0
+          ? "warn"
+          : "good";
 
   return (
     <>
@@ -206,16 +331,23 @@ export default function AdminPage() {
           <div className="admin-dash">
             <header className="admin-top">
               <div>
-                <h1>Látogatottság</h1>
+                <h1>AntiCode Monitor</h1>
                 <p className="admin-muted">
-                  AntiCode · napi / heti / havi áttekintés · 5 perc inaktivitás után kilép
+                  Látogatottság · SEO Monitor · 5 perc inaktivitás után kilép
                 </p>
               </div>
               <div className="admin-top-actions">
                 <Link href="/" className="admin-ghost admin-site-btn">
                   Weboldal
                 </Link>
-                <button type="button" className="admin-ghost" onClick={() => loadStats()}>
+                <button
+                  type="button"
+                  className="admin-ghost"
+                  onClick={() => {
+                    void loadStats();
+                    void loadSeo();
+                  }}
+                >
                   Frissítés
                 </button>
                 <button type="button" className="admin-ghost" onClick={() => onLogout()}>
@@ -224,7 +356,118 @@ export default function AdminPage() {
               </div>
             </header>
 
+            <section className={`admin-card admin-seo admin-seo--${scoreTone}`} aria-label="SEO Monitor">
+              <div className="admin-seo-head">
+                <div>
+                  <h2>SEO Monitor</h2>
+                  <p className="admin-muted">
+                    Napi technikai ellenőrzés: 404, törött linkek, meta, teljesítmény, indexelés, sitemap.
+                    Tartalmat nem ír át automatikusan.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="admin-ghost"
+                  disabled={seoRunning}
+                  onClick={() => void runSeoCheck()}
+                >
+                  {seoRunning ? "Ellenőrzés…" : "Ellenőrzés most"}
+                </button>
+              </div>
+
+              {seoError ? <p className="admin-error">{seoError}</p> : null}
+
+              {seo?.summary.lastCheckedAt ? (
+                <>
+                  <div className="admin-seo-status" aria-label="SEO státusz összefoglaló">
+                    <div className="admin-seo-score">
+                      <span>SEO státusz</span>
+                      <strong>
+                        {seo.summary.score}/100
+                        {seo.summary.criticalCount === 0 ? " ✓" : ""}
+                      </strong>
+                    </div>
+                    <ul className="admin-seo-metrics">
+                      <li>
+                        <strong>{seo.summary.criticalCount}</strong> kritikus hiba
+                      </li>
+                      <li>
+                        <strong>{seo.summary.warningCount}</strong> figyelmeztetés
+                      </li>
+                      <li>
+                        Sitemap: <strong>{statusOkLabel(seo.summary.sitemapOk)}</strong>
+                      </li>
+                      <li>
+                        Indexelés: <strong>{statusOkLabel(seo.summary.indexingOk)}</strong>
+                      </li>
+                      <li>
+                        Hibás linkek: <strong>{seo.summary.brokenLinkCount}</strong>
+                      </li>
+                      <li>
+                        Utolsó ellenőrzés:{" "}
+                        <strong>{formatCheckedAt(seo.summary.lastCheckedAt)}</strong>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p className="admin-muted admin-seo-meta">
+                    {seo.summary.pagesChecked} oldal · átl. válasz{" "}
+                    {seo.summary.avgResponseMs} ms · hiányzó/gyenge meta:{" "}
+                    {seo.summary.missingMetaCount}
+                    {seo.gscConnected
+                      ? " · GSC csatlakoztatva"
+                      : " · GSC: nincs API (opcionális)"}
+                  </p>
+
+                  {seo.issues.length > 0 ? (
+                    <div className="admin-seo-issues">
+                      <h3>Találatok</h3>
+                      <ul>
+                        {seo.issues
+                          .filter((i) => i.severity !== "info")
+                          .concat(seo.issues.filter((i) => i.severity === "info"))
+                          .slice(0, 40)
+                          .map((issue) => (
+                            <li
+                              key={issue.id}
+                              className={`admin-seo-issue admin-seo-issue--${issue.severity}`}
+                            >
+                              <span className="admin-seo-issue-tag">
+                                {issue.severity === "critical"
+                                  ? "kritikus"
+                                  : issue.severity === "warning"
+                                    ? "figyelmeztetés"
+                                    : "infó"}
+                              </span>
+                              <div>
+                                <strong>{issue.title}</strong>
+                                <p>{issue.detail}</p>
+                                {issue.url ? (
+                                  <a href={issue.url} target="_blank" rel="noreferrer">
+                                    {issue.url}
+                                  </a>
+                                ) : null}
+                              </div>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="admin-muted">Nincs jelzett hiba.</p>
+                  )}
+                </>
+              ) : (
+                <p className="admin-muted">
+                  Még nem futott ellenőrzés. Nyomd meg az „Ellenőrzés most” gombot, vagy várd a napi cron futást.
+                </p>
+              )}
+            </section>
+
             {statsError ? <p className="admin-error">{statsError}</p> : null}
+
+            <header className="admin-section-label">
+              <h2>Látogatottság</h2>
+            </header>
 
             {stats ? (
               <>
@@ -292,7 +535,7 @@ export default function AdminPage() {
                 </section>
               </>
             ) : (
-              <p className="admin-muted">Nincs még adat.</p>
+              <p className="admin-muted">Nincs még látogatottsági adat.</p>
             )}
           </div>
         )}

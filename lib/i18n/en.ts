@@ -134,7 +134,7 @@ export const en: Dictionary = {
   homePricing: {
     eyebrow: "Pricing",
     h2: "Main categories, with clear entry prices.",
-    leadBefore: "The detailed 3×9 pricing catalogue is on the ",
+    leadBefore: "The detailed pricing catalogue is on the ",
     leadAfter:
       " page. Here are the starting frames for the main directions — the exact quote always matches the brief.",
     categories: [
@@ -149,6 +149,18 @@ export const en: Dictionary = {
         title: "Online shop",
         from: "From €480",
         text: "Catalogue, product journey, and a manageable admin for day-to-day sales.",
+      },
+      {
+        href: "/seo-optimalizalas",
+        title: "SEO optimisation",
+        from: "From €99",
+        text: "Technical audit and fixes — measurable issues, not keyword stuffing.",
+      },
+      {
+        href: "/auto-seo",
+        title: "Auto SEO",
+        from: "From €30 / month",
+        text: "Daily SEO checks, status, and alerts when something breaks.",
       },
       {
         href: "/egyedi-webfejlesztes",
@@ -360,6 +372,8 @@ export const en: Dictionary = {
     services: [
       { value: "Üzletszerző weboldal", label: "Lead-generating website" },
       { value: "Webshop vagy egyedi rendszer", label: "Online shop or custom system" },
+      { value: "SEO optimalizálás", label: "SEO optimisation" },
+      { value: "Auto SEO", label: "Auto SEO (monthly monitor)" },
       { value: "Meglévő oldal megújítása", label: "Redesign of an existing site" },
       { value: "Még egyeztetném", label: "Still deciding" },
     ],
@@ -391,6 +405,8 @@ export const en: Dictionary = {
     related: [
       { href: "/weboldal-keszites", label: "Website design" },
       { href: "/webshop-keszites", label: "Online shop design" },
+      { href: "/seo-optimalizalas", label: "SEO optimisation" },
+      { href: "/auto-seo", label: "Auto SEO" },
       { href: "/egyedi-webfejlesztes", label: "Custom web development" },
       { href: "/weboldal-karbantartas", label: "Maintenance" },
     ],
@@ -438,6 +454,13 @@ export const en: Dictionary = {
         complex: "€880",
       },
       {
+        name: "SEO optimisation",
+        detail: "Technical audit, meta, structure, and fixes",
+        start: "€99",
+        standard: "€175",
+        complex: "€300",
+      },
+      {
         name: "Quote or application system",
         detail: "Form, file upload, notification flow",
         start: "€125",
@@ -464,6 +487,13 @@ export const en: Dictionary = {
         start: "€40 / month",
         standard: "€65 / month",
         complex: "€115 / month",
+      },
+      {
+        name: "Auto SEO",
+        detail: "Daily technical SEO checks + alerts",
+        start: "€30 / month",
+        standard: "€49 / month",
+        complex: "€75 / month",
       },
       {
         name: "Content & technical development day",
@@ -604,6 +634,66 @@ export const en: Dictionary = {
       ],
       schemaName: "Website maintenance",
       schemaType: "Website maintenance",
+    },
+    "/seo-optimalizalas": {
+      title: "SEO optimisation | AntiCode",
+      description:
+        "SEO optimisation: technical audit, metadata, structure, and search-friendly foundations — with measurable fixes.",
+      eyebrow: "SEO optimisation",
+      h1: "SEO that puts the technical foundations in order.",
+      lead:
+        "I review meta tags, links, the sitemap, and performance — then fix what actually matters. No keyword stuffing, no mass AI articles.",
+      points: [
+        {
+          title: "Technical audit",
+          text: "404s, broken links, missing meta, slow pages — prioritised.",
+        },
+        {
+          title: "Fixes",
+          text: "I fix critical issues; content decisions stay collaborative.",
+        },
+        {
+          title: "Measurement",
+          text: "Status report: what changed, what remains open.",
+        },
+      ],
+      related: [
+        { href: "/auto-seo", label: "Auto SEO" },
+        { href: "/weboldal-karbantartas", label: "Maintenance" },
+        { href: "/arak", label: "Pricing" },
+      ],
+      schemaName: "SEO optimisation",
+      schemaType: "SEO audit and technical optimisation",
+    },
+    "/auto-seo": {
+      title: "Auto SEO — continuous SEO monitor | AntiCode",
+      description:
+        "Auto SEO: daily technical SEO checks, admin status, and alerts when something breaks.",
+      eyebrow: "Auto SEO",
+      h1: "Continuous monitoring, not automatic copywriting.",
+      lead:
+        "Daily checks for 404s, broken links, meta, and indexing. You see SEO status in admin — and get notified if something breaks.",
+      points: [
+        {
+          title: "Daily check",
+          text: "404s, broken links, meta, performance, sitemap.",
+        },
+        {
+          title: "Admin status",
+          text: "Score, critical errors, warnings.",
+        },
+        {
+          title: "Alerts",
+          text: "Email on critical issues — no need to log in daily.",
+        },
+      ],
+      related: [
+        { href: "/seo-optimalizalas", label: "SEO optimisation" },
+        { href: "/weboldal-karbantartas", label: "Maintenance" },
+        { href: "/arak", label: "Pricing" },
+      ],
+      schemaName: "Auto SEO",
+      schemaType: "Continuous SEO monitoring",
     },
   },
   footer: {

@@ -373,6 +373,154 @@ export const SERVICE_PAGES: ServicePageContent[] = [
     schemaName: "Weboldal karbantartás",
     schemaType: "Weboldal karbantartás",
   },
+  {
+    path: "/seo-optimalizalas",
+    title: "SEO optimalizálás | AntiCode",
+    description:
+      "SEO optimalizálás vállalkozásoknak: technikai audit, metaadatok, szerkezet és keresőbarát alapok — mérhető hibajavítással, nem kulcsszó-halmozással.",
+    eyebrow: "SEO optimalizálás",
+    h1: "SEO optimalizálás, ami a technikai alapokat rendbe teszi.",
+    lead:
+      "Átnézem a title/description mezőket, a belső linkeket, a sitemapet, az indexelhetőséget és a teljesítményt — majd javítom, ami tényleg számít a keresőknek. Nem írok mesterségesen tele kulcsszavakkal szöveget, és nem generálok tömegesen SEO-cikkeket.",
+    points: [
+      {
+        title: "Technikai audit",
+        text: "404-ek, törött linkek, hiányzó meta, lassú oldalak, indexelési akadályok — egy listában, prioritással.",
+      },
+      {
+        title: "Javítás",
+        text: "A kritikus hibákat kijavítom; a tartalmi döntéseket veled egyeztetve hagyjuk kézben.",
+      },
+      {
+        title: "Mérés",
+        text: "Search Console és státuszjelentés: mi változott, mi maradt nyitva.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Mit tartalmaz az SEO optimalizálás?",
+        paragraphs: [
+          "A csomag a technikai és szerkezeti SEO-ra fókuszál: meta címek és leírások, H1-hierarchia, canonical, robots/sitemap, belső linkek, 404-ek, mobilbarát teljesítmény. A tartalmi bővítés (új landingek, cikkek) külön, tudatos döntés — nem automatikus AI-átírás.",
+        ],
+        bullets: [
+          "Technikai SEO audit + prioritáslista",
+          "Meta és szerkezeti javítások",
+          "Sitemap / robots / indexelhetőség ellenőrzés",
+          "Teljesítmény-figyelmeztetések kezelése",
+          "Rövid státusz a végén: mi készült el",
+        ],
+      },
+      {
+        heading: "Kinek ajánlom?",
+        paragraphs: [
+          "Annak, akinek már van weboldala, de a keresőkben gyenge, vagy az indulás után nem rendezte a technikai alapokat. Ideális meglévő AntiCode oldalhoz, vagy más stackhez is — előbb felmérem a helyzetet.",
+        ],
+      },
+      {
+        heading: "Árak",
+        paragraphs: [
+          "Az induló, jellemző és komplex kereteket az /arak oldalon találod. A pontos díj a oldalmérettől és a hibák mennyiségétől függ — írásos ajánlatban.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Átírjátok-e az összes szöveget AI-jal?",
+        a: "Nem. A rendszer technikai ellenőrzést és hibajelzést végez; a tartalmi változtatásokat tudatosan, veled egyeztetve csináljuk.",
+      },
+      {
+        q: "Mennyi idő alatt látszik eredmény?",
+        a: "A technikai javítások azonnal élnek; a rangsorváltozás hetek–hónapok kérdése, és a versenytől is függ.",
+      },
+      {
+        q: "Kell-e Google Search Console?",
+        a: "Erősen ajánlott. Segítek a csatlakoztatásban, ha még nincs.",
+      },
+    ],
+    ctaHref: "/kapcsolat",
+    related: [
+      { href: "/auto-seo", label: "Auto SEO" },
+      { href: "/weboldal-karbantartas", label: "Karbantartás" },
+      { href: "/arak", label: "Árak" },
+      { href: "/tudastar", label: "Tudástár" },
+    ],
+    schemaName: "SEO optimalizálás",
+    schemaType: "SEO audit és technikai optimalizálás",
+  },
+  {
+    path: "/auto-seo",
+    title: "Auto SEO — folyamatos SEO monitor | AntiCode",
+    description:
+      "Auto SEO: napi technikai SEO ellenőrzés, státusz az adminban, riasztás ha valami elromlik — AntiCode SEO Monitor.",
+    eyebrow: "Auto SEO",
+    h1: "Auto SEO: folyamatos ellenőrzés, nem automatikus szövegírás.",
+    lead:
+      "A szerver naponta ellenőrzi a 404-eket, törött linkeket, hiányzó metát, teljesítményt és indexelési jeleket. Az adminban látod a SEO státuszt (pl. 96/100), és ha valami eltörik, értesítést kapsz. A tartalmat nem cserélgeti AI — a mérés és a hibajelzés automatikus.",
+    points: [
+      {
+        title: "Napi check",
+        text: "404, hibás linkek, meta, teljesítmény, sitemap, indexelés — rendszeresen.",
+      },
+      {
+        title: "Admin státusz",
+        text: "Pontszám, kritikus hibák, figyelmeztetések, utolsó ellenőrzés ideje.",
+      },
+      {
+        title: "Riasztás",
+        text: "Ha kritikus hiba jelenik meg, e-mail értesítés — nem kell naponta belépned.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Mit csinál az Auto SEO?",
+        paragraphs: [
+          "Folyamatos technikai monitoringot. A cél, hogy időben kiderüljön, ha új 404 jelent meg, eltűnt egy meta, lassult az oldal, vagy elromlott a sitemap — mielőtt a keresőforgalom érezné.",
+        ],
+        bullets: [
+          "Napi automatikus ellenőrzés",
+          "SEO státusz az adminfelületen",
+          "Kritikus hiba esetén értesítés",
+          "Sitemap és indexelési jelek figyelése",
+          "Opcionális GSC-adat későbbi csatlakoztatással",
+        ],
+      },
+      {
+        heading: "Mit nem csinál?",
+        paragraphs: [
+          "Nem írja át a szövegeidet, nem töm meg kulcsszavakkal, és nem gyárt automatikusan SEO-cikkeket. Ezeket tudatosan, emberi döntéssel érdemes csinálni — az Auto SEO a mérésre és a hibajelzésre való.",
+        ],
+      },
+      {
+        heading: "Havi csomag",
+        paragraphs: [
+          "Az Auto SEO havi előfizetés. Az /arak oldalon látod az induló sávokat. Gyakran jól párosul a weboldal-karbantartással.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Ez helyettesíti a Search Console-t?",
+        a: "Nem — kiegészíti. A technikai checkek nálunk futnak; a keresőszavas forgalomhoz a GSC marad a forrás.",
+      },
+      {
+        q: "Milyen gyakran fut az ellenőrzés?",
+        a: "Alapból naponta. Kritikus hiba esetén értesítést küldünk.",
+      },
+      {
+        q: "Kell-e AntiCode-dal készült oldal?",
+        a: "A teljes monitor a nálam futó oldalakon a legkényelmesebb. Más stacknél egyedi felmérés kell.",
+      },
+    ],
+    ctaHref: "/kapcsolat",
+    related: [
+      { href: "/seo-optimalizalas", label: "SEO optimalizálás" },
+      { href: "/weboldal-karbantartas", label: "Karbantartás" },
+      { href: "/arak", label: "Árak" },
+      { href: "/kapcsolat", label: "Kapcsolat" },
+    ],
+    schemaName: "Auto SEO",
+    schemaType: "Folyamatos SEO monitoring",
+  },
 ];
 
 export function getServicePage(path: string) {

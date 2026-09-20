@@ -10,7 +10,7 @@ export default function PricingTable() {
     <>
       <div className="pricing-dashboard">
         <div className="pricing-stat">
-          <b>9</b>
+          <b>{p.rows.length}</b>
           {p.statItems}
         </div>
         <div className="pricing-stat">
@@ -55,7 +55,7 @@ export default function PricingTable() {
           </thead>
           <tbody>
             {p.rows.map((row, index) => {
-              const groupBreaks = [0, 4, 7];
+              const groupBreaks = [0, 5, 8];
               const groupIndex = groupBreaks.indexOf(index);
               return (
                 <React.Fragment key={`${row.name}-${index}`}>
