@@ -208,7 +208,14 @@ export default function AdminPage() {
       setSeo(null);
       return;
     }
-    const data = await res.json();
+    const raw = await res.text();
+    let data: { ok?: boolean; error?: string; report?: SeoReport } = {};
+    try {
+      data = raw ? (JSON.parse(raw) as typeof data) : {};
+    } catch {
+      setSeoError("Nem sikerült betölteni az SEO jelentést.");
+      return;
+    }
     if (!res.ok || !data.ok) {
       setSeoError(data.error || "Nem sikerült betölteni az SEO jelentést.");
       return;
@@ -230,18 +237,52 @@ export default function AdminPage() {
         setAuthed(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        setSeoError(data.error || "Az SEO ellenőrzés sikertelen.");
+
+      const raw = await res.text();
+      let data: {
+        ok?: boolean;
+        error?: string;
+        report?: SeoReport;
+        indexingRefresh?: string;
+      } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as typeof data) : {};
+      } catch {
+        // Gateway HTML/timeout — report may still have been saved; reload it.
+        await loadSeo();
+        setSeoError(
+          res.ok
+            ? ""
+            : "Az ellenőrzés túl sokáig tartott a proxynál. A jelentés frissülhetett — próbáld újra, vagy frissíts."
+        );
         return;
       }
-      setSeo(data.report as SeoReport);
+
+      if (!res.ok || !data.ok) {
+        setSeoError(data.error || "Az SEO ellenőrzés sikertelen.");
+        await loadSeo();
+        return;
+      }
+      if (data.report) setSeo(data.report);
+
+      // GSC indexing finishes in the background — poll a few times for the table.
+      if (data.indexingRefresh === "started") {
+        for (const delayMs of [2500, 6000, 12000]) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          await loadSeo();
+        }
+      }
     } catch {
+      try {
+        await loadSeo();
+      } catch {
+        /* ignore */
+      }
       setSeoError("Hálózati hiba az SEO ellenőrzésnél.");
     } finally {
       setSeoRunning(false);
     }
-  }, []);
+  }, [loadSeo]);
 
   const onLogout = useCallback(async (reason?: "idle") => {
     if (idleTimer.current) {
@@ -635,7 +676,8 @@ export default function AdminPage() {
                             {seo.gscIndexing.siteUrl
                               ? ` · ${seo.gscIndexing.siteUrl}`
                               : ""}
-                            . A napi SEO cron és az „Ellenőrzés most” is lefuttatja.
+                            . A napi SEO cron teljes indexelést futtat; az „Ellenőrzés most”
+                            a technikát azonnal, a GSC indexelést háttérben frissíti.
                           </p>
                           <div className="admin-gsc-index-table-wrap">
                             <table className="admin-table admin-gsc-index-table">

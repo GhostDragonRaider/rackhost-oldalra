@@ -177,3 +177,26 @@ export function markAlertSent(at = new Date().toISOString()) {
   if (store.latest) store.latest.alertSentAt = at;
   writeStore(store);
 }
+
+/** Patch only the GSC indexing block on the latest report (background refresh). */
+export function patchSeoGscIndexing(
+  gscIndexing: GscIndexingSummary
+): SeoReport | null {
+  const store = ensureStore();
+  if (!store.latest) return null;
+
+  const latest: SeoReport = {
+    ...store.latest,
+    gscIndexing,
+    history: store.history,
+    alertSentAt: store.alertSentAt,
+  };
+
+  writeStore({
+    latest,
+    history: store.history,
+    alertSentAt: store.alertSentAt,
+  });
+
+  return latest;
+}

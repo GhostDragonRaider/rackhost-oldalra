@@ -3,11 +3,14 @@ import { fetchGscIndexingSummary, fetchGscTrafficSummary } from "./gsc-client";
 import { SITE_EMAIL, SITE_URL } from "./site";
 import {
   getSeoReport,
+  patchSeoGscIndexing,
   saveSeoReport,
   type SeoIssue,
   type SeoReport,
 } from "./seo-store";
 import { getMonitoredUrls } from "./seo-urls";
+
+let indexingRefreshInFlight: Promise<void> | null = null;
 
 const FETCH_TIMEOUT_MS = 12_000;
 const PERF_WARN_MS = 2500;
@@ -230,9 +233,34 @@ async function maybeSendAlert(report: SeoReport): Promise<boolean> {
   }
 }
 
+/**
+ * Refresh GSC URL Inspection in the background and patch the latest report.
+ * Safe to call after a deferred admin check — does not block the HTTP response.
+ */
+export function refreshSeoIndexingInBackground(): void {
+  if (indexingRefreshInFlight) return;
+
+  indexingRefreshInFlight = (async () => {
+    try {
+      const gscIndexing = await fetchGscIndexingSummary();
+      patchSeoGscIndexing(gscIndexing);
+    } catch (err) {
+      console.error("[seo-checker] background indexing refresh failed:", err);
+    } finally {
+      indexingRefreshInFlight = null;
+    }
+  })();
+}
+
 export async function runSeoCheck(options?: {
   baseUrl?: string;
   sendAlert?: boolean;
+  /**
+   * When true, reuse the previous GSC indexing snapshot so the HTTP response
+   * stays under reverse-proxy timeouts. Call refreshSeoIndexingInBackground()
+   * after responding to update indexing asynchronously.
+   */
+  deferIndexing?: boolean;
 }): Promise<SeoReport> {
   const baseUrl = (options?.baseUrl || process.env.SEO_BASE_URL || SITE_URL).replace(
     /\/$/,
@@ -489,7 +517,24 @@ export async function runSeoCheck(options?: {
   }
 
   const gsc = await fetchGscTrafficSummary(28);
-  const gscIndexing = await fetchGscIndexingSummary();
+  const previousIndexing = getSeoReport().gscIndexing;
+  const gscIndexing = options?.deferIndexing
+    ? previousIndexing ||
+      ({
+        connected: Boolean(
+          process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
+        ),
+        siteUrl: null,
+        checkedAt: new Date().toISOString(),
+        total: 0,
+        indexedCount: 0,
+        notIndexedCount: 0,
+        unknownCount: 0,
+        errorCount: 0,
+        urls: [],
+        error: null,
+      } as NonNullable<SeoReport["gscIndexing"]>)
+    : await fetchGscIndexingSummary();
   const gscConnected = Boolean(
     process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
   );

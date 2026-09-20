@@ -401,9 +401,15 @@ export async function fetchGscTrafficSummary(
   }
 }
 
+export type FetchGscIndexingOptions = {
+  /** Soft deadline for URL Inspection; remaining URLs stay unknown. */
+  budgetMs?: number;
+};
+
 /** Inspect monitored (or provided) URLs via GSC URL Inspection API. */
 export async function fetchGscIndexingSummary(
-  urls?: string[]
+  urls?: string[],
+  options?: FetchGscIndexingOptions
 ): Promise<GscIndexingSummary> {
   const checkedAt = new Date().toISOString();
   const empty: GscIndexingSummary = {
@@ -428,14 +434,42 @@ export async function fetchGscIndexingSummary(
   }
 
   const targets = (urls && urls.length > 0 ? urls : getMonitoredUrls()).slice();
+  const budgetMs =
+    typeof options?.budgetMs === "number" && options.budgetMs > 0
+      ? options.budgetMs
+      : null;
+  const startedAt = Date.now();
 
   try {
     const token = await getAccessToken(creds.email, creds.privateKey);
     const siteUrl = await resolveSiteUrl(token);
 
     const results: GscUrlIndexStatus[] = [];
+    let truncated = false;
     // Sequential to stay under URL Inspection rate limits.
     for (const url of targets) {
+      if (budgetMs !== null && Date.now() - startedAt >= budgetMs) {
+        truncated = true;
+        results.push({
+          url,
+          indexed: null,
+          verdict: null,
+          coverageState: null,
+          robotsTxtState: null,
+          indexingState: null,
+          lastCrawlTime: null,
+          pageFetchState: null,
+          crawledAs: null,
+          googleCanonical: null,
+          userCanonical: null,
+          sitemaps: [],
+          referringUrls: [],
+          mobileUsabilityVerdict: null,
+          inspectionResultLink: null,
+          error: "Időkorlát — később frissül.",
+        });
+        continue;
+      }
       results.push(await inspectUrl(token, siteUrl, url));
     }
 
@@ -456,7 +490,9 @@ export async function fetchGscIndexingSummary(
       unknownCount,
       errorCount,
       urls: results,
-      error: null,
+      error: truncated
+        ? "Az indexelés-ellenőrzés időkorlát miatt részleges; háttérben folytatódik."
+        : null,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
