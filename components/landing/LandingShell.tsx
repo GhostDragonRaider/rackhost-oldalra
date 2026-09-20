@@ -74,15 +74,7 @@ export default function LandingShell({
       </a>
 
       <header className="nav">
-        <div
-          className="container"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "min(1180px, calc(100% - 40px))",
-          }}
-        >
+        <div className="container">
           <BrandMark href="/" />
           <nav className="links" aria-label={t.chrome.navAria}>
             {t.pageNav.map((link) =>
