@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { requireAdmin } from "../../../lib/admin-auth";
-import { runSeoCheck } from "../../../lib/seo-checker";
+import {
+  refreshSeoIndexingInBackground,
+  runSeoCheck,
+} from "../../../lib/seo-checker";
 import { getSeoReport } from "../../../lib/seo-store";
 
 export const config = {
@@ -30,8 +33,15 @@ export default async function handler(
   if (req.method === "POST") {
     try {
       const sendAlert = req.body?.sendAlert !== false;
-      const report = await runSeoCheck({ sendAlert });
-      return res.status(200).json({ ok: true, report });
+      // Defer GSC URL Inspection so nginx (default 60s) does not cut the response.
+      // Indexing continues in the background and is patched onto the saved report.
+      const report = await runSeoCheck({ sendAlert, deferIndexing: true });
+      refreshSeoIndexingInBackground();
+      return res.status(200).json({
+        ok: true,
+        report,
+        indexingRefresh: "started",
+      });
     } catch (e) {
       console.error("[admin/seo] run", e);
       return res

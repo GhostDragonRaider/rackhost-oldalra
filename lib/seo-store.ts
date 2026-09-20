@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { GscTrafficSummary } from "./gsc-client";
+import type { GscIndexingSummary, GscTrafficSummary } from "./gsc-client";
 
 export type SeoIssueSeverity = "critical" | "warning" | "info";
 
@@ -54,6 +54,7 @@ export type SeoReport = {
   alertSentAt: string | null;
   gscConnected: boolean;
   gsc: GscTrafficSummary | null;
+  gscIndexing: GscIndexingSummary | null;
 };
 
 type Store = {
@@ -121,6 +122,8 @@ export function getSeoReport(): SeoReport {
   if (store.latest) {
     return {
       ...store.latest,
+      gscIndexing: store.latest.gscIndexing ?? null,
+      gsc: store.latest.gsc ?? null,
       history: store.history,
       alertSentAt: store.alertSentAt,
     };
@@ -133,6 +136,7 @@ export function getSeoReport(): SeoReport {
     alertSentAt: store.alertSentAt,
     gscConnected: false,
     gsc: null,
+    gscIndexing: null,
   };
 }
 
@@ -172,4 +176,27 @@ export function markAlertSent(at = new Date().toISOString()) {
   store.alertSentAt = at;
   if (store.latest) store.latest.alertSentAt = at;
   writeStore(store);
+}
+
+/** Patch only the GSC indexing block on the latest report (background refresh). */
+export function patchSeoGscIndexing(
+  gscIndexing: GscIndexingSummary
+): SeoReport | null {
+  const store = ensureStore();
+  if (!store.latest) return null;
+
+  const latest: SeoReport = {
+    ...store.latest,
+    gscIndexing,
+    history: store.history,
+    alertSentAt: store.alertSentAt,
+  };
+
+  writeStore({
+    latest,
+    history: store.history,
+    alertSentAt: store.alertSentAt,
+  });
+
+  return latest;
 }

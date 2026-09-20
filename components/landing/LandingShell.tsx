@@ -2,6 +2,7 @@ import React, { ReactNode, useCallback, useLayoutEffect, useState } from "react"
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import LangSwitcher from "./LangSwitcher";
+import { navSlotFromHref } from "./navSlots";
 import SeoHead from "./SeoHead";
 import { useLocale } from "../../lib/i18n/LocaleContext";
 import { SITE_EMAIL } from "../../lib/site";
@@ -77,17 +78,26 @@ export default function LandingShell({
         <div className="container">
           <BrandMark href="/" />
           <nav className="links" aria-label={t.chrome.navAria}>
-            {t.pageNav.map((link) =>
-              link.href.startsWith("/") && !link.href.includes("#") ? (
-                <Link key={link.href} href={link.href}>
+            {t.pageNav.map((link) => {
+              const slot = navSlotFromHref(link.href);
+              return link.href.startsWith("/") && !link.href.includes("#") ? (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  data-nav-slot={slot}
+                >
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.href} href={link.href}>
+                <a
+                  key={link.href}
+                  href={link.href}
+                  data-nav-slot={slot}
+                >
                   {link.label}
                 </a>
-              )
-            )}
+              );
+            })}
           </nav>
           <div className="nav-actions">
             <button

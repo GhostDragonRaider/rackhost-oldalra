@@ -1,13 +1,16 @@
 import nodemailer from "nodemailer";
-import { fetchGscTrafficSummary } from "./gsc-client";
+import { fetchGscIndexingSummary, fetchGscTrafficSummary } from "./gsc-client";
 import { SITE_EMAIL, SITE_URL } from "./site";
 import {
   getSeoReport,
+  patchSeoGscIndexing,
   saveSeoReport,
   type SeoIssue,
   type SeoReport,
 } from "./seo-store";
 import { getMonitoredUrls } from "./seo-urls";
+
+let indexingRefreshInFlight: Promise<void> | null = null;
 
 const FETCH_TIMEOUT_MS = 12_000;
 const PERF_WARN_MS = 2500;
@@ -230,9 +233,34 @@ async function maybeSendAlert(report: SeoReport): Promise<boolean> {
   }
 }
 
+/**
+ * Refresh GSC URL Inspection in the background and patch the latest report.
+ * Safe to call after a deferred admin check — does not block the HTTP response.
+ */
+export function refreshSeoIndexingInBackground(): void {
+  if (indexingRefreshInFlight) return;
+
+  indexingRefreshInFlight = (async () => {
+    try {
+      const gscIndexing = await fetchGscIndexingSummary();
+      patchSeoGscIndexing(gscIndexing);
+    } catch (err) {
+      console.error("[seo-checker] background indexing refresh failed:", err);
+    } finally {
+      indexingRefreshInFlight = null;
+    }
+  })();
+}
+
 export async function runSeoCheck(options?: {
   baseUrl?: string;
   sendAlert?: boolean;
+  /**
+   * When true, reuse the previous GSC indexing snapshot so the HTTP response
+   * stays under reverse-proxy timeouts. Call refreshSeoIndexingInBackground()
+   * after responding to update indexing asynchronously.
+   */
+  deferIndexing?: boolean;
 }): Promise<SeoReport> {
   const baseUrl = (options?.baseUrl || process.env.SEO_BASE_URL || SITE_URL).replace(
     /\/$/,
@@ -489,6 +517,24 @@ export async function runSeoCheck(options?: {
   }
 
   const gsc = await fetchGscTrafficSummary(28);
+  const previousIndexing = getSeoReport().gscIndexing;
+  const gscIndexing = options?.deferIndexing
+    ? previousIndexing ||
+      ({
+        connected: Boolean(
+          process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
+        ),
+        siteUrl: null,
+        checkedAt: new Date().toISOString(),
+        total: 0,
+        indexedCount: 0,
+        notIndexedCount: 0,
+        unknownCount: 0,
+        errorCount: 0,
+        urls: [],
+        error: null,
+      } as NonNullable<SeoReport["gscIndexing"]>)
+    : await fetchGscIndexingSummary();
   const gscConnected = Boolean(
     process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
   );
@@ -532,6 +578,52 @@ export async function runSeoCheck(options?: {
     });
   }
 
+  if (gscConnected && gscIndexing.error) {
+    issues.push({
+      id: "gsc-indexing-error",
+      severity: "warning",
+      category: "indexing",
+      title: "GSC indexelés-ellenőrzés hiba",
+      detail: gscIndexing.error,
+    });
+  } else if (gscConnected && !gscIndexing.error) {
+    issues.push({
+      id: "gsc-indexing-summary",
+      severity: gscIndexing.notIndexedCount > 0 ? "warning" : "info",
+      category: "indexing",
+      title: "GSC indexeltség",
+      detail: `${gscIndexing.indexedCount}/${gscIndexing.total} indexelve · ${gscIndexing.notIndexedCount} nincs indexelve · ${gscIndexing.unknownCount} ismeretlen · ${gscIndexing.errorCount} hiba`,
+    });
+    for (const row of gscIndexing.urls) {
+      if (row.indexed === false) {
+        issues.push({
+          id: `gsc-not-indexed-${row.url}`,
+          severity: "warning",
+          category: "indexing",
+          title: "Oldal nincs indexelve (GSC)",
+          detail: [
+            row.coverageState,
+            row.verdict ? `verdict: ${row.verdict}` : null,
+            row.pageFetchState ? `fetch: ${row.pageFetchState}` : null,
+            row.robotsTxtState ? `robots: ${row.robotsTxtState}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          url: row.url,
+        });
+      } else if (row.error) {
+        issues.push({
+          id: `gsc-inspect-error-${row.url}`,
+          severity: "warning",
+          category: "indexing",
+          title: "URL Inspection hiba",
+          detail: row.error,
+          url: row.url,
+        });
+      }
+    }
+  }
+
   const criticalCount = issues.filter((i) => i.severity === "critical").length;
   const warningCount = issues.filter((i) => i.severity === "warning").length;
   const infoCount = issues.filter((i) => i.severity === "info").length;
@@ -568,6 +660,7 @@ export async function runSeoCheck(options?: {
     pages,
     gscConnected,
     gsc,
+    gscIndexing,
   };
 
   let alertSent = false;
