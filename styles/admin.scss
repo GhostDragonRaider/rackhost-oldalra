@@ -6,8 +6,15 @@ body.admin-active {
 
 .admin-shell {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 40px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 12% 0%, rgba(63, 95, 134, 0.16), transparent 42%),
     linear-gradient(180deg, #f3f6fb 0%, #e8eef6 100%);
@@ -21,8 +28,10 @@ body.admin-active {
 
 .admin-card,
 .admin-login {
-  width: min(920px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
   padding: 28px;
   border: 1px solid #dce5f0;
   border-radius: 18px;
@@ -32,6 +41,7 @@ body.admin-active {
 
 .admin-login {
   width: min(420px, 100%);
+  margin: 0 auto;
   display: grid;
   gap: 14px;
 }
@@ -120,9 +130,12 @@ body.admin-active {
 
 .admin-dash {
   width: min(980px, 100%);
+  max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
   display: grid;
   gap: 18px;
+  justify-items: stretch;
 }
 
 .admin-top {
@@ -344,7 +357,11 @@ body.admin-active {
 }
 
 .admin-gsc-index-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: 12px;
   border: 1px solid #dce5f0;
   border-radius: 12px;
@@ -352,7 +369,8 @@ body.admin-active {
 }
 
 .admin-gsc-index-table {
-  min-width: 980px;
+  min-width: 860px;
+  width: 100%;
   margin: 0;
 }
 
