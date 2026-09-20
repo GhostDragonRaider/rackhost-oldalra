@@ -73,6 +73,35 @@ type SeoReport = {
     }>;
     error: string | null;
   } | null;
+  gscIndexing: {
+    connected: boolean;
+    siteUrl: string | null;
+    checkedAt: string;
+    total: number;
+    indexedCount: number;
+    notIndexedCount: number;
+    unknownCount: number;
+    errorCount: number;
+    urls: Array<{
+      url: string;
+      indexed: boolean | null;
+      verdict: string | null;
+      coverageState: string | null;
+      robotsTxtState: string | null;
+      indexingState: string | null;
+      lastCrawlTime: string | null;
+      pageFetchState: string | null;
+      crawledAs: string | null;
+      googleCanonical: string | null;
+      userCanonical: string | null;
+      sitemaps: string[];
+      referringUrls: string[];
+      mobileUsabilityVerdict: string | null;
+      inspectionResultLink: string | null;
+      error: string | null;
+    }>;
+    error: string | null;
+  } | null;
 };
 
 const IDLE_MS = 5 * 60 * 1000;
@@ -102,6 +131,35 @@ function formatCheckedAt(iso: string): string {
 
 function statusOkLabel(ok: boolean): string {
   return ok ? "rendben" : "figyelem";
+}
+
+function formatCrawlTime(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("hu-HU", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function indexedLabel(indexed: boolean | null, error: string | null): string {
+  if (error) return "hiba";
+  if (indexed === true) return "indexelve";
+  if (indexed === false) return "nincs indexelve";
+  return "ismeretlen";
+}
+
+function shortPath(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.pathname === "/" ? "/" : u.pathname;
+  } catch {
+    return url;
+  }
 }
 
 export default function AdminPage() {
@@ -478,6 +536,160 @@ export default function AdminPage() {
                         </table>
                       ) : (
                         <p className="admin-muted">Még nincs keresési adat ebben az időszakban.</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {seo.gscConnected && seo.gscIndexing ? (
+                    <div
+                      className="admin-gsc admin-gsc-indexing"
+                      aria-label="GSC indexeltség"
+                    >
+                      <h3>Indexeltség (GSC · folyamatos ellenőrzés)</h3>
+                      {seo.gscIndexing.error ? (
+                        <p className="admin-error">{seo.gscIndexing.error}</p>
+                      ) : (
+                        <>
+                          <ul className="admin-seo-metrics">
+                            <li>
+                              Indexelve:{" "}
+                              <strong>
+                                {seo.gscIndexing.indexedCount}/
+                                {seo.gscIndexing.total}
+                              </strong>
+                            </li>
+                            <li>
+                              Nincs indexelve:{" "}
+                              <strong>{seo.gscIndexing.notIndexedCount}</strong>
+                            </li>
+                            <li>
+                              Ismeretlen:{" "}
+                              <strong>{seo.gscIndexing.unknownCount}</strong>
+                            </li>
+                            <li>
+                              Hiba: <strong>{seo.gscIndexing.errorCount}</strong>
+                            </li>
+                          </ul>
+                          <p className="admin-muted admin-seo-meta">
+                            Utolsó GSC index-ellenőrzés:{" "}
+                            <strong>
+                              {formatCheckedAt(seo.gscIndexing.checkedAt)}
+                            </strong>
+                            {seo.gscIndexing.siteUrl
+                              ? ` · ${seo.gscIndexing.siteUrl}`
+                              : ""}
+                            . A napi SEO cron és az „Ellenőrzés most” is lefuttatja.
+                          </p>
+                          <div className="admin-gsc-index-table-wrap">
+                            <table className="admin-table admin-gsc-index-table">
+                              <thead>
+                                <tr>
+                                  <th>Oldal</th>
+                                  <th>Állapot</th>
+                                  <th>Lefedettség</th>
+                                  <th>Utolsó crawl</th>
+                                  <th>Robots</th>
+                                  <th>Fetch</th>
+                                  <th>Canonical</th>
+                                  <th>Mobil</th>
+                                  <th></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {seo.gscIndexing.urls.map((row) => (
+                                  <tr
+                                    key={row.url}
+                                    className={
+                                      row.indexed === true
+                                        ? "is-indexed"
+                                        : row.indexed === false
+                                          ? "is-not-indexed"
+                                          : row.error
+                                            ? "is-error"
+                                            : "is-unknown"
+                                    }
+                                  >
+                                    <td>
+                                      <a
+                                        href={row.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title={row.url}
+                                      >
+                                        {shortPath(row.url)}
+                                      </a>
+                                    </td>
+                                    <td>
+                                      <span
+                                        className={`admin-index-badge admin-index-badge--${
+                                          row.error
+                                            ? "error"
+                                            : row.indexed === true
+                                              ? "ok"
+                                              : row.indexed === false
+                                                ? "bad"
+                                                : "unknown"
+                                        }`}
+                                      >
+                                        {indexedLabel(row.indexed, row.error)}
+                                      </span>
+                                      {row.verdict ? (
+                                        <span className="admin-index-verdict">
+                                          {row.verdict}
+                                        </span>
+                                      ) : null}
+                                      {row.error ? (
+                                        <span className="admin-index-error">
+                                          {row.error}
+                                        </span>
+                                      ) : null}
+                                    </td>
+                                    <td>{row.coverageState || "—"}</td>
+                                    <td>{formatCrawlTime(row.lastCrawlTime)}</td>
+                                    <td>{row.robotsTxtState || "—"}</td>
+                                    <td>
+                                      {[
+                                        row.pageFetchState,
+                                        row.crawledAs
+                                          ? `(${row.crawledAs})`
+                                          : null,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" ") || "—"}
+                                    </td>
+                                    <td className="admin-index-canonical">
+                                      {row.googleCanonical ||
+                                        row.userCanonical ||
+                                        "—"}
+                                      {row.sitemaps.length > 0 ? (
+                                        <span className="admin-muted">
+                                          {" "}
+                                          · sitemap: {row.sitemaps.length}
+                                        </span>
+                                      ) : null}
+                                    </td>
+                                    <td>
+                                      {row.mobileUsabilityVerdict || "—"}
+                                    </td>
+                                    <td>
+                                      {row.inspectionResultLink ? (
+                                        <a
+                                          href={row.inspectionResultLink}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                        >
+                                          GSC
+                                        </a>
+                                      ) : (
+                                        "—"
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
                       )}
                     </div>
                   ) : null}
