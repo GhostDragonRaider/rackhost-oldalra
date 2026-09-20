@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { getMonitoredUrls } from "./seo-urls";
 
 export type GscTrafficSummary = {
   connected: boolean;
@@ -15,6 +16,38 @@ export type GscTrafficSummary = {
     ctr: number;
     position: number;
   }>;
+  error: string | null;
+};
+
+export type GscUrlIndexStatus = {
+  url: string;
+  indexed: boolean | null;
+  verdict: string | null;
+  coverageState: string | null;
+  robotsTxtState: string | null;
+  indexingState: string | null;
+  lastCrawlTime: string | null;
+  pageFetchState: string | null;
+  crawledAs: string | null;
+  googleCanonical: string | null;
+  userCanonical: string | null;
+  sitemaps: string[];
+  referringUrls: string[];
+  mobileUsabilityVerdict: string | null;
+  inspectionResultLink: string | null;
+  error: string | null;
+};
+
+export type GscIndexingSummary = {
+  connected: boolean;
+  siteUrl: string | null;
+  checkedAt: string;
+  total: number;
+  indexedCount: number;
+  notIndexedCount: number;
+  unknownCount: number;
+  errorCount: number;
+  urls: GscUrlIndexStatus[];
   error: string | null;
 };
 
@@ -66,7 +99,11 @@ async function getAccessToken(
       assertion,
     }),
   });
-  const data = (await res.json()) as { access_token?: string; error?: string; error_description?: string };
+  const data = (await res.json()) as {
+    access_token?: string;
+    error?: string;
+    error_description?: string;
+  };
   if (!res.ok || !data.access_token) {
     throw new Error(
       data.error_description || data.error || `Token hiba HTTP ${res.status}`
@@ -100,6 +137,17 @@ async function listSites(token: string): Promise<string[]> {
   return (data.siteEntry || [])
     .map((s) => s.siteUrl || "")
     .filter(Boolean);
+}
+
+async function resolveSiteUrl(token: string): Promise<string> {
+  const sites = await listSites(token);
+  if (!sites.length) {
+    throw new Error(
+      "A service accountnak nincs Search Console property-je. Add hozzá felhasználóként: anticode-seo@anticode-website.iam.gserviceaccount.com"
+    );
+  }
+  const preferred = candidateSiteUrls().find((u) => sites.includes(u));
+  return preferred || sites[0];
 }
 
 function dayStamp(d: Date): string {
@@ -183,6 +231,127 @@ async function queryAnalytics(
   };
 }
 
+function deriveIndexed(args: {
+  verdict: string | null;
+  coverageState: string | null;
+}): boolean | null {
+  const coverage = (args.coverageState || "").toLowerCase();
+  const verdict = (args.verdict || "").toUpperCase();
+
+  if (
+    coverage.includes("submitted and indexed") ||
+    (coverage.includes("indexed") && !coverage.includes("not indexed"))
+  ) {
+    return true;
+  }
+  if (verdict === "PASS") return true;
+
+  if (
+    coverage.includes("not indexed") ||
+    coverage.includes("excluded") ||
+    coverage.includes("unknown to google") ||
+    coverage.includes("blocked")
+  ) {
+    return false;
+  }
+  if (verdict === "FAIL") return false;
+
+  return null;
+}
+
+type InspectionApiResponse = {
+  inspectionResult?: {
+    inspectionResultLink?: string;
+    indexStatusResult?: {
+      verdict?: string;
+      coverageState?: string;
+      robotsTxtState?: string;
+      indexingState?: string;
+      lastCrawlTime?: string;
+      pageFetchState?: string;
+      crawledAs?: string;
+      googleCanonical?: string;
+      userCanonical?: string;
+      sitemap?: string[];
+      referringUrls?: string[];
+    };
+    mobileUsabilityResult?: {
+      verdict?: string;
+    };
+  };
+  error?: { message?: string; status?: string };
+};
+
+async function inspectUrl(
+  token: string,
+  siteUrl: string,
+  inspectionUrl: string
+): Promise<GscUrlIndexStatus> {
+  const res = await fetch(
+    "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inspectionUrl,
+        siteUrl,
+        languageCode: "hu-HU",
+      }),
+    }
+  );
+  const data = (await res.json()) as InspectionApiResponse;
+  if (!res.ok) {
+    return {
+      url: inspectionUrl,
+      indexed: null,
+      verdict: null,
+      coverageState: null,
+      robotsTxtState: null,
+      indexingState: null,
+      lastCrawlTime: null,
+      pageFetchState: null,
+      crawledAs: null,
+      googleCanonical: null,
+      userCanonical: null,
+      sitemaps: [],
+      referringUrls: [],
+      mobileUsabilityVerdict: null,
+      inspectionResultLink: null,
+      error: data.error?.message || `URL Inspection HTTP ${res.status}`,
+    };
+  }
+
+  const index = data.inspectionResult?.indexStatusResult;
+  const verdict = index?.verdict || null;
+  const coverageState = index?.coverageState || null;
+
+  return {
+    url: inspectionUrl,
+    indexed: deriveIndexed({ verdict, coverageState }),
+    verdict,
+    coverageState,
+    robotsTxtState: index?.robotsTxtState || null,
+    indexingState: index?.indexingState || null,
+    lastCrawlTime: index?.lastCrawlTime || null,
+    pageFetchState: index?.pageFetchState || null,
+    crawledAs: index?.crawledAs || null,
+    googleCanonical: index?.googleCanonical || null,
+    userCanonical: index?.userCanonical || null,
+    sitemaps: Array.isArray(index?.sitemap) ? index!.sitemap! : [],
+    referringUrls: Array.isArray(index?.referringUrls)
+      ? index!.referringUrls!
+      : [],
+    mobileUsabilityVerdict:
+      data.inspectionResult?.mobileUsabilityResult?.verdict || null,
+    inspectionResultLink:
+      data.inspectionResult?.inspectionResultLink || null,
+    error: null,
+  };
+}
+
 export async function fetchGscTrafficSummary(
   days = 28
 ): Promise<GscTrafficSummary> {
@@ -208,18 +377,7 @@ export async function fetchGscTrafficSummary(
 
   try {
     const token = await getAccessToken(creds.email, creds.privateKey);
-    const sites = await listSites(token);
-    if (!sites.length) {
-      return {
-        ...empty,
-        connected: true,
-        error:
-          "A service accountnak nincs Search Console property-je. Add hozzá felhasználóként: anticode-seo@anticode-website.iam.gserviceaccount.com",
-      };
-    }
-
-    const preferred = candidateSiteUrls().find((u) => sites.includes(u));
-    const siteUrl = preferred || sites[0];
+    const siteUrl = await resolveSiteUrl(token);
     const stats = await queryAnalytics(token, siteUrl, days);
 
     return {
@@ -238,6 +396,74 @@ export async function fetchGscTrafficSummary(
     return {
       ...empty,
       connected: Boolean(creds),
+      error: message,
+    };
+  }
+}
+
+/** Inspect monitored (or provided) URLs via GSC URL Inspection API. */
+export async function fetchGscIndexingSummary(
+  urls?: string[]
+): Promise<GscIndexingSummary> {
+  const checkedAt = new Date().toISOString();
+  const empty: GscIndexingSummary = {
+    connected: false,
+    siteUrl: null,
+    checkedAt,
+    total: 0,
+    indexedCount: 0,
+    notIndexedCount: 0,
+    unknownCount: 0,
+    errorCount: 0,
+    urls: [],
+    error: null,
+  };
+
+  const creds = getCredentials();
+  if (!creds) {
+    return {
+      ...empty,
+      error: "GSC_CLIENT_EMAIL / GSC_PRIVATE_KEY nincs beállítva.",
+    };
+  }
+
+  const targets = (urls && urls.length > 0 ? urls : getMonitoredUrls()).slice();
+
+  try {
+    const token = await getAccessToken(creds.email, creds.privateKey);
+    const siteUrl = await resolveSiteUrl(token);
+
+    const results: GscUrlIndexStatus[] = [];
+    // Sequential to stay under URL Inspection rate limits.
+    for (const url of targets) {
+      results.push(await inspectUrl(token, siteUrl, url));
+    }
+
+    const indexedCount = results.filter((r) => r.indexed === true).length;
+    const notIndexedCount = results.filter((r) => r.indexed === false).length;
+    const errorCount = results.filter((r) => Boolean(r.error)).length;
+    const unknownCount = results.filter(
+      (r) => r.indexed === null && !r.error
+    ).length;
+
+    return {
+      connected: true,
+      siteUrl,
+      checkedAt,
+      total: results.length,
+      indexedCount,
+      notIndexedCount,
+      unknownCount,
+      errorCount,
+      urls: results,
+      error: null,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      ...empty,
+      connected: Boolean(creds),
+      total: targets.length,
       error: message,
     };
   }
