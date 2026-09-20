@@ -1,3 +1,29 @@
+// Global styles only - component styles are now in TSX files with emotion
+
+:root {
+  --nav-bar-color: #a855f7;
+  --nav-bar-bgcolor: rgba(10, 10, 25, 0.85);
+  --nav-bar-hover-color: rgba(74, 216, 235, 0.8);
+  --home-page-title-color: #ffffff;
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+body {
+  background-image: none;
+  overflow-x: hidden;
+  padding-top: 0;
+  margin: 0;
+  background-color: #f5f8fc;
+  color: #0b1b36;
+}
 
 .site-error {
   min-height: 100vh;
@@ -37,30 +63,6 @@
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-// Global styles only - component styles are now in TSX files with emotion
-
-:root {
-  --nav-bar-color: #a855f7;
-  --nav-bar-bgcolor: rgba(10, 10, 25, 0.85);
-  --nav-bar-hover-color: rgba(74, 216, 235, 0.8);
-  --home-page-title-color: #ffffff;
-}
-
-*,
-::before,
-::after {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-body {
-  background-image: none;
-  overflow-x: hidden;
-  padding-top: 70px; /* MenuSystem navbar magassága */
 }
 
 /* New homepage landing: no wallpaper / old navbar offset */

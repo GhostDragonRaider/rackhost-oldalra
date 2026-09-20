@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { SITE_EMAIL, SITE_NAME } from "../../lib/site";
+import nodemailer from "nodemailer";
+import { SITE_EMAIL } from "../../lib/site";
 
 type Body = {
   name?: string;
@@ -54,8 +55,9 @@ export default async function handler(
     return bad(res, 400, "Írj röviden a projektről (legalább 10 karakter).");
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const smtpUser = process.env.SMTP_USER || SITE_EMAIL;
+  const smtpPass = process.env.SMTP_PASS;
+  if (!smtpPass) {
     return bad(
       res,
       503,
@@ -72,42 +74,35 @@ export default async function handler(
     message,
   ].join("\n");
 
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM || `${SITE_NAME} <onboarding@resend.dev>`,
-        to: [process.env.CONTACT_TO || SITE_EMAIL],
-        reply_to: email,
-        subject: `Projektindítás — ${service}`,
-        text,
-      }),
-    });
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.rackhost.hu",
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
 
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error("Resend error:", response.status, detail);
-      return bad(
-        res,
-        502,
-        "Nem sikerült elküldeni az üzenetet. Próbáld újra, vagy írj a info@anticode.hu címre."
-      );
-    }
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `AntiCode <${SITE_EMAIL}>`,
+      to: process.env.CONTACT_TO || SITE_EMAIL,
+      replyTo: email,
+      subject: `AntiCode — Projektindítás — ${service}`,
+      text,
+    });
 
     return res.status(200).json({
       ok: true,
       message: "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem.",
     });
   } catch (err) {
-    console.error("Contact API error:", err);
+    console.error("Contact SMTP error:", err);
     return bad(
       res,
-      500,
-      "Váratlan hiba történt. Írj közvetlenül a info@anticode.hu címre."
+      502,
+      "Nem sikerült elküldeni az üzenetet. Próbáld újra, vagy írj a info@anticode.hu címre."
     );
   }
 }
