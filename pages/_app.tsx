@@ -6,15 +6,28 @@ import "../styles/landing.scss";
 import NavBar from "../components/Navbar";
 import { LangProvider } from "../components/lang_context";
 import { AuthProvider } from "../components/auth_context";
+import { LocaleProvider } from "../lib/i18n/LocaleContext";
 import { SERVICE_PATHS } from "../lib/site";
 
-const LANDING_PATHS = new Set<string>(["/", ...SERVICE_PATHS]);
+const LANDING_PATHS = new Set<string>([
+  "/",
+  ...SERVICE_PATHS,
+  "/kapcsolat",
+  "/rolam",
+  "/tudastar",
+]);
+
+function isLandingPath(pathname: string) {
+  if (LANDING_PATHS.has(pathname)) return true;
+  if (pathname.startsWith("/tudastar/")) return true;
+  return false;
+}
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isProjectPage = router.pathname.startsWith("/projects/");
   const isHomePage = router.pathname === "/";
-  const isLandingShell = LANDING_PATHS.has(router.pathname);
+  const isLandingShell = isLandingPath(router.pathname);
 
   useLayoutEffect(() => {
     document.body.classList.toggle("landing-active", isLandingShell);
@@ -26,7 +39,6 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [isLandingShell]);
 
-  // Homepage load / refresh always starts at the top
   useEffect(() => {
     if (!isHomePage) return;
 
@@ -55,13 +67,15 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [isHomePage]);
 
   return (
-    <LangProvider>
-      <AuthProvider>
-        <div className={isProjectPage ? "project-page" : ""}>
-          {!isProjectPage && !isLandingShell && <NavBar />}
-          <Component {...pageProps} />
-        </div>
-      </AuthProvider>
-    </LangProvider>
+    <LocaleProvider>
+      <LangProvider>
+        <AuthProvider>
+          <div className={isProjectPage ? "project-page" : ""}>
+            {!isProjectPage && !isLandingShell && <NavBar />}
+            <Component {...pageProps} />
+          </div>
+        </AuthProvider>
+      </LangProvider>
+    </LocaleProvider>
   );
 }

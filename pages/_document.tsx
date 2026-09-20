@@ -1,24 +1,25 @@
 import { Head, Html, Main, NextScript } from "next/document";
 
-/** Blocks wallpaper FOUC; respects saved light/dark theme before paint. */
+/** Blocks wallpaper FOUC; default light theme, respects saved preference. */
 export default function Document() {
   return (
-    <Html lang="hu">
+    <Html lang="hu" data-theme="light">
       <Head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <meta name="theme-color" content="#f5f8fc" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("anticode-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem("anticode-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`,
           }}
         />
         <style
           dangerouslySetInnerHTML={{
             __html: [
               "html,body{background-image:none!important}",
-              'html:not([data-theme="light"]),html:not([data-theme="light"]) body{background-color:#081426}',
-              'html[data-theme="light"],html[data-theme="light"] body{background-color:#f5f8fc}',
-              "body.landing-active .nav .links a{color:#b6c6dd}",
-              'html[data-theme="light"] body.landing-active .nav .links a{color:#52637a}',
+              'html:not([data-theme="dark"]),html:not([data-theme="dark"]) body{background-color:#f5f8fc}',
+              'html[data-theme="dark"],html[data-theme="dark"] body{background-color:#081426}',
+              "body.landing-active .nav .links a{color:#52637a}",
+              'html[data-theme="dark"] body.landing-active .nav .links a{color:#b6c6dd}',
             ].join(""),
           }}
         />

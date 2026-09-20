@@ -987,3 +987,45 @@ body.landing-active .mock-card-accent .mock-card-text{
   margin: 0;
   color: var(--muted);
 }
+
+body.landing-active .lang-switcher{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  flex-shrink:0;
+}
+body.landing-active .lang-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:28px;
+  padding:0;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  cursor:pointer;
+  opacity:.72;
+  transition:opacity .2s, background .2s, transform .2s;
+}
+body.landing-active .lang-btn:hover,
+body.landing-active .lang-btn:focus-visible{
+  opacity:1;
+  background:color-mix(in srgb,var(--blue) 12%,transparent);
+  outline:none;
+}
+body.landing-active .lang-btn.is-active{
+  opacity:1;
+  background:color-mix(in srgb,var(--blue) 18%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--blue) 35%,transparent);
+}
+body.landing-active .lang-btn svg{
+  display:block;
+  border-radius:2px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.12);
+}
+

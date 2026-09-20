@@ -4,25 +4,19 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import Link from "next/link";
 import BrandMark from "./BrandMark";
+import LangSwitcher from "./LangSwitcher";
 import SeoHead from "./SeoHead";
-import {
-  DECK_CARDS,
-  FAQ_ITEMS,
-  HOME_PRICE_CATEGORIES,
-  INTAKE_STEPS,
-  NAV_LINKS,
-  REFERENCE_PROJECTS,
-} from "./projectData";
+import { REFERENCE_PROJECTS } from "./projectData";
+import { useLocale } from "../../lib/i18n/LocaleContext";
 import {
   absoluteUrl,
-  DEFAULT_DESCRIPTION,
   faqJsonLd,
-  HOME_TITLE,
   SITE_EMAIL,
   SITE_NAME,
   SITE_URL,
@@ -32,39 +26,8 @@ type Theme = "dark" | "light";
 
 const THEME_KEY = "anticode-theme";
 const DECK_LAYERS = ["deck-front", "deck-middle", "deck-back", "deck-last"] as const;
-const FAQ_MID = Math.ceil(FAQ_ITEMS.length / 2);
-const FAQ_COLUMNS = [
-  FAQ_ITEMS.slice(0, FAQ_MID),
-  FAQ_ITEMS.slice(FAQ_MID),
-] as const;
-
-const PROCESS_STEPS = [
-  {
-    num: "01",
-    title: "Tisztázás",
-    text: "Megértjük, mit kell eladnod, kinek, és mi akadályozza most a döntést.",
-  },
-  {
-    num: "02",
-    title: "Irány",
-    text: "Rögzítjük az oldalszerkezetet és azt az egy következő lépést, amit a látogatónak meg kell tennie.",
-  },
-  {
-    num: "03",
-    title: "Tervezés",
-    text: "Üzenet és felület ugyanarra a célra dolgozik — érthető, meggyőző, döntésre kész.",
-  },
-  {
-    num: "04",
-    title: "Építés",
-    text: "Gyors, reszponzív megvalósítás, amit később is biztonsággal kezelhetsz.",
-  },
-  {
-    num: "05",
-    title: "Élesítés",
-    text: "Ellenőrzött indulás, tiszta átadás és stabil működés az első naptól.",
-  },
-] as const;
+const GLASS_SELECTOR =
+  ".links a, .nav-actions .btn, .theme, .menu, .lang-switcher .lang-btn";
 
 function applyTheme(next: Theme) {
   document.documentElement.dataset.theme = next;
@@ -74,9 +37,25 @@ function applyTheme(next: Theme) {
 }
 
 export default function LandingPage() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const { t } = useLocale();
+
+  const projects = useMemo(
+    () =>
+      t.references.projects.map((p) => {
+        const media = REFERENCE_PROJECTS.find((r) => r.id === p.id)!;
+        return { ...p, preview: media.preview, demoHref: media.demoHref };
+      }),
+    [t]
+  );
+
+  const faqColumns = useMemo(() => {
+    const mid = Math.ceil(t.faq.items.length / 2);
+    return [t.faq.items.slice(0, mid), t.faq.items.slice(mid)];
+  }, [t]);
+
+  const [theme, setTheme] = useState<Theme>("light");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeProjectId, setActiveProjectId] = useState(REFERENCE_PROJECTS[0].id);
+  const [activeProjectId, setActiveProjectId] = useState(projects[0].id);
   const [showcaseFade, setShowcaseFade] = useState(false);
   const [showcaseFace, setShowcaseFace] = useState<"desc" | "preview">("desc");
   const [formStatus, setFormStatus] = useState("");
@@ -84,6 +63,12 @@ export default function LandingPage() {
   const [formSending, setFormSending] = useState(false);
   const [openFaq, setOpenFaq] = useState<Record<string, boolean>>({});
   const [year] = useState(() => new Date().getFullYear());
+
+  useEffect(() => {
+    setActiveProjectId((id) =>
+      projects.some((p) => p.id === id) ? id : projects[0].id
+    );
+  }, [projects]);
 
   const toggleFaq = useCallback((question: string) => {
     setOpenFaq((prev) => ({ ...prev, [question]: !prev[question] }));
@@ -100,8 +85,7 @@ export default function LandingPage() {
   const deckAnimatingRef = useRef(false);
 
   const activeProject =
-    REFERENCE_PROJECTS.find((p) => p.id === activeProjectId) ??
-    REFERENCE_PROJECTS[0];
+    projects.find((p) => p.id === activeProjectId) ?? projects[0];
 
   const toggleTheme = useCallback(() => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -113,7 +97,7 @@ export default function LandingPage() {
   useLayoutEffect(() => {
     document.body.classList.add("landing-active");
     const saved = localStorage.getItem(THEME_KEY) as Theme | null;
-    const initial: Theme = saved === "light" || saved === "dark" ? saved : "dark";
+    const initial: Theme = saved === "light" || saved === "dark" ? saved : "light";
     setTheme(initial);
     applyTheme(initial);
   }, []);
@@ -152,7 +136,7 @@ export default function LandingPage() {
 
     const onPointerMove = (event: PointerEvent) => {
       const target = (event.target as Element).closest(
-        ".links a, .nav-actions .btn, .theme, .menu"
+        GLASS_SELECTOR
       ) as HTMLElement | null;
       if (target) placeGlass(target);
       else hideGlass();
@@ -161,9 +145,7 @@ export default function LandingPage() {
     navContainer.addEventListener("pointermove", onPointerMove);
     navContainer.addEventListener("pointerleave", hideGlass);
 
-    const focusables = navContainer.querySelectorAll<HTMLElement>(
-      ".links a, .nav-actions .btn, .theme, .menu"
-    );
+    const focusables = navContainer.querySelectorAll<HTMLElement>(GLASS_SELECTOR);
     const onFocus = (e: FocusEvent) => placeGlass(e.currentTarget as HTMLElement);
     const onBlur = () => hideGlass();
     focusables.forEach((el) => {
@@ -368,9 +350,9 @@ export default function LandingPage() {
       action === "home"
         ? 0
         : action === "end"
-          ? REFERENCE_PROJECTS.length - 1
-          : (index + action + REFERENCE_PROJECTS.length) % REFERENCE_PROJECTS.length;
-    const next = REFERENCE_PROJECTS[nextIndex];
+          ? projects.length - 1
+          : (index + action + projects.length) % projects.length;
+    const next = projects[nextIndex];
     selectProject(next.id);
     const buttons = document.querySelectorAll<HTMLButtonElement>(".project-list .project");
     buttons[nextIndex]?.focus();
@@ -382,7 +364,7 @@ export default function LandingPage() {
     setFormError("");
     setFormStatus("");
     if (!form.reportValidity()) {
-      setFormError("Kérlek, javítsd a jelölt mezőket, majd küldd újra.");
+      setFormError(t.contact.validation);
       return;
     }
 
@@ -404,21 +386,13 @@ export default function LandingPage() {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string; message?: string };
       if (!res.ok || !data.ok) {
-        setFormError(
-          data.error ||
-            `Nem sikerült elküldeni. Írj közvetlenül a ${SITE_EMAIL} címre.`
-        );
+        setFormError(t.contact.fail.replace("{email}", SITE_EMAIL));
         return;
       }
-      setFormStatus(
-        data.message ||
-          "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem."
-      );
+      setFormStatus(t.contact.success);
       form.reset();
     } catch {
-      setFormError(
-        `Hálózati hiba. Próbáld újra, vagy írj a ${SITE_EMAIL} címre.`
-      );
+      setFormError(t.contact.network.replace("{email}", SITE_EMAIL));
     } finally {
       setFormSending(false);
     }
@@ -433,53 +407,22 @@ export default function LandingPage() {
       name: SITE_NAME,
       url: SITE_URL,
       email: SITE_EMAIL,
-      description: DEFAULT_DESCRIPTION,
+      description: t.meta.description,
       areaServed: "HU",
       image: absoluteUrl("/logo.png"),
       logo: absoluteUrl("/logo.png"),
-      serviceType: [
-        "Weboldal készítés",
-        "Webshop fejlesztés",
-        "Egyedi webes rendszerek",
-        "Weboldal karbantartás",
-      ],
+      serviceType: t.services.cards.map((card) => card.title),
       hasOfferCatalog: {
         "@type": "OfferCatalog",
-        name: "AntiCode szolgáltatások",
-        itemListElement: [
-          {
-            "@type": "Offer",
-            itemOffered: {
-              "@type": "Service",
-              name: "Weboldal készítés",
-              url: absoluteUrl("/weboldal-keszites"),
-            },
+        name: "AntiCode",
+        itemListElement: t.services.cards.map((card) => ({
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: card.title,
+            url: absoluteUrl(card.href),
           },
-          {
-            "@type": "Offer",
-            itemOffered: {
-              "@type": "Service",
-              name: "Webshop készítés",
-              url: absoluteUrl("/webshop-keszites"),
-            },
-          },
-          {
-            "@type": "Offer",
-            itemOffered: {
-              "@type": "Service",
-              name: "Egyedi webfejlesztés",
-              url: absoluteUrl("/egyedi-webfejlesztes"),
-            },
-          },
-          {
-            "@type": "Offer",
-            itemOffered: {
-              "@type": "Service",
-              name: "Weboldal karbantartás",
-              url: absoluteUrl("/weboldal-karbantartas"),
-            },
-          },
-        ],
+        })),
       },
     },
     {
@@ -496,23 +439,26 @@ export default function LandingPage() {
       "@type": "WebSite",
       name: SITE_NAME,
       url: SITE_URL,
-      inLanguage: "hu-HU",
+      inLanguage: t.meta.htmlLang,
       publisher: { "@type": "Organization", name: SITE_NAME },
     },
-    faqJsonLd(FAQ_ITEMS, SITE_URL),
+    faqJsonLd(
+      t.faq.items.map((item) => ({ q: item.q, a: item.a })),
+      SITE_URL
+    ),
   ];
 
   return (
     <div className="landing-page">
       <SeoHead
-        title={HOME_TITLE}
-        description={DEFAULT_DESCRIPTION}
+        title={t.meta.title}
+        description={t.meta.description}
         path="/"
         jsonLd={jsonLd}
       />
 
       <a className="skip-link" href="#tartalom">
-        Ugrás a tartalomra
+        {t.chrome.skip}
       </a>
 
       <header className="nav">
@@ -528,8 +474,8 @@ export default function LandingPage() {
         >
           <span className="nav-glass" aria-hidden="true" ref={glassRef} />
           <BrandMark href="#tartalom" />
-          <nav className="links" aria-label="Fő navigáció">
-            {NAV_LINKS.map((link) => (
+          <nav className="links" aria-label={t.chrome.navAria}>
+            {t.nav.map((link) => (
               <a key={link.href} href={link.href}>
                 {link.label}
               </a>
@@ -539,21 +485,22 @@ export default function LandingPage() {
             <button
               className="theme"
               type="button"
-              aria-label="Világos vagy sötét mód váltása"
+              aria-label={t.chrome.theme}
               aria-pressed={theme === "dark"}
-              title="Téma váltása"
+              title={t.chrome.themeTitle}
               onClick={toggleTheme}
             >
               <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
             </button>
-            <a className="btn" href="/kapcsolat">
-              <span className="btn-label">Ajánlatot kérek</span>{" "}
+            <a className="btn" href="#kapcsolat">
+              <span className="btn-label">{t.chrome.cta}</span>
               <span aria-hidden="true">→</span>
             </a>
+            <LangSwitcher />
             <button
               className="menu"
               type="button"
-              aria-label={menuOpen ? "Menü bezárása" : "Menü megnyitása"}
+              aria-label={menuOpen ? t.chrome.menuClose : t.chrome.menuOpen}
               aria-controls="mobile-nav"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
@@ -567,10 +514,10 @@ export default function LandingPage() {
       <nav
         className={`mobile-nav${menuOpen ? " open" : ""}`}
         id="mobile-nav"
-        aria-label="Mobil navigáció"
+        aria-label={t.chrome.mobileNavAria}
         aria-hidden={!menuOpen}
       >
-        {NAV_LINKS.map((link) => (
+        {t.nav.map((link) => (
           <a
             key={link.href}
             href={link.href}
@@ -585,32 +532,26 @@ export default function LandingPage() {
       <main id="tartalom" className="landing-main" tabIndex={-1}>
         <section className="hero container">
           <div>
-            <p className="seo-kicker">
-              Weboldal készítés szolgáltató vállalkozásoknak
-            </p>
-            <div className="eyebrow eyebrow-premium">Szolgáltató vállalkozásoknak</div>
-            <h1>Ne csak jelen legyél online. Legyen okod, hogy téged válasszanak.</h1>
-            <p>
-              Üzletszerző weboldalakat és célzott webes rendszereket készítek olyan
-              vállalkozásoknak, amelyek tisztábban szeretnék bemutatni az ajánlatukat
-              és könnyebbé tenni az ügyfélszerzést.
-            </p>
+            <p className="seo-kicker">{t.hero.seoKicker}</p>
+            <div className="eyebrow eyebrow-premium">{t.hero.eyebrow}</div>
+            <h1>{t.hero.h1}</h1>
+            <p>{t.hero.lead}</p>
             <div className="actions">
               <a className="btn" href="#kapcsolat">
-                Kérek ajánlatot <span aria-hidden="true">→</span>
+                {t.hero.ctaPrimary} <span aria-hidden="true">→</span>
               </a>
               <a className="btn secondary" href="#referenciak">
-                Munkáim
+                {t.hero.ctaSecondary}
               </a>
             </div>
             <div className="hero-proof">
-              <span>Közvetlen együttműködés</span>
-              <span>Átlátható projektkeret</span>
-              <span>Reszponzív megvalósítás</span>
+              {t.hero.proofs.map((proof) => (
+                <span key={proof}>{proof}</span>
+              ))}
             </div>
           </div>
-          <div className="deck" id="heroDeck" ref={deckRef} aria-label="AntiCode projektkártyák">
-            {DECK_CARDS.map((card) => (
+          <div className="deck" id="heroDeck" ref={deckRef} aria-label={t.hero.deckAria}>
+            {t.deck.map((card) => (
               <article className="browser deck-card" key={card.kicker}>
                 <div className="bar">
                   <i className="dot" aria-hidden="true" />
@@ -641,46 +582,21 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow eyebrow-premium">Amiben segítek</div>
-                <h2>Nem csak elkészül az oldal. Feladata is lesz.</h2>
+                <div className="eyebrow eyebrow-premium">{t.services.eyebrow}</div>
+                <h2>{t.services.h2}</h2>
               </div>
-              <p>
-                A megjelenés, a tartalom és a technikai megoldás egy irányba dolgozik:
-                hogy a látogató gyorsabban értse meg, miért releváns számára a
-                vállalkozásod.
-              </p>
+              <p>{t.services.lead}</p>
             </div>
             <div className="cards">
-              <article className="card">
-                <span className="num">01 / BEMUTATKOZÁS ÉS LEAD</span>
-                <h3>
-                  <Link href="/weboldal-keszites">Üzletszerző weboldalak</Link>
-                </h3>
-                <p>
-                  Üzenet, oldalszerkezet és CTA-k, amelyek a bizonytalan érdeklődőt
-                  kapcsolatfelvétel felé terelik.
-                </p>
-              </article>
-              <article className="card">
-                <span className="num">02 / ONLINE ÉRTÉKESÍTÉS</span>
-                <h3>
-                  <Link href="/webshop-keszites">Webshopok</Link>
-                </h3>
-                <p>
-                  Átgondolt termékút, könnyen kezelhető admin és olyan vásárlási élmény,
-                  amely nem akadályozza a döntést.
-                </p>
-              </article>
-              <article className="card">
-                <span className="num">03 / HATÉKONYABB MŰKÖDÉS</span>
-                <h3>
-                  <Link href="/egyedi-webfejlesztes">Egyedi webes rendszerek</Link>
-                </h3>
-                <p>
-                  Űrlapok, védett adminfelületek és célzott eszközök, amelyek a saját
-                  folyamataidhoz igazodnak.
-                </p>
-              </article>
+              {t.services.cards.map((card) => (
+                <article className="card" key={card.href}>
+                  <span className="num">{card.num}</span>
+                  <h3>
+                    <Link href={card.href}>{card.title}</Link>
+                  </h3>
+                  <p>{card.text}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
@@ -689,17 +605,17 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow eyebrow-premium">Árak</div>
-                <h2>Fő kategóriák, érthető belépő árakkal.</h2>
+                <div className="eyebrow eyebrow-premium">{t.homePricing.eyebrow}</div>
+                <h2>{t.homePricing.h2}</h2>
               </div>
               <p>
-                A részletes 3×9-es árkatalógus a{" "}
-                <Link href="/arak">/arak</Link> oldalon van. Itt a fő irányok
-                induló keretei — a pontos ajánlat mindig a feladathoz igazodik.
+                {t.homePricing.leadBefore}
+                <Link href="/arak">/arak</Link>
+                {t.homePricing.leadAfter}
               </p>
             </div>
             <div className="price-categories">
-              {HOME_PRICE_CATEGORIES.map((cat) => (
+              {t.homePricing.categories.map((cat) => (
                 <article className="price-category" key={cat.href}>
                   <h3>
                     <Link href={cat.href}>{cat.title}</Link>
@@ -711,16 +627,15 @@ export default function LandingPage() {
             </div>
             <div className="price-callout">
               <p>
-                <strong>Pontos díj:</strong> a tartalom, a funkciók és a határidő
-                alapján írásos ajánlatot kapsz. A tárhely, domain és külső szolgáltatások
-                külön tételként szerepelnek.
+                <strong>{t.homePricing.calloutStrong}</strong>
+                {t.homePricing.calloutRest}
               </p>
               <div className="actions">
                 <Link className="btn secondary" href="/arak">
-                  Részletes árak <span aria-hidden="true">→</span>
+                  {t.homePricing.detailed} <span aria-hidden="true">→</span>
                 </Link>
                 <a className="btn" href="#kapcsolat">
-                  Kérek ajánlatot <span aria-hidden="true">→</span>
+                  {t.homePricing.cta} <span aria-hidden="true">→</span>
                 </a>
               </div>
             </div>
@@ -731,21 +646,18 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow eyebrow-premium">Munkáim</div>
-                <h2>Mini esettanulmányok élő demóval.</h2>
+                <div className="eyebrow eyebrow-premium">{t.references.eyebrow}</div>
+                <h2>{t.references.h2}</h2>
               </div>
-              <p>
-                Probléma → tervezési döntés → megoldás → élő demó. Öt saját példa:
-                corporate, foglaló, katalógus, cockpit és képeskártyák.
-              </p>
+              <p>{t.references.lead}</p>
             </div>
             <div className="slider">
               <div
                 className="project-list"
                 role="tablist"
-                aria-label="Referencia projektek"
+                aria-label={t.references.listAria}
               >
-                {REFERENCE_PROJECTS.map((project, index) => {
+                {projects.map((project, index) => {
                   const active = project.id === activeProjectId;
                   return (
                     <button
@@ -804,7 +716,7 @@ export default function LandingPage() {
                       href={activeProject.demoHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`${activeProject.tabLabel} demó megnyitása`}
+                      aria-label={activeProject.demoOpenAria}
                     >
                       <img
                         src={activeProject.preview}
@@ -836,16 +748,13 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head process-head">
               <div>
-                <div className="eyebrow eyebrow-premium">Munkamódszer</div>
-                <h2>Átlátható folyamat. Kevesebb találgatás.</h2>
+                <div className="eyebrow eyebrow-premium">{t.process.eyebrow}</div>
+                <h2>{t.process.h2}</h2>
               </div>
-              <p className="process-lead">
-                A jó eredmény nem a fejlesztéssel kezdődik, hanem azzal, hogy közösen
-                tisztázzuk, kinek és mit kell elérnie az oldalnak.
-              </p>
+              <p className="process-lead">{t.process.lead}</p>
             </div>
             <div className="process" role="list" ref={processRef}>
-              {PROCESS_STEPS.map((step) => (
+              {t.process.steps.map((step) => (
                 <div className="step" role="listitem" key={step.num} data-step={step.num}>
                   <svg className="step-outline" aria-hidden="true">
                     <rect className="step-outline-path" pathLength={1} />
@@ -867,13 +776,13 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow eyebrow-premium">Gyakori kérdések</div>
-                <h2>A fontos részletek még az ajánlatkérés előtt.</h2>
+                <div className="eyebrow eyebrow-premium">{t.faq.eyebrow}</div>
+                <h2>{t.faq.h2}</h2>
               </div>
-              <p>Egyértelmű keretekkel gyorsabb a döntés és kevesebb a félreértés.</p>
+              <p>{t.faq.lead}</p>
             </div>
             <div className="faq-list">
-              {FAQ_COLUMNS.map((column, colIdx) => (
+              {faqColumns.map((column, colIdx) => (
                 <div className="faq-column" key={colIdx}>
                   {column.map((item, itemIdx) => {
                     const isOpen = !!openFaq[item.q];
@@ -917,30 +826,20 @@ export default function LandingPage() {
         <section id="rolam">
           <div className="container about">
             <div className="about-card about-card-person">
-              <div className="eyebrow">Ki dolgozik a projekten</div>
+              <div className="eyebrow">{t.about.personEyebrow}</div>
               <div className="about-person">
                 <div className="about-avatar" aria-hidden="true">
                   A
                 </div>
-                <div className="identity">
-                  Anti — alapító és fejlesztő
-                </div>
+                <div className="identity">{t.about.identity}</div>
               </div>
-              <h2>Egy kapcsolattartó. Tiszta felelősség.</h2>
-              <p>
-                Az első beszélgetéstől az éles indulásig közvetlenül velem dolgozol.
-                A döntések, a tervezés és a fejlesztés egy kézben maradnak, ezért a
-                visszajelzések gyorsan beépülnek. Nem ügynökségi rétegek — egy ember,
-                aki a projekt végéig elérhető.
-              </p>
+              <h2>{t.about.personH2}</h2>
+              <p>{t.about.personText}</p>
             </div>
             <div className="about-card">
-              <div className="eyebrow">A mérce</div>
-              <h2>Ne csak szép legyen. Könnyű legyen rá igent mondani.</h2>
-              <p>
-                A prémium felület nem öncélú díszítés: rendet teremt az információban,
-                erősíti a bizalmat, és segít a látogatónak magabiztosan továbblépni.
-              </p>
+              <div className="eyebrow">{t.about.metricEyebrow}</div>
+              <h2>{t.about.metricH2}</h2>
+              <p>{t.about.metricText}</p>
             </div>
           </div>
         </section>
@@ -952,15 +851,13 @@ export default function LandingPage() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow eyebrow-premium">Így indul a projekt</div>
-                <h2 id="intake-heading">Ajánlatkéréstől a projektindításig.</h2>
+                <div className="eyebrow eyebrow-premium">{t.intake.eyebrow}</div>
+                <h2 id="intake-heading">{t.intake.h2}</h2>
               </div>
-              <p>
-                Átlátható lépések — kevesebb ismeretlen, professzionálisabb folyamat.
-              </p>
+              <p>{t.intake.lead}</p>
             </div>
             <div className="process" role="list" ref={intakeRef}>
-              {INTAKE_STEPS.map((step, i) => {
+              {t.intake.steps.map((step, i) => {
                 const num = String(i + 1).padStart(2, "0");
                 return (
                   <div
@@ -990,15 +887,11 @@ export default function LandingPage() {
           <div className="container">
             <div className="contact-inner">
               <div className="contact-copy">
-                <div className="eyebrow">Projektindítás</div>
-                <h2>Mondd el röviden, min szeretnél változtatni.</h2>
-                <p>
-                  Néhány mondat alapján visszajelzek, hogy látok-e értelmes irányt a
-                  feladatra. Ha igen, kapsz egy tiszta következő lépést és egy
-                  projektkeretet — kötelezettség nélkül.
-                </p>
+                <div className="eyebrow">{t.contact.eyebrow}</div>
+                <h2>{t.contact.h2}</h2>
+                <p>{t.contact.lead}</p>
                 <p className="direct-email">
-                  Inkább közvetlenül írnál?{" "}
+                  {t.contact.directBefore}{" "}
                   <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>
                 </p>
               </div>
@@ -1009,7 +902,7 @@ export default function LandingPage() {
                 aria-describedby="form-feedback"
               >
                 <label htmlFor="lead-name">
-                  Név
+                  {t.contact.name}
                   <input
                     id="lead-name"
                     name="name"
@@ -1017,13 +910,13 @@ export default function LandingPage() {
                     required
                     minLength={2}
                     maxLength={100}
-                    placeholder="Neved"
+                    placeholder={t.contact.namePh}
                     aria-required="true"
                     aria-invalid={!!formError}
                   />
                 </label>
                 <label htmlFor="lead-email">
-                  E-mail
+                  {t.contact.email}
                   <input
                     id="lead-email"
                     name="email"
@@ -1032,13 +925,13 @@ export default function LandingPage() {
                     inputMode="email"
                     required
                     maxLength={254}
-                    placeholder="email@ceged.hu"
+                    placeholder={t.contact.emailPh}
                     aria-required="true"
                     aria-invalid={!!formError}
                   />
                 </label>
                 <label className="full" htmlFor="lead-service">
-                  Mire van szükséged?
+                  {t.contact.service}
                   <select
                     id="lead-service"
                     name="service"
@@ -1047,23 +940,24 @@ export default function LandingPage() {
                     aria-required="true"
                   >
                     <option value="" disabled>
-                      Válassz egy irányt
+                      {t.contact.servicePh}
                     </option>
-                    <option>Üzletszerző weboldal</option>
-                    <option>Webshop vagy egyedi rendszer</option>
-                    <option>Meglévő oldal megújítása</option>
-                    <option>Még egyeztetném</option>
+                    {t.contact.services.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="full" htmlFor="lead-message">
-                  Röviden a projektről
+                  {t.contact.message}
                   <textarea
                     id="lead-message"
                     name="message"
                     required
                     minLength={10}
                     maxLength={2000}
-                    placeholder="Mivel foglalkozol, mi nem működik most jól, és mit szeretnél elérni?"
+                    placeholder={t.contact.messagePh}
                     aria-required="true"
                   />
                 </label>
@@ -1080,13 +974,10 @@ export default function LandingPage() {
                   </label>
                 </div>
                 <button className="btn" type="submit" disabled={formSending}>
-                  {formSending ? "Küldés..." : "Üzenet küldése"}{" "}
+                  {formSending ? t.contact.sending : t.contact.submit}{" "}
                   <span aria-hidden="true">→</span>
                 </button>
-                <p className="form-note">
-                  Az adataidat csak az ajánlatkérés kezeléséhez használom. Válasz: 1
-                  munkanapon belül.
-                </p>
+                <p className="form-note">{t.contact.note}</p>
                 <div id="form-feedback">
                   {formError ? (
                     <p className="form-status form-status-error" role="alert">
@@ -1109,15 +1000,15 @@ export default function LandingPage() {
         <div className="container footer">
           <p>
             <BrandMark className="brand footer-brand" asLink={false} /> /{" "}
-            <Link href="/weboldal-keszites">weboldal készítés</Link>
+            <Link href="/weboldal-keszites">{t.homePricing.categories[0].title}</Link>
             {" · "}
-            <Link href="/arak">árak</Link>
+            <Link href="/arak">{t.chrome.prices}</Link>
             {" · "}
-            <Link href="/tudastar">tudástár</Link>
+            <Link href="/tudastar">Tudástár</Link>
             {" · "}
-            <Link href="/kapcsolat">kapcsolat</Link>
+            <Link href="/kapcsolat">{t.chrome.cta}</Link>
           </p>
-          <p>© {year} AntiCode. Minden jog fenntartva.</p>
+          <p>© {year} AntiCode</p>
         </div>
       </footer>
     </div>
