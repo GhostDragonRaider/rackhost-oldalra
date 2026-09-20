@@ -10,8 +10,9 @@ const THEME_KEY = "anticode-theme";
 const PAGE_NAV = [
   { href: "/#szolgaltatasok", label: "Szolgáltatások" },
   { href: "/arak", label: "Árak" },
+  { href: "/tudastar", label: "Tudástár" },
   { href: "/#referenciak", label: "Referenciák" },
-  { href: "/#kapcsolat", label: "Kapcsolat" },
+  { href: "/kapcsolat", label: "Kapcsolat" },
 ] as const;
 
 function applyTheme(next: Theme) {
@@ -26,6 +27,8 @@ type LandingShellProps = {
   description: string;
   path: string;
   children: ReactNode;
+  noindex?: boolean;
+  ogType?: "website" | "article";
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
 
@@ -34,6 +37,8 @@ export default function LandingShell({
   description,
   path,
   children,
+  noindex = false,
+  ogType = "website",
   jsonLd,
 }: LandingShellProps) {
   const [theme, setTheme] = useState<Theme>("dark");
@@ -63,6 +68,8 @@ export default function LandingShell({
         title={title}
         description={description}
         path={path}
+        noindex={noindex}
+        ogType={ogType}
         jsonLd={jsonLd}
       />
 
@@ -104,10 +111,10 @@ export default function LandingShell({
             >
               <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
             </button>
-            <a className="btn" href="/#kapcsolat">
+            <Link className="btn" href="/kapcsolat">
               <span className="btn-label">Ajánlatot kérek</span>{" "}
               <span aria-hidden="true">→</span>
-            </a>
+            </Link>
             <button
               className="menu"
               type="button"
@@ -154,6 +161,12 @@ export default function LandingShell({
             <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>
             {" · "}
             <Link href="/arak">Árak</Link>
+            {" · "}
+            <Link href="/tudastar">Tudástár</Link>
+            {" · "}
+            <Link href="/rolam">Rólam</Link>
+            {" · "}
+            <Link href="/kapcsolat">Kapcsolat</Link>
             {" · "}© {year} AntiCode
           </p>
         </div>

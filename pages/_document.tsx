@@ -26,7 +26,7 @@ export default function Document() {
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=location.pathname.replace(/\\/$/,"")||"/";var ok=p==="/"||p==="/arak"||p==="/weboldal-keszites"||p==="/webshop-keszites"||p==="/egyedi-webfejlesztes"||p==="/weboldal-karbantartas";if(ok)document.body.classList.add("landing-active");}catch(e){}})();`,
+            __html: `(function(){try{var p=location.pathname.replace(/\\/$/,"")||"/";var ok=p==="/"||p==="/arak"||p==="/kapcsolat"||p==="/rolam"||p==="/tudastar"||p.indexOf("/tudastar/")===0||p==="/weboldal-keszites"||p==="/webshop-keszites"||p==="/egyedi-webfejlesztes"||p==="/weboldal-karbantartas";if(ok)document.body.classList.add("landing-active");}catch(e){}})();`,
           }}
         />
         <Main />

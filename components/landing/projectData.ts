@@ -139,11 +139,12 @@ export const INTAKE_STEPS = [
 
 export const NAV_LINKS = [
   { href: "#szolgaltatasok", label: "Szolgáltatások" },
-  { href: "#arak", label: "Árak" },
+  { href: "/arak", label: "Árak" },
+  { href: "/tudastar", label: "Tudástár" },
   { href: "#referenciak", label: "Referenciák" },
   { href: "#folyamat", label: "Hogyan dolgozom?" },
-  { href: "#rolam", label: "Rólam" },
-  { href: "#kapcsolat", label: "Kapcsolat" },
+  { href: "/rolam", label: "Rólam" },
+  { href: "/kapcsolat", label: "Kapcsolat" },
 ] as const;
 
 export const DECK_CARDS = [

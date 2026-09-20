@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   skipTrailingSlashRedirect: true,
+  async redirects() {
+    return [
+      { source: "/contact", destination: "/kapcsolat", permanent: true },
+      { source: "/about", destination: "/rolam", permanent: true },
+    ];
+  },
   // Demo SPA fallback + booking API proxy (dev). Production uses vercel.json rewrites.
   async rewrites() {
     return [

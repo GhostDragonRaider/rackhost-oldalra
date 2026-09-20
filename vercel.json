@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/contact",
+      "destination": "/kapcsolat",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/rolam",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/projects/project-2",

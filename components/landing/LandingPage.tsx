@@ -21,7 +21,8 @@ import {
 import {
   absoluteUrl,
   DEFAULT_DESCRIPTION,
-  DEFAULT_TITLE,
+  faqJsonLd,
+  HOME_TITLE,
   SITE_EMAIL,
   SITE_NAME,
   SITE_URL,
@@ -434,7 +435,8 @@ export default function LandingPage() {
       email: SITE_EMAIL,
       description: DEFAULT_DESCRIPTION,
       areaServed: "HU",
-      image: absoluteUrl("/favicon.svg"),
+      image: absoluteUrl("/logo.png"),
+      logo: absoluteUrl("/logo.png"),
       serviceType: [
         "Weboldal készítés",
         "Webshop fejlesztés",
@@ -469,6 +471,14 @@ export default function LandingPage() {
               url: absoluteUrl("/egyedi-webfejlesztes"),
             },
           },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Weboldal karbantartás",
+              url: absoluteUrl("/weboldal-karbantartas"),
+            },
+          },
         ],
       },
     },
@@ -479,7 +489,7 @@ export default function LandingPage() {
       jobTitle: "Alapító és fejlesztő",
       worksFor: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
       email: SITE_EMAIL,
-      url: SITE_URL,
+      url: absoluteUrl("/rolam"),
     },
     {
       "@context": "https://schema.org",
@@ -489,12 +499,13 @@ export default function LandingPage() {
       inLanguage: "hu-HU",
       publisher: { "@type": "Organization", name: SITE_NAME },
     },
+    faqJsonLd(FAQ_ITEMS, SITE_URL),
   ];
 
   return (
     <div className="landing-page">
       <SeoHead
-        title={DEFAULT_TITLE}
+        title={HOME_TITLE}
         description={DEFAULT_DESCRIPTION}
         path="/"
         jsonLd={jsonLd}
@@ -535,7 +546,7 @@ export default function LandingPage() {
             >
               <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
             </button>
-            <a className="btn" href="#kapcsolat">
+            <a className="btn" href="/kapcsolat">
               <span className="btn-label">Ajánlatot kérek</span>{" "}
               <span aria-hidden="true">→</span>
             </a>
@@ -1101,6 +1112,10 @@ export default function LandingPage() {
             <Link href="/weboldal-keszites">weboldal készítés</Link>
             {" · "}
             <Link href="/arak">árak</Link>
+            {" · "}
+            <Link href="/tudastar">tudástár</Link>
+            {" · "}
+            <Link href="/kapcsolat">kapcsolat</Link>
           </p>
           <p>© {year} AntiCode. Minden jog fenntartva.</p>
         </div>

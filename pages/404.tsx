@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import SeoHead from "../components/landing/SeoHead";
 import { useLang } from "../components/lang_context";
 
 const messages = {
@@ -21,12 +22,26 @@ export default function Custom404() {
 
   return (
     <div className="page-404">
-      <h1 className="page-404-code">404</h1>
-      <h2 className="page-404-title">{t.title}</h2>
+      <SeoHead
+        title="Az oldal nem található | AntiCode"
+        description="A keresett AntiCode oldal nem található. Lépj vissza a kezdőlapra vagy a kapcsolat oldalra."
+        path="/404"
+        noindex
+      />
+      <p className="page-404-code" aria-hidden="true">
+        404
+      </p>
+      <h1 className="page-404-title">{t.title}</h1>
       <p className="page-404-subtitle">{t.subtitle}</p>
-      <Link href="/" className="page-404-link">
-        {t.back}
-      </Link>
+      <p className="page-404-links">
+        <Link href="/" className="page-404-link">
+          {t.back}
+        </Link>
+        {" · "}
+        <Link href="/kapcsolat" className="page-404-link">
+          Kapcsolat
+        </Link>
+      </p>
     </div>
   );
 }
