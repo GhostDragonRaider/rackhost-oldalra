@@ -16,6 +16,13 @@ type Stats = {
   month: { views: number; visitors: number };
   weeks: Array<{ week: string; label: string; views: number; visitors: number }>;
   last7Days: Array<{ date: string; views: number; visitors: number }>;
+  dayDetails: Array<{
+    date: string;
+    views: number;
+    visitors: number;
+    hours: Array<{ hour: string; label: string; views: number }>;
+    activeHours: Array<{ hour: string; label: string; views: number }>;
+  }>;
 };
 
 type SeoIssue = {
@@ -346,6 +353,56 @@ export default function AdminPage() {
     if (!stats?.weeks?.length) return 1;
     return Math.max(1, ...stats.weeks.map((w) => w.views));
   }, [stats]);
+
+  const dayDetails = stats?.dayDetails ?? [];
+  const maxHourViews = useMemo(() => {
+    let max = 1;
+    for (const day of dayDetails) {
+      for (const h of day.hours) {
+        if (h.views > max) max = h.views;
+      }
+    }
+    return max;
+  }, [dayDetails]);
+
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!stats?.dayDetails?.length) return;
+    setOpenDays((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      const details = stats.dayDetails;
+      const todayKey = details[details.length - 1]?.date;
+      for (const day of details) {
+        if (next[day.date] !== undefined) continue;
+        next[day.date] = day.date === todayKey || day.views > 0;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [stats]);
+
+  function toggleDay(date: string) {
+    setOpenDays((prev) => ({ ...prev, [date]: !prev[date] }));
+  }
+
+  function formatDayLabel(date: string): string {
+    const d = new Date(`${date}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return date;
+    return d.toLocaleDateString("hu-HU", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+    });
+  }
+
+  function hourRangeLabel(hour: string): string {
+    const start = Number(hour);
+    const end = (start + 1) % 24;
+    return `${String(start).padStart(2, "0")}:00–${String(end).padStart(2, "0")}:00`;
+  }
 
   const scoreTone =
     !seo?.summary.lastCheckedAt
@@ -807,6 +864,111 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                </section>
+
+                <section
+                  className="admin-card"
+                  aria-label="Napi megtekintések időpont szerint"
+                >
+                  <h2>Napi bontás órákra</h2>
+                  <p className="admin-muted">
+                    Az utolsó 30 nap: mely órákban érkezett megtekintés, és hány
+                    darab (szerver helyi ideje).
+                  </p>
+                  <div className="admin-day-details">
+                    {[...dayDetails].reverse().map((day) => {
+                      const open = Boolean(openDays[day.date]);
+                      return (
+                        <article key={day.date} className="admin-day-block">
+                          <button
+                            type="button"
+                            className="admin-day-toggle"
+                            aria-expanded={open}
+                            onClick={() => toggleDay(day.date)}
+                          >
+                            <span>
+                              <strong>{formatDayLabel(day.date)}</strong>
+                              <em>
+                                {day.views} megtekintés · {day.visitors} látogató
+                              </em>
+                            </span>
+                            <span aria-hidden="true">{open ? "−" : "+"}</span>
+                          </button>
+                          {open ? (
+                            <div className="admin-day-body">
+                              {day.views === 0 ? (
+                                <p className="admin-muted">
+                                  Ezen a napon nem volt megtekintés.
+                                </p>
+                              ) : day.activeHours.length === 0 ? (
+                                <p className="admin-muted">
+                                  Van napi összesítés ({day.views}), de órás adat
+                                  még nincs — az új megtekintésektől kezdve
+                                  megjelenik az óránkénti bontás.
+                                </p>
+                              ) : (
+                                <>
+                                  <div
+                                    className="admin-hour-chart"
+                                    role="img"
+                                    aria-label={`${day.date} óránkénti megtekintései`}
+                                  >
+                                    {day.hours.map((h) => {
+                                      const pct = Math.round(
+                                        (h.views / maxHourViews) * 100
+                                      );
+                                      return (
+                                        <div
+                                          key={h.hour}
+                                          className="admin-hour-col"
+                                          title={`${h.label}: ${h.views} megtekintés`}
+                                        >
+                                          <div className="admin-hour-bar-wrap">
+                                            <div
+                                              className={`admin-hour-bar${
+                                                h.views > 0 ? " is-active" : ""
+                                              }`}
+                                              style={{
+                                                height: `${Math.max(
+                                                  pct,
+                                                  h.views > 0 ? 8 : 0
+                                                )}%`,
+                                              }}
+                                            />
+                                          </div>
+                                          <span className="admin-hour-label">
+                                            {h.hour}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  <table className="admin-table admin-hour-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Időpont</th>
+                                        <th>Megtekintések</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {day.activeHours.map((h) => (
+                                        <tr key={h.hour}>
+                                          <td>{hourRangeLabel(h.hour)}</td>
+                                          <td>
+                                            <strong>{h.views}</strong>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </>
+                              )}
+                            </div>
+                          ) : null}
+                        </article>
+                      );
+                    })}
+                  </div>
                 </section>
               </>
             ) : (
