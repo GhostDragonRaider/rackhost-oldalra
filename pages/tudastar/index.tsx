@@ -11,7 +11,7 @@ import {
 
 const TITLE = "Tudástár — weboldal, webshop, SEO | AntiCode";
 const DESCRIPTION =
-  "Gyakorlati útmutatók weboldal és webshop készítéshez: árak, döntési segédletek, SEO checklistek és technikai magyarázatok — generikus bloghelyett hasznos válaszokkal.";
+  "Weboldal és webshop útmutatók: árak, döntési segédletek, SEO checklistek és technikai magyarázatok — gyakorlati válaszokkal.";
 
 export default function TudastarIndexPage() {
   const jsonLd = [

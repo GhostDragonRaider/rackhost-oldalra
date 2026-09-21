@@ -144,7 +144,9 @@ async function headOrGetStatus(url: string): Promise<number> {
         "User-Agent": "AntiCodeSEOMonitor/1.0 (+https://anticode.hu)",
       },
     });
-    if (head.status !== 405 && head.status !== 501) {
+    // Trust successful HEAD. Many hosts (e.g. Google support) answer 404/403
+    // on HEAD while GET returns 200 — always verify failures with GET.
+    if (head.ok) {
       return head.status;
     }
   } catch {
