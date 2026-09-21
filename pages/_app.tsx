@@ -29,7 +29,8 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isProjectPage = router.pathname.startsWith("/projects/");
   const isLandingShell = isLandingPath(router.pathname);
-  const isAdminPage = router.pathname === "/admin";
+  const isAdminPage =
+    router.pathname === "/admin" || router.pathname.startsWith("/admin/");
 
   useLayoutEffect(() => {
     document.body.classList.toggle("landing-active", isLandingShell);

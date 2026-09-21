@@ -1,5 +1,6 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import LandingShell from "../components/landing/LandingShell";
 import {
   absoluteUrl,
@@ -13,10 +14,36 @@ const TITLE = "Kapcsolat | AntiCode";
 const DESCRIPTION =
   "Ajánlatkérés AntiCode-tól: írd meg röviden a projekted, és 1 munkanapon belül visszajelzek. Weboldal, webshop, egyedi fejlesztés.";
 
+const SERVICE_OPTIONS = [
+  "Üzletszerző weboldal",
+  "Webshop vagy egyedi rendszer",
+  "Meglévő oldal megújítása",
+  "Még egyeztetném",
+] as const;
+
 export default function KapcsolatPage() {
+  const router = useRouter();
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+
+  const prefill = useMemo(() => {
+    const q = router.query;
+    const message = typeof q.message === "string" ? q.message : "";
+    const serviceRaw = typeof q.service === "string" ? q.service : "";
+    const websiteUrl =
+      typeof q.website_url === "string" ? q.website_url.trim() : "";
+    const service = SERVICE_OPTIONS.includes(
+      serviceRaw as (typeof SERVICE_OPTIONS)[number]
+    )
+      ? serviceRaw
+      : "";
+    const messageWithUrl =
+      websiteUrl && message && !message.includes(websiteUrl)
+        ? `${message}\nURL: ${websiteUrl}`
+        : message;
+    return { message: messageWithUrl, service };
+  }, [router.query]);
 
   const jsonLd = [
     {
@@ -73,9 +100,7 @@ export default function KapcsolatPage() {
       setStatus(json.message || "Elküldve.");
       form.reset();
     } catch {
-      setError(
-        `Váratlan hiba. Írj közvetlenül: ${SITE_EMAIL}`
-      );
+      setError(`Váratlan hiba. Írj közvetlenül: ${SITE_EMAIL}`);
     } finally {
       setSending(false);
     }
@@ -144,15 +169,17 @@ export default function KapcsolatPage() {
                   id="kapcsolat-service"
                   name="service"
                   required
-                  defaultValue=""
+                  key={prefill.service || "empty"}
+                  defaultValue={prefill.service || ""}
                 >
                   <option value="" disabled>
                     Válassz egy irányt
                   </option>
-                  <option>Üzletszerző weboldal</option>
-                  <option>Webshop vagy egyedi rendszer</option>
-                  <option>Meglévő oldal megújítása</option>
-                  <option>Még egyeztetném</option>
+                  {SERVICE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="full" htmlFor="kapcsolat-message">
@@ -163,6 +190,8 @@ export default function KapcsolatPage() {
                   required
                   minLength={10}
                   maxLength={2000}
+                  key={prefill.message || "empty-msg"}
+                  defaultValue={prefill.message}
                   placeholder="Mivel foglalkozol, mi nem működik most jól, és mit szeretnél elérni?"
                 />
               </label>

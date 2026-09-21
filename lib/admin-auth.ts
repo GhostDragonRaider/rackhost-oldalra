@@ -2,7 +2,9 @@ import crypto from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const COOKIE = "ac_admin_sess";
+const SKIP_ANALYTICS_COOKIE = "ac_skip_analytics";
 const MAX_AGE_SEC = 60 * 60 * 12; // 12 hours
+const SKIP_ANALYTICS_MAX_AGE_SEC = 60 * 60 * 24 * 400; // ~13 months
 
 type SessionPayload = {
   u: string;
@@ -109,18 +111,28 @@ export function setSessionCookie(
   req?: NextApiRequest
 ) {
   const secure = cookieSecureSuffix(req);
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${MAX_AGE_SEC}${secure}`
-  );
+  res.setHeader("Set-Cookie", [
+    `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${MAX_AGE_SEC}${secure}`,
+    // Owner browser: do not count pageviews (kept after logout).
+    `${SKIP_ANALYTICS_COOKIE}=1; Path=/; SameSite=Strict; Max-Age=${SKIP_ANALYTICS_MAX_AGE_SEC}${secure}`,
+  ]);
 }
 
 export function clearSessionCookie(res: NextApiResponse, req?: NextApiRequest) {
   const secure = cookieSecureSuffix(req);
+  // Keep ac_skip_analytics so the owner's own browsing still stays uncounted.
   res.setHeader(
     "Set-Cookie",
     `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`
   );
+}
+
+/** True when this request should not be counted as a public pageview. */
+export function shouldSkipAnalytics(req: NextApiRequest): boolean {
+  const cookies = req.cookies || {};
+  if (cookies[SKIP_ANALYTICS_COOKIE] === "1") return true;
+  if (cookies[COOKIE]) return true;
+  return false;
 }
 
 /** Set Secure only on real HTTPS (or explicit override) so local `next start` over HTTP works. */

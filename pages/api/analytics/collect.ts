@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { clientIp } from "../../../lib/admin-auth";
+import { clientIp, shouldSkipAnalytics } from "../../../lib/admin-auth";
 import { recordPageview } from "../../../lib/analytics-store";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,6 +9,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
+    if (shouldSkipAnalytics(req)) {
+      return res.status(204).end();
+    }
+
     const path = String(req.body?.path || "/").slice(0, 200);
     const ua = String(req.headers["user-agent"] || "unknown").slice(0, 400);
     recordPageview({
