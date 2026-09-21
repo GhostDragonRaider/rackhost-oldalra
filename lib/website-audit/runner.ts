@@ -16,6 +16,12 @@ import {
   summarizeFindings,
 } from "./score";
 import { getCachedAuditId, setCachedAuditId } from "./rate-limit";
+import {
+  extractCanonical,
+  extractH1s,
+  extractTitle,
+  metaContent,
+} from "./html";
 import type {
   AuditFinding,
   AuditProgressStep,
@@ -44,46 +50,6 @@ function headerMap(headers: Headers): Record<string, string> {
   headers.forEach((value, key) => {
     out[key.toLowerCase()] = value;
   });
-  return out;
-}
-
-function extractTitle(html: string): string | null {
-  const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  return m ? m[1].replace(/\s+/g, " ").trim() || null : null;
-}
-
-function metaContent(html: string, name: string): string | null {
-  const re = new RegExp(
-    `<meta[^>]+(?:name|property)=["']${name}["'][^>]+content=["']([^"']*)["']`,
-    "i"
-  );
-  const re2 = new RegExp(
-    `<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["']${name}["']`,
-    "i"
-  );
-  const m = html.match(re) || html.match(re2);
-  return m?.[1]?.trim() || null;
-}
-
-function extractCanonical(html: string): string | null {
-  const m =
-    html.match(
-      /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i
-    ) ||
-    html.match(
-      /<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i
-    );
-  return m?.[1]?.trim() || null;
-}
-
-function extractH1s(html: string): string[] {
-  const out: string[] = [];
-  const re = /<h1\b[^>]*>([\s\S]*?)<\/h1>/gi;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(html))) {
-    const text = match[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-    if (text) out.push(text);
-  }
   return out;
 }
 
@@ -371,7 +337,7 @@ export async function runWebsiteAudit(options: {
     });
     record.findings = findings;
     record.categories = computeCategoryScores(findings);
-    record.overallScore = computeOverallScore(record.categories);
+    record.overallScore = 0;
     return saveAudit(record);
   }
 

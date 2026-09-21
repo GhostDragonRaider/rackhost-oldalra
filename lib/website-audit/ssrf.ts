@@ -69,6 +69,12 @@ export function validateAuditUrlInput(raw: string): SsrfValidationResult {
   }
 
   let candidate = trimmed;
+  if (
+    /:\/\//.test(candidate) &&
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(candidate)
+  ) {
+    return { ok: false, error: "Érvénytelen URL formátum." };
+  }
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(candidate)) {
     candidate = `https://${candidate}`;
   }
@@ -78,6 +84,13 @@ export function validateAuditUrlInput(raw: string): SsrfValidationResult {
     url = new URL(candidate);
   } catch {
     return { ok: false, error: "Érvénytelen URL formátum." };
+  }
+
+  // Reject hostnames with illegal characters (e.g. ht!tp://… after auto-prefix)
+  if (/[^a-z0-9.-]/i.test(url.hostname.replace(/^\[|\]$/g, ""))) {
+    if (net.isIP(url.hostname.replace(/^\[|\]$/g, "")) === 0) {
+      return { ok: false, error: "Érvénytelen hosztnév az URL-ben." };
+    }
   }
 
   const protocol = url.protocol.toLowerCase();
