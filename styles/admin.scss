@@ -201,10 +201,6 @@ body.admin-active {
   opacity: 1;
 }
 
-.admin-nav-toggle {
-  display: none;
-}
-
 .admin-nav-link {
   position: relative;
   z-index: 1;
@@ -1079,21 +1075,24 @@ body.admin-active {
     padding: 20px 16px;
   }
 
-  .admin-nav-toggle {
-    display: inline-flex;
-  }
-
   .admin-nav {
-    display: none;
-    flex-direction: column;
-  }
-
-  .admin-nav.is-open {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
   }
 
   .admin-nav-link {
     width: 100%;
+    justify-content: center;
+    min-height: 48px;
+    padding: 10px 8px;
+    font-size: 0.82rem;
+    text-align: center;
+  }
+
+  .admin-nav-icon {
+    display: none;
   }
 
   .admin-kpis {

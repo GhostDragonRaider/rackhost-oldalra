@@ -49,7 +49,6 @@ export default function AdminShell({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [idleNotice, setIdleNotice] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const glassRef = useRef<HTMLSpanElement>(null);
@@ -76,7 +75,6 @@ export default function AdminShell({
       });
       setAuthedSafe(false);
       setIdleNotice(reason === "idle");
-      setNavOpen(false);
     },
     [setAuthedSafe]
   );
@@ -117,22 +115,18 @@ export default function AdminShell({
     const onActivity = () => bumpIdle();
     window.addEventListener("pointerdown", onActivity);
     window.addEventListener("keydown", onActivity);
+    window.addEventListener("scroll", onActivity, { passive: true, capture: true });
+    window.addEventListener("wheel", onActivity, { passive: true });
+    window.addEventListener("touchmove", onActivity, { passive: true });
     return () => {
       window.removeEventListener("pointerdown", onActivity);
       window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("scroll", onActivity, true);
+      window.removeEventListener("wheel", onActivity);
+      window.removeEventListener("touchmove", onActivity);
       if (idleTimer.current) clearTimeout(idleTimer.current);
     };
   }, [authed, bumpIdle]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 801px)");
-    const sync = () => {
-      if (mq.matches) setNavOpen(true);
-    };
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, [authed]);
 
   // Liquid glass: rests on active item, slides to hovered item
   useEffect(() => {
@@ -210,7 +204,7 @@ export default function AdminShell({
       window.removeEventListener("resize", onResize);
       if (glassTimerRef.current) clearTimeout(glassTimerRef.current);
     };
-  }, [authed, active, navOpen]);
+  }, [authed, active]);
 
   async function onLogin(e: FormEvent) {
     e.preventDefault();
@@ -299,15 +293,6 @@ export default function AdminShell({
                 </Link>
                 <button
                   type="button"
-                  className="admin-ghost admin-nav-toggle"
-                  aria-expanded={navOpen}
-                  aria-controls="admin-nav"
-                  onClick={() => setNavOpen((o) => !o)}
-                >
-                  Menü
-                </button>
-                <button
-                  type="button"
                   className="admin-ghost"
                   onClick={() => void onLogout()}
                 >
@@ -319,7 +304,7 @@ export default function AdminShell({
             <nav
               id="admin-nav"
               ref={navRef}
-              className={`admin-nav${navOpen ? " is-open" : ""}`}
+              className="admin-nav"
               aria-label="Admin navigáció"
             >
               <span className="admin-nav-glass" aria-hidden="true" ref={glassRef} />
@@ -331,7 +316,6 @@ export default function AdminShell({
                     active === item.id ? " is-active" : ""
                   }`}
                   aria-current={active === item.id ? "page" : undefined}
-                  onClick={() => setNavOpen(false)}
                 >
                   <span className="admin-nav-icon" aria-hidden="true">
                     {item.icon}

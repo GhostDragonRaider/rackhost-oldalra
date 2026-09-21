@@ -455,8 +455,8 @@ function MonitorWorkspace({
         <p className="admin-muted">Nincs még látogatottsági adat.</p>
       )}
 
-      <p className="admin-muted">
-        <Link href="/admin/website-audit">Weboldal-ellenőrző →</Link>
+      <p className="admin-muted admin-tool-jump">
+        <Link href="/admin/website-audit">Weboldal-ellenőrző megnyitása →</Link>
       </p>
     </>
   );
