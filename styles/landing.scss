@@ -651,9 +651,11 @@ body.landing-active .mock-card-accent .mock-card-text{
   margin:0 0 4px;
   max-width:100%;
 }
-.seo-kicker{
+/* Beat `.hero p` (margin/color/size) — must stay with the eyebrow stack */
+.hero p.seo-kicker,
+.hero .hero-intro .seo-kicker{
   margin:0;
-  /* Match eyebrow-premium text start: padding-left + bar + gap */
+  /* Same left inset as eyebrow-premium label text (pad + bar + gap) */
   padding:7px 14px 7px calc(11px + 14px + 11px);
   max-width:100%;
   box-sizing:border-box;
@@ -662,6 +664,7 @@ body.landing-active .mock-card-accent .mock-card-text{
   font-weight:900;
   letter-spacing:.08em;
   line-height:1.35;
+  text-align:left;
   text-wrap:balance;
 }
 @media (max-width:850px){
@@ -670,7 +673,8 @@ body.landing-active .mock-card-accent .mock-card-text{
     margin:0 0 2px;
     width:100%;
   }
-  .seo-kicker{
+  .hero p.seo-kicker,
+  .hero .hero-intro .seo-kicker{
     padding-left:calc(11px + 14px + 11px);
     padding-right:0;
     letter-spacing:.06em;
