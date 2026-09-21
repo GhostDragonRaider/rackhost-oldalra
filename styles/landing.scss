@@ -1165,7 +1165,8 @@ body.landing-active .nav-actions .lang-switcher{
     transition:none;
     transform:none;
   }
-  body.landing-active .mobile-nav.open a{
+  body.landing-active .mobile-nav.open a,
+  body.landing-active .mobile-nav.open .mobile-nav-tools{
     animation:none;
     opacity:1;
     transform:none;
@@ -1263,6 +1264,49 @@ body.landing-active .nav-actions .lang-switcher{
   body.landing-active .hero .actions .btn.secondary{
     width:auto;
     min-width:0;
+  }
+}
+
+/* Narrow phones: brand + hamburger only; theme & language live in the drawer */
+body.landing-active .mobile-nav-tools{
+  display:none;
+}
+@media(max-width:360px){
+  body.landing-active .nav .container{
+    width:min(1180px,calc(100% - 20px)) !important;
+    column-gap:8px;
+  }
+  body.landing-active .nav-actions{
+    gap:6px;
+  }
+  body.landing-active .nav-actions .theme,
+  body.landing-active .nav-actions .lang-switcher{
+    display:none !important;
+  }
+  body.landing-active .nav-actions .menu{
+    display:inline-flex !important;
+  }
+  body.landing-active .mobile-nav-tools{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:4px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  body.landing-active .mobile-nav-tools .theme{
+    width:42px;
+    height:42px;
+    flex-shrink:0;
+  }
+  body.landing-active .mobile-nav-tools .lang-switcher{
+    display:inline-flex !important;
+  }
+  body.landing-active .mobile-nav.open .mobile-nav-tools{
+    animation:mobileNavItemIn .32s cubic-bezier(.22,1,.36,1) forwards;
+    animation-delay:.34s;
+    opacity:0;
   }
 }
 

@@ -518,6 +518,20 @@ export default function LandingPage() {
             {link.label}
           </a>
         ))}
+        <div className="mobile-nav-tools">
+          <button
+            className="theme"
+            type="button"
+            aria-label={t.chrome.theme}
+            aria-pressed={theme === "dark"}
+            title={t.chrome.themeTitle}
+            tabIndex={menuOpen ? undefined : -1}
+            onClick={toggleTheme}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
+          </button>
+          <LangSwitcher />
+        </div>
       </nav>
 
       <main id="tartalom" className="landing-main" tabIndex={-1}>
