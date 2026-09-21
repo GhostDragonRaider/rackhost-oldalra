@@ -669,6 +669,43 @@ body.admin-active {
   color: #52637a;
 }
 
+.admin-report-problems {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #fed7aa;
+  background: #fffaf5;
+}
+
+.admin-report-problems h4 {
+  color: #9a3412;
+}
+
+.admin-report-ok {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  color: #067647;
+  font-weight: 700;
+}
+
+.admin-report-info-details {
+  margin-top: 10px;
+}
+
+.admin-report-info-details summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #52637a;
+  padding: 6px 0;
+}
+
+.admin-report-info-details[open] summary {
+  margin-bottom: 8px;
+}
+
 .admin-report-table-wrap {
   width: 100%;
   overflow-x: auto;

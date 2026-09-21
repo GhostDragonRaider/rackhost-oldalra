@@ -134,6 +134,17 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           ? "warn"
           : "bad";
 
+  const problemFindings = (audit?.findings || [])
+    .filter((f) => f.severity === "critical" || f.severity === "warning")
+    .sort((a, b) => {
+      const rank = { critical: 0, warning: 1, info: 2, pass: 3 };
+      return (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9);
+    });
+
+  const infoFindings = (audit?.findings || []).filter(
+    (f) => f.severity === "info"
+  );
+
   return (
     <>
       <section className="admin-card admin-audit" aria-label="Weboldal-ellenőrző">
@@ -242,6 +253,89 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 </div>
               </div>
             </header>
+
+            <section
+              className="admin-report-block admin-report-problems"
+              aria-label="Weboldal hibái"
+            >
+              <h4>Weboldal hibái</h4>
+              {problemFindings.length === 0 ? (
+                <p className="admin-muted admin-report-ok">
+                  Nincs kritikus hiba vagy figyelmeztetés.
+                </p>
+              ) : (
+                <div className="admin-report-table-wrap">
+                  <table className="admin-report-table admin-report-findings">
+                    <thead>
+                      <tr>
+                        <th scope="col">Súlyosság</th>
+                        <th scope="col">Kategória</th>
+                        <th scope="col">Hiba</th>
+                        <th scope="col">Részlet</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {problemFindings.map((f) => (
+                        <tr
+                          key={f.id}
+                          className={`admin-finding--${f.severity}`}
+                        >
+                          <td>
+                            <span className="admin-finding-tag admin-finding-tag--inline">
+                              {severityLabel(f.severity)}
+                            </span>
+                          </td>
+                          <td>{f.category}</td>
+                          <td>{f.title}</td>
+                          <td className="admin-break">
+                            {f.detail}
+                            {f.evidence ? (
+                              <pre className="admin-evidence">{f.evidence}</pre>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {infoFindings.length > 0 ? (
+                <details className="admin-report-info-details">
+                  <summary>
+                    További infók ({infoFindings.length}) — nem kritikus
+                  </summary>
+                  <div className="admin-report-table-wrap">
+                    <table className="admin-report-table admin-report-findings">
+                      <thead>
+                        <tr>
+                          <th scope="col">Súlyosság</th>
+                          <th scope="col">Kategória</th>
+                          <th scope="col">Megjegyzés</th>
+                          <th scope="col">Részlet</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {infoFindings.map((f) => (
+                          <tr
+                            key={f.id}
+                            className={`admin-finding--${f.severity}`}
+                          >
+                            <td>
+                              <span className="admin-finding-tag admin-finding-tag--inline">
+                                {severityLabel(f.severity)}
+                              </span>
+                            </td>
+                            <td>{f.category}</td>
+                            <td>{f.title}</td>
+                            <td className="admin-break">{f.detail}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              ) : null}
+            </section>
 
             <section className="admin-report-block">
               <h4>Lépések</h4>
