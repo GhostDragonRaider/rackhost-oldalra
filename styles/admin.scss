@@ -676,6 +676,49 @@ body.admin-active {
   background: #fffaf5;
 }
 
+.admin-report-offer {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid #dce5f0;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef5fc 100%);
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.admin-report-offer-count {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0b1b36;
+}
+
+.admin-report-offer-ask {
+  margin: 0;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.admin-report-offer-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #3f5f86;
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-report-offer-cta:hover,
+.admin-report-offer-cta:focus-visible {
+  background: #2a4a6e;
+  outline: none;
+}
+
 .admin-report-problems h4 {
   color: #9a3412;
 }

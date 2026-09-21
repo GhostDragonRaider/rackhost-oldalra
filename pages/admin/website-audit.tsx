@@ -145,6 +145,50 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     (f) => f.severity === "info"
   );
 
+  const criticalCount = (audit?.findings || []).filter(
+    (f) => f.severity === "critical"
+  ).length;
+  const warningCount = (audit?.findings || []).filter(
+    (f) => f.severity === "warning"
+  ).length;
+  const infoCount = infoFindings.length;
+
+  function problemSummaryText(
+    critical: number,
+    warning: number,
+    info: number
+  ): string {
+    if (critical === 0 && warning === 0 && info === 0) {
+      return "Nem találtunk javítandó hibát.";
+    }
+    if (critical > 0 && warning > 0) {
+      return `${critical} kritikus és ${warning} hibát találtunk.`;
+    }
+    if (critical > 0) {
+      return `${critical} kritikus hibát találtunk.`;
+    }
+    if (warning > 0 && info > 0) {
+      return `${warning} hibát és ${info} egyéb hibát találtunk.`;
+    }
+    if (warning > 0) {
+      return `${warning} hibát találtunk.`;
+    }
+    return `${info} egyéb hibát találtunk.`;
+  }
+
+  const offerHref = audit
+    ? `/kapcsolat?${new URLSearchParams({
+        service: "Meglévő oldal megújítása",
+        website_url: audit.normalizedUrl || audit.inputUrl || "",
+        message: [
+          "Weboldal-ellenőrző alapján szeretnék ajánlatot kérni a hibák javítására.",
+          `Ellenőrzött URL: ${audit.normalizedUrl || audit.inputUrl}`,
+          `Eredmény: ${problemSummaryText(criticalCount, warningCount, infoCount)}`,
+          `Összpontszám: ${audit.overallScore}/100`,
+        ].join("\n"),
+      }).toString()}`
+    : "/kapcsolat";
+
   return (
     <>
       <section className="admin-card admin-audit" aria-label="Weboldal-ellenőrző">
@@ -253,6 +297,29 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 </div>
               </div>
             </header>
+
+            <section
+              className="admin-report-block admin-report-offer"
+              aria-label="Hibák összefoglalója"
+            >
+              <p className="admin-report-offer-count">
+                {problemSummaryText(criticalCount, warningCount, infoCount)}
+              </p>
+              {criticalCount + warningCount + infoCount > 0 ? (
+                <>
+                  <p className="admin-report-offer-ask">
+                    Szeretnéd, hogy ezeket a hibákat kijavítsuk?
+                  </p>
+                  <Link href={offerHref} className="admin-report-offer-cta">
+                    Kérj ajánlatot
+                  </Link>
+                </>
+              ) : (
+                <p className="admin-muted" style={{ margin: 0 }}>
+                  Az oldal jelenlegi állapotában nincs azonnali javítanivaló.
+                </p>
+              )}
+            </section>
 
             <section
               className="admin-report-block admin-report-problems"
