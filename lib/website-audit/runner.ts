@@ -279,6 +279,7 @@ async function maybePagespeed(
         ok: false,
         performanceScore: null,
         error: data.error?.message || `PageSpeed HTTP ${res.status}`,
+        source: null,
       };
     }
     const score = data.lighthouseResult?.categories?.performance?.score;
@@ -291,6 +292,7 @@ async function maybePagespeed(
         typeof score === "number"
           ? null
           : "A PageSpeed válasz nem tartalmazott performance pontszámot.",
+      source: typeof score === "number" ? "pagespeed_api" : null,
     };
   } catch (e) {
     return {
@@ -303,8 +305,89 @@ async function maybePagespeed(
             ? "PageSpeed időtúllépés."
             : e.message
           : "PageSpeed hiba.",
+      source: null,
     };
   }
+}
+
+/** Local performance estimate when Google PSI quota/API is unavailable. */
+function estimateLocalPerformance(input: {
+  responseMs: number | null;
+  responseBytes: number | null;
+  headers: Record<string, string>;
+  html: string | null;
+  contentType: string | null;
+}): { score: number; detail: string } {
+  let score = 100;
+  const notes: string[] = [];
+  const ms = input.responseMs;
+  if (ms == null) {
+    score -= 20;
+    notes.push("nincs válaszidő");
+  } else if (ms > 3000) {
+    score -= 35;
+    notes.push(`lassú TTFB ${ms} ms`);
+  } else if (ms > 1500) {
+    score -= 22;
+    notes.push(`közepes TTFB ${ms} ms`);
+  } else if (ms > 800) {
+    score -= 10;
+    notes.push(`TTFB ${ms} ms`);
+  } else {
+    notes.push(`gyors TTFB ${ms} ms`);
+  }
+
+  const bytes = input.responseBytes;
+  if (bytes != null) {
+    if (bytes > 1_500_000) {
+      score -= 25;
+      notes.push(`nagy HTML ${Math.round(bytes / 1024)} KB`);
+    } else if (bytes > 500_000) {
+      score -= 12;
+      notes.push(`HTML ${Math.round(bytes / 1024)} KB`);
+    } else {
+      notes.push(`HTML ${Math.round(bytes / 1024)} KB`);
+    }
+  }
+
+  const enc = (input.headers["content-encoding"] || "").toLowerCase();
+  if (!enc.includes("gzip") && !enc.includes("br") && !enc.includes("deflate")) {
+    score -= 10;
+    notes.push("nincs tömörítés");
+  } else {
+    notes.push(`tömörítés: ${enc}`);
+  }
+
+  const cache = input.headers["cache-control"] || input.headers["expires"];
+  if (!cache) {
+    score -= 6;
+    notes.push("nincs cache-control");
+  }
+
+  const html = input.html || "";
+  if (html) {
+    const scripts = (html.match(/<script\b/gi) || []).length;
+    const images = (html.match(/<img\b/gi) || []).length;
+    if (scripts > 25) {
+      score -= 12;
+      notes.push(`${scripts} script`);
+    } else if (scripts > 12) {
+      score -= 6;
+      notes.push(`${scripts} script`);
+    }
+    if (images > 40) {
+      score -= 8;
+      notes.push(`${images} kép`);
+    }
+    if (!/<link[^>]+rel=["']preconnect["']/i.test(html) && scripts > 5) {
+      score -= 3;
+    }
+  } else if (input.contentType && !/html/i.test(input.contentType)) {
+    notes.push("nem HTML — becslés a válaszból");
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  return { score, detail: notes.join(" · ") };
 }
 
 function initialProgress(): AuditProgressStep[] {
@@ -743,27 +826,55 @@ export async function runWebsiteAudit(options: {
     });
     setStep(progress, "robots", "done");
 
-    // PageSpeed (always attempted)
+    // PageSpeed API, with local performance fallback on quota/API failure
     setStep(progress, "pagespeed", "running");
     const ps = await maybePagespeed(fetched.finalUrl || validated.normalized);
-    record.technical.pagespeed = ps;
     if (ps.ok && ps.performanceScore != null) {
-      setStep(progress, "pagespeed", "done", `${ps.performanceScore}/100`);
+      record.technical.pagespeed = ps;
+      setStep(progress, "pagespeed", "done", `${ps.performanceScore}/100 (API)`);
       findings.push({
         id: "pagespeed-score",
         category: "performance",
         severity: ps.performanceScore >= 50 ? "pass" : "warning",
         title: `PageSpeed: ${ps.performanceScore}/100`,
-        detail: "Lighthouse performance (mobile).",
+        detail: "Google PageSpeed Insights (mobile Lighthouse).",
       });
     } else {
-      setStep(progress, "pagespeed", "error", ps.error || "hiba");
+      const local = estimateLocalPerformance({
+        responseMs: fetched.ms,
+        responseBytes: fetched.buffer.byteLength,
+        headers: fetched.headers,
+        html:
+          fetched.headers["content-type"]?.includes("html") ||
+          !fetched.headers["content-type"]
+            ? fetched.buffer.toString("utf8")
+            : null,
+        contentType: fetched.headers["content-type"] || null,
+      });
+      const apiNote = ps.error
+        ? ps.error.length > 160
+          ? `${ps.error.slice(0, 160)}…`
+          : ps.error
+        : "API hiba";
+      record.technical.pagespeed = {
+        attempted: true,
+        ok: true,
+        performanceScore: local.score,
+        error: `Google PSI nem elérhető (${apiNote}). Helyi becslés használva.`,
+        source: "local_estimate",
+      };
+      setStep(
+        progress,
+        "pagespeed",
+        "done",
+        `${local.score}/100 (helyi becslés)`
+      );
       findings.push({
-        id: "pagespeed-error",
+        id: "pagespeed-local",
         category: "performance",
-        severity: "warning",
-        title: "PageSpeed nem sikerült",
-        detail: ps.error || "Ismeretlen hiba — az audit többi része megmarad.",
+        severity: local.score >= 50 ? "pass" : "warning",
+        title: `Teljesítmény (helyi): ${local.score}/100`,
+        detail: `A Google PageSpeed API most nem volt használható (${apiNote}). Saját becslés: ${local.detail}`,
       });
     }
 

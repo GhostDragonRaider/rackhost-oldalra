@@ -392,8 +392,24 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                       <th scope="row">PageSpeed</th>
                       <td className="admin-break">
                         {audit.technical.pagespeed.ok
-                          ? `${audit.technical.pagespeed.performanceScore}/100`
+                          ? `${audit.technical.pagespeed.performanceScore}/100${
+                              audit.technical.pagespeed.source ===
+                              "local_estimate"
+                                ? " (helyi becslés)"
+                                : audit.technical.pagespeed.source ===
+                                    "pagespeed_api"
+                                  ? " (Google PSI)"
+                                  : ""
+                            }`
                           : audit.technical.pagespeed.error || "hiba"}
+                        {audit.technical.pagespeed.error &&
+                        audit.technical.pagespeed.source ===
+                          "local_estimate" ? (
+                          <span className="admin-muted">
+                            {" "}
+                            — {audit.technical.pagespeed.error}
+                          </span>
+                        ) : null}
                       </td>
                     </tr>
                   </tbody>

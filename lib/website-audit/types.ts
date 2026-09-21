@@ -60,6 +60,8 @@ export type AuditTechnical = {
     ok: boolean;
     performanceScore: number | null;
     error: string | null;
+    /** pagespeed_api = Google PSI; local_estimate = saját mérés fallback */
+    source: "pagespeed_api" | "local_estimate" | null;
   };
 };
 

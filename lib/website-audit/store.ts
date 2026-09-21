@@ -103,6 +103,7 @@ export function emptyTechnical(): WebsiteAuditRecord["technical"] {
       ok: false,
       performanceScore: null,
       error: null,
+      source: null,
     },
   };
 }
