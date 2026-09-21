@@ -16,6 +16,13 @@ type Stats = {
   month: { views: number; visitors: number };
   weeks: Array<{ week: string; label: string; views: number; visitors: number }>;
   last7Days: Array<{ date: string; views: number; visitors: number }>;
+  dayDetails: Array<{
+    date: string;
+    views: number;
+    visitors: number;
+    hours: Array<{ hour: string; label: string; views: number }>;
+    activeHours: Array<{ hour: string; label: string; views: number }>;
+  }>;
 };
 
 type SeoIssue = {
@@ -73,6 +80,35 @@ type SeoReport = {
     }>;
     error: string | null;
   } | null;
+  gscIndexing: {
+    connected: boolean;
+    siteUrl: string | null;
+    checkedAt: string;
+    total: number;
+    indexedCount: number;
+    notIndexedCount: number;
+    unknownCount: number;
+    errorCount: number;
+    urls: Array<{
+      url: string;
+      indexed: boolean | null;
+      verdict: string | null;
+      coverageState: string | null;
+      robotsTxtState: string | null;
+      indexingState: string | null;
+      lastCrawlTime: string | null;
+      pageFetchState: string | null;
+      crawledAs: string | null;
+      googleCanonical: string | null;
+      userCanonical: string | null;
+      sitemaps: string[];
+      referringUrls: string[];
+      mobileUsabilityVerdict: string | null;
+      inspectionResultLink: string | null;
+      error: string | null;
+    }>;
+    error: string | null;
+  } | null;
 };
 
 const IDLE_MS = 5 * 60 * 1000;
@@ -102,6 +138,35 @@ function formatCheckedAt(iso: string): string {
 
 function statusOkLabel(ok: boolean): string {
   return ok ? "rendben" : "figyelem";
+}
+
+function formatCrawlTime(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("hu-HU", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function indexedLabel(indexed: boolean | null, error: string | null): string {
+  if (error) return "hiba";
+  if (indexed === true) return "indexelve";
+  if (indexed === false) return "nincs indexelve";
+  return "ismeretlen";
+}
+
+function shortPath(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.pathname === "/" ? "/" : u.pathname;
+  } catch {
+    return url;
+  }
 }
 
 export default function AdminPage() {
@@ -143,7 +208,14 @@ export default function AdminPage() {
       setSeo(null);
       return;
     }
-    const data = await res.json();
+    const raw = await res.text();
+    let data: { ok?: boolean; error?: string; report?: SeoReport } = {};
+    try {
+      data = raw ? (JSON.parse(raw) as typeof data) : {};
+    } catch {
+      setSeoError("Nem sikerült betölteni az SEO jelentést.");
+      return;
+    }
     if (!res.ok || !data.ok) {
       setSeoError(data.error || "Nem sikerült betölteni az SEO jelentést.");
       return;
@@ -165,18 +237,52 @@ export default function AdminPage() {
         setAuthed(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        setSeoError(data.error || "Az SEO ellenőrzés sikertelen.");
+
+      const raw = await res.text();
+      let data: {
+        ok?: boolean;
+        error?: string;
+        report?: SeoReport;
+        indexingRefresh?: string;
+      } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as typeof data) : {};
+      } catch {
+        // Gateway HTML/timeout — report may still have been saved; reload it.
+        await loadSeo();
+        setSeoError(
+          res.ok
+            ? ""
+            : "Az ellenőrzés túl sokáig tartott a proxynál. A jelentés frissülhetett — próbáld újra, vagy frissíts."
+        );
         return;
       }
-      setSeo(data.report as SeoReport);
+
+      if (!res.ok || !data.ok) {
+        setSeoError(data.error || "Az SEO ellenőrzés sikertelen.");
+        await loadSeo();
+        return;
+      }
+      if (data.report) setSeo(data.report);
+
+      // GSC indexing finishes in the background — poll a few times for the table.
+      if (data.indexingRefresh === "started") {
+        for (const delayMs of [2500, 6000, 12000]) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          await loadSeo();
+        }
+      }
     } catch {
+      try {
+        await loadSeo();
+      } catch {
+        /* ignore */
+      }
       setSeoError("Hálózati hiba az SEO ellenőrzésnél.");
     } finally {
       setSeoRunning(false);
     }
-  }, []);
+  }, [loadSeo]);
 
   const onLogout = useCallback(async (reason?: "idle") => {
     if (idleTimer.current) {
@@ -288,6 +394,56 @@ export default function AdminPage() {
     if (!stats?.weeks?.length) return 1;
     return Math.max(1, ...stats.weeks.map((w) => w.views));
   }, [stats]);
+
+  const dayDetails = stats?.dayDetails ?? [];
+  const maxHourViews = useMemo(() => {
+    let max = 1;
+    for (const day of dayDetails) {
+      for (const h of day.hours) {
+        if (h.views > max) max = h.views;
+      }
+    }
+    return max;
+  }, [dayDetails]);
+
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!stats?.dayDetails?.length) return;
+    setOpenDays((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      const details = stats.dayDetails;
+      const todayKey = details[details.length - 1]?.date;
+      for (const day of details) {
+        if (next[day.date] !== undefined) continue;
+        next[day.date] = day.date === todayKey || day.views > 0;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [stats]);
+
+  function toggleDay(date: string) {
+    setOpenDays((prev) => ({ ...prev, [date]: !prev[date] }));
+  }
+
+  function formatDayLabel(date: string): string {
+    const d = new Date(`${date}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return date;
+    return d.toLocaleDateString("hu-HU", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+    });
+  }
+
+  function hourRangeLabel(hour: string): string {
+    const start = Number(hour);
+    const end = (start + 1) % 24;
+    return `${String(start).padStart(2, "0")}:00–${String(end).padStart(2, "0")}:00`;
+  }
 
   const scoreTone =
     !seo?.summary.lastCheckedAt
@@ -482,6 +638,161 @@ export default function AdminPage() {
                     </div>
                   ) : null}
 
+                  {seo.gscConnected && seo.gscIndexing ? (
+                    <div
+                      className="admin-gsc admin-gsc-indexing"
+                      aria-label="GSC indexeltség"
+                    >
+                      <h3>Indexeltség (GSC · folyamatos ellenőrzés)</h3>
+                      {seo.gscIndexing.error ? (
+                        <p className="admin-error">{seo.gscIndexing.error}</p>
+                      ) : (
+                        <>
+                          <ul className="admin-seo-metrics">
+                            <li>
+                              Indexelve:{" "}
+                              <strong>
+                                {seo.gscIndexing.indexedCount}/
+                                {seo.gscIndexing.total}
+                              </strong>
+                            </li>
+                            <li>
+                              Nincs indexelve:{" "}
+                              <strong>{seo.gscIndexing.notIndexedCount}</strong>
+                            </li>
+                            <li>
+                              Ismeretlen:{" "}
+                              <strong>{seo.gscIndexing.unknownCount}</strong>
+                            </li>
+                            <li>
+                              Hiba: <strong>{seo.gscIndexing.errorCount}</strong>
+                            </li>
+                          </ul>
+                          <p className="admin-muted admin-seo-meta">
+                            Utolsó GSC index-ellenőrzés:{" "}
+                            <strong>
+                              {formatCheckedAt(seo.gscIndexing.checkedAt)}
+                            </strong>
+                            {seo.gscIndexing.siteUrl
+                              ? ` · ${seo.gscIndexing.siteUrl}`
+                              : ""}
+                            . A napi SEO cron teljes indexelést futtat; az „Ellenőrzés most”
+                            a technikát azonnal, a GSC indexelést háttérben frissíti.
+                          </p>
+                          <div className="admin-gsc-index-table-wrap">
+                            <table className="admin-table admin-gsc-index-table">
+                              <thead>
+                                <tr>
+                                  <th>Oldal</th>
+                                  <th>Állapot</th>
+                                  <th>Lefedettség</th>
+                                  <th>Utolsó crawl</th>
+                                  <th>Robots</th>
+                                  <th>Fetch</th>
+                                  <th>Canonical</th>
+                                  <th>Mobil</th>
+                                  <th></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {seo.gscIndexing.urls.map((row) => (
+                                  <tr
+                                    key={row.url}
+                                    className={
+                                      row.indexed === true
+                                        ? "is-indexed"
+                                        : row.indexed === false
+                                          ? "is-not-indexed"
+                                          : row.error
+                                            ? "is-error"
+                                            : "is-unknown"
+                                    }
+                                  >
+                                    <td>
+                                      <a
+                                        href={row.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title={row.url}
+                                      >
+                                        {shortPath(row.url)}
+                                      </a>
+                                    </td>
+                                    <td>
+                                      <span
+                                        className={`admin-index-badge admin-index-badge--${
+                                          row.error
+                                            ? "error"
+                                            : row.indexed === true
+                                              ? "ok"
+                                              : row.indexed === false
+                                                ? "bad"
+                                                : "unknown"
+                                        }`}
+                                      >
+                                        {indexedLabel(row.indexed, row.error)}
+                                      </span>
+                                      {row.verdict ? (
+                                        <span className="admin-index-verdict">
+                                          {row.verdict}
+                                        </span>
+                                      ) : null}
+                                      {row.error ? (
+                                        <span className="admin-index-error">
+                                          {row.error}
+                                        </span>
+                                      ) : null}
+                                    </td>
+                                    <td>{row.coverageState || "—"}</td>
+                                    <td>{formatCrawlTime(row.lastCrawlTime)}</td>
+                                    <td>{row.robotsTxtState || "—"}</td>
+                                    <td>
+                                      {[
+                                        row.pageFetchState,
+                                        row.crawledAs
+                                          ? `(${row.crawledAs})`
+                                          : null,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" ") || "—"}
+                                    </td>
+                                    <td className="admin-index-canonical">
+                                      {row.googleCanonical ||
+                                        row.userCanonical ||
+                                        "—"}
+                                      {row.sitemaps.length > 0 ? (
+                                        <span className="admin-muted">
+                                          {" "}
+                                          · sitemap: {row.sitemaps.length}
+                                        </span>
+                                      ) : null}
+                                    </td>
+                                    <td>
+                                      {row.mobileUsabilityVerdict || "—"}
+                                    </td>
+                                    <td>
+                                      {row.inspectionResultLink ? (
+                                        <a
+                                          href={row.inspectionResultLink}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                        >
+                                          GSC
+                                        </a>
+                                      ) : (
+                                        "—"
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : null}
+
                   {seo.issues.length > 0 ? (
                     <div className="admin-seo-issues">
                       <h3>Találatok</h3>
@@ -595,6 +906,111 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                </section>
+
+                <section
+                  className="admin-card"
+                  aria-label="Napi megtekintések időpont szerint"
+                >
+                  <h2>Napi bontás órákra</h2>
+                  <p className="admin-muted">
+                    Az utolsó 30 nap: mely órákban érkezett megtekintés, és hány
+                    darab (szerver helyi ideje).
+                  </p>
+                  <div className="admin-day-details">
+                    {[...dayDetails].reverse().map((day) => {
+                      const open = Boolean(openDays[day.date]);
+                      return (
+                        <article key={day.date} className="admin-day-block">
+                          <button
+                            type="button"
+                            className="admin-day-toggle"
+                            aria-expanded={open}
+                            onClick={() => toggleDay(day.date)}
+                          >
+                            <span>
+                              <strong>{formatDayLabel(day.date)}</strong>
+                              <em>
+                                {day.views} megtekintés · {day.visitors} látogató
+                              </em>
+                            </span>
+                            <span aria-hidden="true">{open ? "−" : "+"}</span>
+                          </button>
+                          {open ? (
+                            <div className="admin-day-body">
+                              {day.views === 0 ? (
+                                <p className="admin-muted">
+                                  Ezen a napon nem volt megtekintés.
+                                </p>
+                              ) : day.activeHours.length === 0 ? (
+                                <p className="admin-muted">
+                                  Van napi összesítés ({day.views}), de órás adat
+                                  még nincs — az új megtekintésektől kezdve
+                                  megjelenik az óránkénti bontás.
+                                </p>
+                              ) : (
+                                <>
+                                  <div
+                                    className="admin-hour-chart"
+                                    role="img"
+                                    aria-label={`${day.date} óránkénti megtekintései`}
+                                  >
+                                    {day.hours.map((h) => {
+                                      const pct = Math.round(
+                                        (h.views / maxHourViews) * 100
+                                      );
+                                      return (
+                                        <div
+                                          key={h.hour}
+                                          className="admin-hour-col"
+                                          title={`${h.label}: ${h.views} megtekintés`}
+                                        >
+                                          <div className="admin-hour-bar-wrap">
+                                            <div
+                                              className={`admin-hour-bar${
+                                                h.views > 0 ? " is-active" : ""
+                                              }`}
+                                              style={{
+                                                height: `${Math.max(
+                                                  pct,
+                                                  h.views > 0 ? 8 : 0
+                                                )}%`,
+                                              }}
+                                            />
+                                          </div>
+                                          <span className="admin-hour-label">
+                                            {h.hour}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  <table className="admin-table admin-hour-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Időpont</th>
+                                        <th>Megtekintések</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {day.activeHours.map((h) => (
+                                        <tr key={h.hour}>
+                                          <td>{hourRangeLabel(h.hour)}</td>
+                                          <td>
+                                            <strong>{h.views}</strong>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </>
+                              )}
+                            </div>
+                          ) : null}
+                        </article>
+                      );
+                    })}
+                  </div>
                 </section>
               </>
             ) : (
