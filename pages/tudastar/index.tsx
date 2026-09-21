@@ -11,7 +11,7 @@ import {
 
 const TITLE = "Tudástár — weboldal, webshop, SEO | AntiCode";
 const DESCRIPTION =
-  "AntiCode tudástár: weboldal készítés árak, weboldal vs webshop, SEO alapok és indítási checklist szolgáltató vállalkozásoknak.";
+  "Gyakorlati útmutatók weboldal és webshop készítéshez: árak, döntési segédletek, SEO checklistek és technikai magyarázatok — generikus bloghelyett hasznos válaszokkal.";
 
 export default function TudastarIndexPage() {
   const jsonLd = [
@@ -41,9 +41,9 @@ export default function TudastarIndexPage() {
           <div className="eyebrow">Tudástár</div>
           <h1>Döntést segítő cikkek weboldalhoz és webshophoz.</h1>
           <p>
-            Rövid, gyakorlatias anyagok: árazás, SEO, indítás és a
-            „weboldal vagy webshop” kérdés. Minden cikk a megfelelő
-            szolgáltatásoldalra vezet.
+            Konkrét árkeretek, döntési táblázatok, élesítési checklistek és
+            technikai SEO magyarázatok. Akkor is hasznos, ha végül nem nálam
+            rendelsz.
           </p>
         </div>
       </section>
@@ -59,7 +59,7 @@ export default function TudastarIndexPage() {
                 <h2>
                   <Link href={`/tudastar/${article.slug}`}>{article.h1}</Link>
                 </h2>
-                <p>{article.lead}</p>
+                <p>{article.cardExcerpt}</p>
                 <Link className="text-link" href={`/tudastar/${article.slug}`}>
                   Elolvasom →
                 </Link>
