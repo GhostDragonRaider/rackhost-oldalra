@@ -1147,12 +1147,19 @@ body.landing-active .nav-actions{
   letter-spacing: -.04em;
   margin: 28px 0 12px;
 }
+.prose h3{
+  font-size: 1.1rem;
+  letter-spacing: -.02em;
+  margin: 18px 0 10px;
+  color: var(--text);
+}
 .prose p{
   color: var(--muted);
   line-height: 1.65;
   margin: 0 0 14px;
 }
-.prose ul{
+.prose ul,
+.prose ol{
   margin: 0 0 22px;
   padding-left: 1.15rem;
   color: var(--muted);
@@ -1164,6 +1171,124 @@ body.landing-active .nav-actions{
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.prose-table-wrap{
+  margin: 0 0 22px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.prose-table-caption{
+  margin: 12px 14px 0 !important;
+  font-size: .86rem;
+  color: var(--muted);
+}
+.prose-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .92rem;
+}
+.prose-table th,
+.prose-table td{
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+.prose-table thead th{
+  border-top: 0;
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  color: var(--text);
+  font-size: .78rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.prose-code{
+  margin: 0 0 22px;
+}
+.prose-code figcaption{
+  margin: 0 0 8px;
+  font-size: .86rem;
+  color: var(--muted);
+}
+.prose-code pre{
+  margin: 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .84rem;
+  line-height: 1.5;
+}
+.prose-compare{
+  margin: 0 0 22px;
+  display: grid;
+  gap: 10px;
+}
+.prose-compare-bad,
+.prose-compare-good{
+  margin: 0 !important;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.prose-compare-label{
+  display: block;
+  margin-bottom: 6px;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+.prose-compare-note{
+  margin: 0 !important;
+  font-size: .9rem;
+}
+.prose-checklist{
+  margin: 0 0 22px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+.prose-checklist-list{
+  list-style: none;
+  margin: 0 !important;
+  padding-left: 0 !important;
+}
+.prose-checklist-list li{
+  position: relative;
+  padding-left: 1.6rem;
+  margin: 0 0 10px;
+}
+.prose-checklist-list li:before{
+  content: "☐";
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-weight: 900;
+}
+.prose-note{
+  padding: 12px 14px;
+  border-left: 3px solid var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+  border-radius: 0 10px 10px 0;
+  color: var(--muted);
+}
+.prose-cta{
+  margin-top: 8px !important;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text) !important;
 }
 .faq-list-single{
   grid-template-columns: 1fr !important;

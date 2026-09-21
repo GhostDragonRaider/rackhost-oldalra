@@ -1,7 +1,7 @@
 import React from "react";
-import Link from "next/link";
 import { GetStaticPaths, GetStaticProps } from "next";
 import LandingShell from "../../components/landing/LandingShell";
+import ArticleBody from "../../components/landing/ArticleBody";
 import { ARTICLES, Article, getArticle } from "../../lib/articles";
 import {
   absoluteUrl,
@@ -19,8 +19,8 @@ export default function TudastarArticlePage({ article }: Props) {
       "@type": "Article",
       headline: article.h1,
       description: article.description,
-      datePublished: article.date,
-      dateModified: article.date,
+      datePublished: article.datePublished,
+      dateModified: article.dateModified,
       inLanguage: "hu-HU",
       author: { "@type": "Person", name: "Anti", url: absoluteUrl("/rolam") },
       publisher: {
@@ -59,44 +59,7 @@ export default function TudastarArticlePage({ article }: Props) {
         </div>
       </section>
 
-      {article.sections.map((section) => (
-        <section className="content-block" key={section.heading}>
-          <div className="container prose">
-            <h2>{section.heading}</h2>
-            {section.paragraphs.map((p) => (
-              <p key={p.slice(0, 40)}>{p}</p>
-            ))}
-            {section.bullets?.length ? (
-              <ul>
-                {section.bullets.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        </section>
-      ))}
-
-      <section className="contact">
-        <div className="container">
-          <div className="section-head">
-            <div>
-              <div className="eyebrow">Kapcsolódó</div>
-              <h2>Folytasd itt</h2>
-            </div>
-          </div>
-          <ul className="related-links">
-            {article.relatedServices.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href}>{item.label}</Link>
-              </li>
-            ))}
-            <li>
-              <Link href="/tudastar">Összes cikk</Link>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <ArticleBody article={article} />
     </LandingShell>
   );
 }

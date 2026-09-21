@@ -76,12 +76,37 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://anticode.hu/tudastar/wordpress-builder-vagy-egyedi</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://anticode.hu/tudastar/mennyi-ido-alatt-keszul-el-egy-weboldal</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://anticode.hu/tudastar/weboldal-fenntartas-koltsege</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://anticode.hu/tudastar/seo-alapok-uj-weboldalhoz</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://anticode.hu/tudastar/weboldal-inditas-checklist</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://anticode.hu/tudastar/google-latja-e-a-weboldalad</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://anticode.hu/tudastar/mi-az-a-technikai-seo</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
