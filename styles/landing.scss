@@ -643,13 +643,39 @@ body.landing-active .mock-card-accent .mock-card-text{
 }
 
 /* SEO / a11y / conversion additions */
+.hero-intro{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+  margin:0 0 4px;
+  max-width:100%;
+}
 .seo-kicker{
-  margin:0 0 10px;
+  margin:0;
+  /* Match eyebrow-premium text start: padding-left + bar + gap */
+  padding:7px 14px 7px calc(11px + 14px + 11px);
+  max-width:100%;
+  box-sizing:border-box;
   color:var(--blue-2);
-  font-size:.95rem;
-  font-weight:800;
-  letter-spacing:.01em;
+  font-size:.78rem;
+  font-weight:900;
+  letter-spacing:.08em;
   line-height:1.35;
+  text-wrap:balance;
+}
+@media (max-width:850px){
+  .hero-intro{
+    gap:6px;
+    margin:0 0 2px;
+    width:100%;
+  }
+  .seo-kicker{
+    padding-left:calc(11px + 14px + 11px);
+    padding-right:0;
+    letter-spacing:.06em;
+    font-size:.74rem;
+  }
 }
 .price-categories{
   display:grid;
@@ -697,6 +723,7 @@ body.landing-active .mock-card-accent .mock-card-text{
   gap:11px;
   margin:0;
   padding:7px 14px 7px 11px;
+  max-width:100%;
   border-radius:9px;
   color:var(--blue-2);
   letter-spacing:.14em;
@@ -901,7 +928,7 @@ body.landing-active .hero > div:first-of-type{
 body.landing-active .hero h1{
   min-height:3.2em;
 }
-body.landing-active .hero > div:first-of-type > p{
+body.landing-active .hero > div:first-of-type > p:not(.seo-kicker){
   min-height:4.8em;
 }
 body.landing-active .hero-proof{
@@ -1211,7 +1238,7 @@ body.landing-active .nav-actions .lang-switcher{
     min-height:0;
   }
   body.landing-active .hero h1,
-  body.landing-active .hero > div:first-of-type > p,
+  body.landing-active .hero > div:first-of-type > p:not(.seo-kicker),
   body.landing-active .section-head h1,
   body.landing-active .section-head h2,
   body.landing-active .section-head > p,

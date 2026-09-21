@@ -523,8 +523,10 @@ export default function LandingPage() {
       <main id="tartalom" className="landing-main" tabIndex={-1}>
         <section className="hero container">
           <div>
-            <p className="seo-kicker">{t.hero.seoKicker}</p>
-            <div className="eyebrow eyebrow-premium">{t.hero.eyebrow}</div>
+            <div className="hero-intro">
+              <p className="seo-kicker">{t.hero.seoKicker}</p>
+              <div className="eyebrow eyebrow-premium">{t.hero.eyebrow}</div>
+            </div>
             <h1>{t.hero.h1}</h1>
             <p>{t.hero.lead}</p>
             <div className="actions">
