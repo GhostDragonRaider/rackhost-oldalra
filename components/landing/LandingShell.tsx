@@ -1,8 +1,16 @@
-import React, { ReactNode, useCallback, useLayoutEffect, useState } from "react";
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import LangSwitcher from "./LangSwitcher";
 import SeoHead from "./SeoHead";
+import { useNavCollapse } from "./useNavCollapse";
 import { useLocale } from "../../lib/i18n/LocaleContext";
 import { SITE_EMAIL } from "../../lib/site";
 
@@ -39,6 +47,8 @@ export default function LandingShell({
   const [theme, setTheme] = useState<Theme>("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [year] = useState(() => new Date().getFullYear());
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const navCollapsed = useNavCollapse(navContainerRef, [t.pageNav]);
 
   const toggleTheme = useCallback(() => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -54,6 +64,29 @@ export default function LandingShell({
       saved === "light" || saved === "dark" ? saved : "light";
     setTheme(initial);
     applyTheme(initial);
+  }, []);
+
+  useEffect(() => {
+    if (navCollapsed) return;
+    setMenuOpen(false);
+  }, [navCollapsed]);
+
+  useEffect(() => {
+    const container = navContainerRef.current;
+    if (!container) return;
+    const nav = container.closest(".nav");
+    const reset = () => {
+      container.scrollLeft = 0;
+      if (nav instanceof HTMLElement) nav.scrollLeft = 0;
+      const links = container.querySelector(".links");
+      if (links instanceof HTMLElement) links.scrollLeft = 0;
+    };
+    container.addEventListener("focusin", reset);
+    container.addEventListener("click", reset);
+    return () => {
+      container.removeEventListener("focusin", reset);
+      container.removeEventListener("click", reset);
+    };
   }, []);
 
   const closeMenu = () => setMenuOpen(false);
@@ -73,8 +106,8 @@ export default function LandingShell({
         {t.chrome.skip}
       </a>
 
-      <header className="nav">
-        <div className="container">
+      <header className={`nav${navCollapsed ? " nav-collapsed" : ""}`}>
+        <div className="container" ref={navContainerRef}>
           <BrandMark href="/" />
           <nav className="links" aria-label={t.chrome.navAria}>
             {t.pageNav.map((link) =>

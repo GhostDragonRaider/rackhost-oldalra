@@ -12,6 +12,7 @@ import Link from "next/link";
 import BrandMark from "./BrandMark";
 import LangSwitcher from "./LangSwitcher";
 import SeoHead from "./SeoHead";
+import { useNavCollapse } from "./useNavCollapse";
 import { REFERENCE_PROJECTS } from "./projectData";
 import { useLocale } from "../../lib/i18n/LocaleContext";
 import {
@@ -75,6 +76,7 @@ export default function LandingPage() {
   }, []);
 
   const navContainerRef = useRef<HTMLDivElement>(null);
+  const navCollapsed = useNavCollapse(navContainerRef, [t.nav]);
   const glassRef = useRef<HTMLSpanElement>(null);
   const processRef = useRef<HTMLDivElement>(null);
   const intakeRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,11 @@ export default function LandingPage() {
     applyTheme(initial);
   }, []);
 
+  useEffect(() => {
+    if (navCollapsed) return;
+    setMenuOpen(false);
+  }, [navCollapsed]);
+
   // Nav glass hover
   useEffect(() => {
     const navContainer = navContainerRef.current;
@@ -117,11 +124,18 @@ export default function LandingPage() {
         return;
       }
       activeGlassTargetRef.current = target;
+      // Focus/click must not scroll the sticky nav sideways.
+      navContainer.scrollLeft = 0;
+      const nav = navContainer.closest(".nav");
+      if (nav instanceof HTMLElement) nav.scrollLeft = 0;
+
       const outer = navContainer.getBoundingClientRect();
       const box = target.getBoundingClientRect();
-      glass.style.left = `${box.left - outer.left}px`;
-      glass.style.top = `${box.top - outer.top}px`;
-      glass.style.width = `${box.width}px`;
+      const left = Math.max(0, box.left - outer.left);
+      const width = Math.min(box.width, Math.max(0, outer.width - left));
+      glass.style.left = `${left}px`;
+      glass.style.top = `${Math.max(0, box.top - outer.top)}px`;
+      glass.style.width = `${width}px`;
       glass.style.height = `${box.height}px`;
       glass.classList.add("active");
     };
@@ -456,7 +470,7 @@ export default function LandingPage() {
         {t.chrome.skip}
       </a>
 
-      <header className="nav">
+      <header className={`nav${navCollapsed ? " nav-collapsed" : ""}`}>
         <div className="container" ref={navContainerRef}>
           <span className="nav-glass" aria-hidden="true" ref={glassRef} />
           <BrandMark href="#tartalom" />
