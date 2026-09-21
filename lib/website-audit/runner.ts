@@ -120,58 +120,77 @@ async function followRedirects(startUrl: string): Promise<{
   let current = startUrl;
   let totalMs = 0;
 
-  for (let i = 0; i <= MAX_REDIRECTS; i++) {
-    const parsed = new URL(current);
-    await assertPublicHostname(parsed.hostname);
+  try {
+    for (let i = 0; i <= MAX_REDIRECTS; i++) {
+      const parsed = new URL(current);
+      await assertPublicHostname(parsed.hostname);
 
-    const { response, buffer, ms, truncated } = await fetchWithLimits(current);
-    totalMs += ms;
-    chain.push(current);
-    const headers = headerMap(response.headers);
-    const status = response.status;
+      const { response, buffer, ms, truncated } = await fetchWithLimits(current);
+      totalMs += ms;
+      chain.push(current);
+      const headers = headerMap(response.headers);
+      const status = response.status;
 
-    if (status >= 300 && status < 400) {
-      const loc = headers.location;
-      if (!loc) {
-        return {
-          finalUrl: current,
-          status,
-          headers,
-          buffer,
-          ms: totalMs,
-          chain,
-          truncated,
-          error: "Redirect Location header hiányzik.",
-        };
+      if (status >= 300 && status < 400) {
+        const loc = headers.location;
+        if (!loc) {
+          return {
+            finalUrl: current,
+            status,
+            headers,
+            buffer,
+            ms: totalMs,
+            chain,
+            truncated,
+            error: "Redirect Location header hiányzik.",
+          };
+        }
+        const next = new URL(loc, current).toString();
+        const nextHost = new URL(next).hostname;
+        await assertPublicHostname(nextHost);
+        current = next;
+        continue;
       }
-      const next = new URL(loc, current).toString();
-      const nextHost = new URL(next).hostname;
-      await assertPublicHostname(nextHost);
-      current = next;
-      continue;
+
+      return {
+        finalUrl: current,
+        status,
+        headers,
+        buffer,
+        ms: totalMs,
+        chain,
+        truncated,
+      };
     }
 
     return {
       finalUrl: current,
-      status,
-      headers,
-      buffer,
+      status: 0,
+      headers: {},
+      buffer: Buffer.alloc(0),
       ms: totalMs,
       chain,
-      truncated,
+      truncated: false,
+      error: `Túl sok átirányítás (max ${MAX_REDIRECTS}).`,
+    };
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.name === "AbortError"
+          ? "Időtúllépés a lekérés közben."
+          : e.message
+        : "Hálózati hiba a lekérés közben.";
+    return {
+      finalUrl: current,
+      status: 0,
+      headers: {},
+      buffer: Buffer.alloc(0),
+      ms: totalMs,
+      chain,
+      truncated: false,
+      error: message,
     };
   }
-
-  return {
-    finalUrl: current,
-    status: 0,
-    headers: {},
-    buffer: Buffer.alloc(0),
-    ms: totalMs,
-    chain,
-    truncated: false,
-    error: `Túl sok átirányítás (max ${MAX_REDIRECTS}).`,
-  };
 }
 
 function checkTls(hostname: string): Promise<WebsiteAuditRecord["technical"]["tls"]> {
@@ -783,7 +802,7 @@ export async function runWebsiteAudit(options: {
     });
     record.findings = findings;
     record.categories = computeCategoryScores(findings);
-    record.overallScore = computeOverallScore(record.categories);
+    record.overallScore = 0;
     record.status = "failed";
     record.error = message;
     record.summary = message;
