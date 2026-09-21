@@ -1055,7 +1055,7 @@ body.landing-active .nav-actions .lang-switcher{
 
 /*
   Fixed-width slots + CTA need ~1200px free.
-  Below that: hamburger (keep theme). Never shrink slot widths — locale jump.
+  Below that: hamburger (keep theme + language). Never shrink slot widths — locale jump.
 */
 @media(max-width:1240px) and (min-width:851px){
   body.landing-active .container{
@@ -1070,9 +1070,11 @@ body.landing-active .nav-actions .lang-switcher{
     width:min(1180px,calc(100% - 32px)) !important;
   }
   body.landing-active .links,
-  body.landing-active .nav-actions .btn,
-  body.landing-active .nav-actions .lang-switcher{
+  body.landing-active .nav-actions .btn{
     display:none !important;
+  }
+  body.landing-active .nav-actions .lang-switcher{
+    display:inline-flex !important;
   }
   body.landing-active .nav-actions .menu{
     display:inline-flex !important;
@@ -1149,9 +1151,11 @@ body.landing-active .nav-actions .lang-switcher{
     max-width:100%;
   }
   body.landing-active .links,
-  body.landing-active .nav-actions .btn,
-  body.landing-active .nav-actions .lang-switcher{
+  body.landing-active .nav-actions .btn{
     display:none !important;
+  }
+  body.landing-active .nav-actions .lang-switcher{
+    display:inline-flex !important;
   }
   body.landing-active .nav-actions .menu{
     display:inline-flex !important;
