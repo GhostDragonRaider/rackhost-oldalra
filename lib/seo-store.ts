@@ -178,9 +178,13 @@ export function markAlertSent(at = new Date().toISOString()) {
   writeStore(store);
 }
 
-/** Patch only the GSC indexing block on the latest report (background refresh). */
+/** Patch GSC indexing on the latest report; optionally refresh issues/summary. */
 export function patchSeoGscIndexing(
-  gscIndexing: GscIndexingSummary
+  gscIndexing: GscIndexingSummary,
+  extras?: {
+    issues?: SeoReport["issues"];
+    summary?: SeoReport["summary"];
+  }
 ): SeoReport | null {
   const store = ensureStore();
   if (!store.latest) return null;
@@ -188,6 +192,8 @@ export function patchSeoGscIndexing(
   const latest: SeoReport = {
     ...store.latest,
     gscIndexing,
+    issues: extras?.issues ?? store.latest.issues,
+    summary: extras?.summary ?? store.latest.summary,
     history: store.history,
     alertSentAt: store.alertSentAt,
   };
