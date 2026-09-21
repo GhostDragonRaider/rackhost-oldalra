@@ -106,12 +106,32 @@ export function hashVisitor(ip: string, ua: string): string {
     .slice(0, 24);
 }
 
+/** Same visitor + path within this window counts once (covers double beacons). */
+const SERVER_DEDUPE_MS = 3000;
+const recentHits = new Map<string, number>();
+
+function shouldSkipServerDuplicate(visitor: string, page: string): boolean {
+  const now = Date.now();
+  const key = `${visitor}|${page}`;
+  const last = recentHits.get(key) || 0;
+  if (now - last < SERVER_DEDUPE_MS) return true;
+  recentHits.set(key, now);
+  if (recentHits.size > 5000) {
+    for (const [k, at] of recentHits) {
+      if (now - at > SERVER_DEDUPE_MS) recentHits.delete(k);
+    }
+  }
+  return false;
+}
+
 export function recordPageview(input: {
   ip: string;
   userAgent: string;
   path?: string;
 }): void {
-  const page = String(input.path || "/").slice(0, 200);
+  let page = String(input.path || "/").slice(0, 200);
+  page = page.split("?")[0].split("#")[0] || "/";
+  if (page.length > 1 && page.endsWith("/")) page = page.slice(0, -1);
   if (
     page.startsWith("/admin") ||
     page.startsWith("/api/") ||
@@ -125,6 +145,9 @@ export function recordPageview(input: {
   const key = dayKey(now);
   const hour = hourKey(now);
   const visitor = hashVisitor(input.ip, input.userAgent || "unknown");
+  if (shouldSkipServerDuplicate(visitor, page)) {
+    return;
+  }
   const day = store.days[key] || { views: 0, visitors: [], hours: {} };
   day.views += 1;
   day.hours = day.hours || {};
