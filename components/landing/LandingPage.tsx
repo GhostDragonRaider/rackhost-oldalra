@@ -11,6 +11,7 @@ import React, {
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import LangSwitcher from "./LangSwitcher";
+import { navSlotFromHref } from "./navSlots";
 import SeoHead from "./SeoHead";
 import { REFERENCE_PROJECTS } from "./projectData";
 import { useLocale } from "../../lib/i18n/LocaleContext";
@@ -462,7 +463,11 @@ export default function LandingPage() {
           <BrandMark href="#tartalom" />
           <nav className="links" aria-label={t.chrome.navAria}>
             {t.nav.map((link) => (
-              <a key={link.href} href={link.href}>
+              <a
+                key={link.href}
+                href={link.href}
+                data-nav-slot={navSlotFromHref(link.href)}
+              >
                 {link.label}
               </a>
             ))}
@@ -518,8 +523,10 @@ export default function LandingPage() {
       <main id="tartalom" className="landing-main" tabIndex={-1}>
         <section className="hero container">
           <div>
-            <p className="seo-kicker">{t.hero.seoKicker}</p>
-            <div className="eyebrow eyebrow-premium">{t.hero.eyebrow}</div>
+            <div className="hero-intro">
+              <p className="seo-kicker">{t.hero.seoKicker}</p>
+              <div className="eyebrow eyebrow-premium">{t.hero.eyebrow}</div>
+            </div>
             <h1>{t.hero.h1}</h1>
             <p>{t.hero.lead}</p>
             <div className="actions">
