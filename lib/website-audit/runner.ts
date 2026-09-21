@@ -256,20 +256,17 @@ async function maybePagespeed(
   url: string
 ): Promise<WebsiteAuditRecord["technical"]["pagespeed"]> {
   const key = process.env.PAGESPEED_API_KEY?.trim();
-  if (!key) {
-    return {
-      attempted: false,
-      ok: false,
-      performanceScore: null,
-      error: "PAGESPEED_API_KEY nincs beállítva (opcionális).",
-    };
-  }
+  const params = new URLSearchParams({
+    url,
+    category: "performance",
+    strategy: "mobile",
+  });
+  if (key) params.set("key", key);
   const endpoint =
-    `https://www.googleapis.com/pagespeedonline/v5/runPagespeed` +
-    `?url=${encodeURIComponent(url)}&category=performance&strategy=mobile&key=${encodeURIComponent(key)}`;
+    `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params.toString()}`;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20_000);
+    const timer = setTimeout(() => controller.abort(), 45_000);
     const res = await fetch(endpoint, { signal: controller.signal });
     clearTimeout(timer);
     const data = (await res.json()) as {
@@ -290,14 +287,22 @@ async function maybePagespeed(
       ok: typeof score === "number",
       performanceScore:
         typeof score === "number" ? Math.round(score * 100) : null,
-      error: null,
+      error:
+        typeof score === "number"
+          ? null
+          : "A PageSpeed válasz nem tartalmazott performance pontszámot.",
     };
   } catch (e) {
     return {
       attempted: true,
       ok: false,
       performanceScore: null,
-      error: e instanceof Error ? e.message : "PageSpeed hiba.",
+      error:
+        e instanceof Error
+          ? e.name === "AbortError"
+            ? "PageSpeed időtúllépés."
+            : e.message
+          : "PageSpeed hiba.",
     };
   }
 }
@@ -310,7 +315,7 @@ function initialProgress(): AuditProgressStep[] {
     { id: "headers", label: "Biztonsági headerek", status: "pending" },
     { id: "html", label: "HTML / SEO jelek", status: "pending" },
     { id: "robots", label: "robots.txt / sitemap", status: "pending" },
-    { id: "pagespeed", label: "PageSpeed (opcionális)", status: "pending" },
+    { id: "pagespeed", label: "PageSpeed", status: "pending" },
     { id: "score", label: "Pontszámítás", status: "pending" },
   ];
 }
@@ -512,13 +517,13 @@ export async function runWebsiteAudit(options: {
         setStep(progress, "tls", "error", tlsInfo.error);
       }
     } else {
-      setStep(progress, "tls", "skipped", "Nem HTTPS");
+      setStep(progress, "tls", "done", "Nem HTTPS — TLS ellenőrzés lefutott (hiba)");
       findings.push({
-        id: "tls-skipped",
+        id: "tls-no-https",
         category: "security",
         severity: "critical",
         title: "Nincs HTTPS",
-        detail: "A végső URL nem HTTPS.",
+        detail: "A végső URL nem HTTPS — a TLS tanúsítvány nem ellenőrizhető biztonságosan.",
       });
     }
 
@@ -738,20 +743,11 @@ export async function runWebsiteAudit(options: {
     });
     setStep(progress, "robots", "done");
 
-    // PageSpeed optional
+    // PageSpeed (always attempted)
     setStep(progress, "pagespeed", "running");
     const ps = await maybePagespeed(fetched.finalUrl || validated.normalized);
     record.technical.pagespeed = ps;
-    if (!ps.attempted) {
-      setStep(progress, "pagespeed", "skipped", ps.error || "kihagyva");
-      findings.push({
-        id: "pagespeed-skipped",
-        category: "performance",
-        severity: "info",
-        title: "PageSpeed kihagyva",
-        detail: ps.error || "Nincs API kulcs.",
-      });
-    } else if (ps.ok && ps.performanceScore != null) {
+    if (ps.ok && ps.performanceScore != null) {
       setStep(progress, "pagespeed", "done", `${ps.performanceScore}/100`);
       findings.push({
         id: "pagespeed-score",
@@ -765,8 +761,8 @@ export async function runWebsiteAudit(options: {
       findings.push({
         id: "pagespeed-error",
         category: "performance",
-        severity: "info",
-        title: "PageSpeed nem elérhető",
+        severity: "warning",
+        title: "PageSpeed nem sikerült",
         detail: ps.error || "Ismeretlen hiba — az audit többi része megmarad.",
       });
     }
@@ -809,7 +805,8 @@ export async function runWebsiteAudit(options: {
     record.updatedAt = new Date().toISOString();
     for (const step of progress) {
       if (step.status === "running" || step.status === "pending") {
-        step.status = step.status === "running" ? "error" : "skipped";
+        step.status = "error";
+        if (!step.detail) step.detail = "Nem futott le teljesen.";
       }
     }
     return saveAudit(record);

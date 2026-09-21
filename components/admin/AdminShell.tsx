@@ -1,6 +1,13 @@
 import Head from "next/head";
 import Link from "next/link";
-import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import {
+  FormEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export type AdminNavId = "monitor" | "audit";
 
@@ -16,16 +23,18 @@ type AdminShellProps = {
 };
 
 const IDLE_MS = 5 * 60 * 1000;
+const GLASS_SELECTOR = ".admin-nav-link";
 
-const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> = [
-  { id: "monitor", href: "/admin", label: "Monitor", icon: "▣" },
-  {
-    id: "audit",
-    href: "/admin/website-audit",
-    label: "Weboldal-ellenőrző",
-    icon: "⌀",
-  },
-];
+const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> =
+  [
+    { id: "monitor", href: "/admin", label: "Monitor", icon: "▣" },
+    {
+      id: "audit",
+      href: "/admin/website-audit",
+      label: "Weboldal-ellenőrző",
+      icon: "⌀",
+    },
+  ];
 
 export default function AdminShell({
   active,
@@ -42,6 +51,10 @@ export default function AdminShell({
   const [idleNotice, setIdleNotice] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const glassRef = useRef<HTMLSpanElement>(null);
+  const activeGlassTargetRef = useRef<HTMLElement | null>(null);
+  const glassTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setAuthedSafe = useCallback(
     (value: boolean) => {
@@ -120,6 +133,84 @@ export default function AdminShell({
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, [authed]);
+
+  // Liquid glass: rests on active item, slides to hovered item
+  useEffect(() => {
+    if (!authed) return;
+    const nav = navRef.current;
+    const glass = glassRef.current;
+    if (!nav || !glass) return;
+
+    const placeGlass = (target: HTMLElement, persist = false) => {
+      if (glassTimerRef.current) clearTimeout(glassTimerRef.current);
+      if (
+        !persist &&
+        activeGlassTargetRef.current === target &&
+        glass.classList.contains("is-active")
+      ) {
+        return;
+      }
+      activeGlassTargetRef.current = target;
+      const outer = nav.getBoundingClientRect();
+      const box = target.getBoundingClientRect();
+      if (box.width < 2 || box.height < 2) return;
+      glass.style.left = `${box.left - outer.left + nav.scrollLeft}px`;
+      glass.style.top = `${box.top - outer.top + nav.scrollTop}px`;
+      glass.style.width = `${box.width}px`;
+      glass.style.height = `${box.height}px`;
+      glass.classList.add("is-active");
+    };
+
+    const placeOnActive = () => {
+      const current = nav.querySelector<HTMLElement>(
+        `${GLASS_SELECTOR}.is-active`
+      );
+      if (current) placeGlass(current, true);
+      else glass.classList.remove("is-active");
+    };
+
+    const hideToActive = () => {
+      if (glassTimerRef.current) clearTimeout(glassTimerRef.current);
+      glassTimerRef.current = setTimeout(() => {
+        placeOnActive();
+      }, 130);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const target = (event.target as Element).closest(
+        GLASS_SELECTOR
+      ) as HTMLElement | null;
+      if (target) placeGlass(target);
+      else hideToActive();
+    };
+
+    nav.addEventListener("pointermove", onPointerMove);
+    nav.addEventListener("pointerleave", hideToActive);
+
+    const focusables = nav.querySelectorAll<HTMLElement>(GLASS_SELECTOR);
+    const onFocus = (e: FocusEvent) =>
+      placeGlass(e.currentTarget as HTMLElement);
+    const onBlur = () => hideToActive();
+    focusables.forEach((el) => {
+      el.addEventListener("focus", onFocus);
+      el.addEventListener("blur", onBlur);
+    });
+
+    placeOnActive();
+    const onResize = () => placeOnActive();
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      nav.removeEventListener("pointermove", onPointerMove);
+      nav.removeEventListener("pointerleave", hideToActive);
+      focusables.forEach((el) => {
+        el.removeEventListener("focus", onFocus);
+        el.removeEventListener("blur", onBlur);
+      });
+      window.removeEventListener("resize", onResize);
+      if (glassTimerRef.current) clearTimeout(glassTimerRef.current);
+    };
+  }, [authed, active, navOpen]);
 
   async function onLogin(e: FormEvent) {
     e.preventDefault();
@@ -227,9 +318,11 @@ export default function AdminShell({
 
             <nav
               id="admin-nav"
+              ref={navRef}
               className={`admin-nav${navOpen ? " is-open" : ""}`}
               aria-label="Admin navigáció"
             >
+              <span className="admin-nav-glass" aria-hidden="true" ref={glassRef} />
               {NAV.map((item) => (
                 <Link
                   key={item.id}

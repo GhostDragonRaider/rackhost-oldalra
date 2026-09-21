@@ -13,6 +13,8 @@ export const config = {
       sizeLimit: "32kb",
     },
   },
+  // PageSpeed can take 20–40s; keep the route alive.
+  maxDuration: 60,
 };
 
 export default async function handler(

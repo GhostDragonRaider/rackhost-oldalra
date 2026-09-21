@@ -34,11 +34,22 @@ function formatWhen(iso: string): string {
   });
 }
 
-function WebsiteAuditWorkspace({
-  bumpIdle,
-}: {
-  bumpIdle: () => void;
-}) {
+function stepLabel(status: string): string {
+  switch (status) {
+    case "pending":
+      return "vár";
+    case "running":
+      return "fut";
+    case "done":
+      return "kész";
+    case "error":
+      return "hiba";
+    default:
+      return status;
+  }
+}
+
+function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [url, setUrl] = useState("https://");
   const [force, setForce] = useState(false);
   const [running, setRunning] = useState(false);
@@ -46,8 +57,6 @@ function WebsiteAuditWorkspace({
   const [statusMsg, setStatusMsg] = useState("");
   const [audit, setAudit] = useState<WebsiteAuditRecord | null>(null);
   const [history, setHistory] = useState<WebsiteAuditSummary[]>([]);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [filter, setFilter] = useState<"all" | AuditFinding["severity"]>("all");
 
   const loadHistory = useCallback(async () => {
     const res = await fetch("/api/admin/website-audit", {
@@ -77,7 +86,6 @@ function WebsiteAuditWorkspace({
     setAudit(data.audit as WebsiteAuditRecord);
     setUrl(data.audit.inputUrl || data.audit.normalizedUrl || "https://");
     setStatusMsg(`Betöltve: ${formatWhen(data.audit.createdAt)}`);
-    setDetailsOpen(false);
   }
 
   async function startAudit(e?: FormEvent, opts?: { force?: boolean }) {
@@ -117,9 +125,14 @@ function WebsiteAuditWorkspace({
     }
   }
 
-  const findings = (audit?.findings || []).filter((f) =>
-    filter === "all" ? true : f.severity === filter
-  );
+  const tone =
+    !audit
+      ? "neutral"
+      : audit.overallScore >= 80
+        ? "good"
+        : audit.overallScore >= 55
+          ? "warn"
+          : "bad";
 
   return (
     <>
@@ -128,8 +141,8 @@ function WebsiteAuditWorkspace({
           <div>
             <h2>Weboldal-ellenőrző</h2>
             <p className="admin-muted">
-              Admin tesztverzió — tetszőleges publikus URL technikai auditja
-              (SSRF-védelemmel). Nem publikus szolgáltatás.
+              Admin tesztverzió — tetszőleges publikus URL teljes technikai
+              auditja (SSRF-védelemmel). Nem publikus szolgáltatás.
             </p>
           </div>
         </div>
@@ -168,7 +181,8 @@ function WebsiteAuditWorkspace({
             </button>
           </div>
           <p id="audit-url-hint" className="admin-muted">
-            Csak publikus http(s) URL. Localhost / privát IP tiltott.
+            Csak publikus http(s) URL. Localhost / privát IP tiltott. Minden
+            lépés lefut (PageSpeed is).
           </p>
           <label className="admin-audit-check">
             <input
@@ -181,64 +195,28 @@ function WebsiteAuditWorkspace({
           </label>
         </form>
 
-        <div
-          className="admin-audit-status"
-          aria-live="polite"
-          role="status"
-        >
+        <div className="admin-audit-status" aria-live="polite" role="status">
           {statusMsg ? <p className="admin-muted">{statusMsg}</p> : null}
           {error ? <p className="admin-error">{error}</p> : null}
         </div>
 
-        {audit?.progress?.length ? (
-          <ol className="admin-progress" aria-label="Audit lépések">
-            {audit.progress.map((step) => (
-              <li
-                key={step.id}
-                className={`admin-progress-item admin-progress-item--${step.status}`}
-              >
-                <span className="admin-progress-state">
-                  {step.status === "pending"
-                    ? "vár"
-                    : step.status === "running"
-                      ? "fut"
-                      : step.status === "done"
-                        ? "kész"
-                        : step.status === "skipped"
-                          ? "kihagyva"
-                          : "hiba"}
-                </span>
-                <span>
-                  <strong>{step.label}</strong>
-                  {step.detail ? (
-                    <em className="admin-muted"> — {step.detail}</em>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ol>
-        ) : null}
-
         {audit ? (
-          <>
-            <div
-              className={`admin-seo-status admin-audit-score admin-seo--${
-                audit.overallScore >= 80
-                  ? "good"
-                  : audit.overallScore >= 55
-                    ? "warn"
-                    : "bad"
-              }`}
-            >
-              <div className="admin-seo-score">
+          <article
+            className={`admin-audit-report admin-seo--${tone}`}
+            aria-label="Audit jelentés"
+          >
+            <header className="admin-report-head">
+              <div className="admin-report-score">
                 <span>Összpontszám</span>
                 <strong>{audit.overallScore}/100</strong>
               </div>
-              <div>
-                <p className="admin-muted" style={{ margin: 0 }}>
-                  {audit.summary}
-                </p>
+              <div className="admin-report-meta">
+                <h3>Audit jelentés</h3>
+                <p>{audit.summary}</p>
                 <p className="admin-muted">
+                  {formatWhen(audit.createdAt)} · {audit.status}
+                </p>
+                <p>
                   Cél:{" "}
                   <a
                     href={audit.normalizedUrl}
@@ -261,198 +239,262 @@ function WebsiteAuditWorkspace({
                   >
                     Újraellenőrzés
                   </button>
-                  <button
-                    type="button"
-                    className="admin-ghost"
-                    aria-expanded={detailsOpen}
-                    onClick={() => setDetailsOpen((o) => !o)}
-                  >
-                    {detailsOpen
-                      ? "Technikai részletek elrejtése"
-                      : "Technikai részletek"}
-                  </button>
                 </div>
               </div>
-            </div>
+            </header>
 
-            <div className="admin-score-grid" aria-label="Kategóriapontok">
-              {audit.categories.map((cat) => (
-                <article key={cat.id} className="admin-score-card">
-                  <span>{cat.label}</span>
-                  <strong>{cat.score}/100</strong>
-                  <em>{cat.findingCount} találat</em>
-                </article>
-              ))}
-            </div>
-
-            <div className="admin-audit-filters" role="group" aria-label="Szűrés">
-              {(["all", "critical", "warning", "info", "pass"] as const).map(
-                (key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`admin-ghost${
-                      filter === key ? " is-active-filter" : ""
-                    }`}
-                    aria-pressed={filter === key}
-                    onClick={() => setFilter(key)}
-                  >
-                    {key === "all" ? "Összes" : severityLabel(key)}
-                  </button>
-                )
-              )}
-            </div>
-
-            <ul className="admin-findings" aria-label="Találatok">
-              {findings.length === 0 ? (
-                <li className="admin-muted">Nincs találat ebben a szűrésben.</li>
-              ) : (
-                findings.map((f) => (
-                  <li
-                    key={f.id}
-                    className={`admin-finding admin-finding--${f.severity}`}
-                  >
-                    <span className="admin-finding-tag">
-                      {severityLabel(f.severity)}
-                    </span>
-                    <div>
-                      <strong>{f.title}</strong>
-                      <p>{f.detail}</p>
-                      {f.evidence ? (
-                        <pre className="admin-evidence">{f.evidence}</pre>
-                      ) : null}
-                    </div>
-                  </li>
-                ))
-              )}
-            </ul>
-
-            {detailsOpen ? (
-              <div className="admin-tech" aria-label="Technikai részletek">
-                <h3>Technikai adatok</h3>
-                <dl className="admin-tech-grid">
-                  <div>
-                    <dt>HTTP státusz</dt>
-                    <dd>{audit.technical.statusCode ?? "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Válaszidő</dt>
-                    <dd>
-                      {audit.technical.responseMs != null
-                        ? `${audit.technical.responseMs} ms`
-                        : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Méret</dt>
-                    <dd>
-                      {audit.technical.responseBytes != null
-                        ? `${audit.technical.responseBytes} B`
-                        : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Content-Type</dt>
-                    <dd className="admin-break">
-                      {audit.technical.contentType || "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Végső URL</dt>
-                    <dd className="admin-break">
-                      {audit.technical.finalUrl || "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Title</dt>
-                    <dd>{audit.technical.title || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Meta description</dt>
-                    <dd>{audit.technical.metaDescription || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>H1</dt>
-                    <dd>
-                      {audit.technical.h1Count} ·{" "}
-                      {audit.technical.h1Texts.join(" | ") || "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Canonical</dt>
-                    <dd className="admin-break">
-                      {audit.technical.canonical || "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>robots.txt</dt>
-                    <dd>
-                      {audit.technical.robotsTxtOk == null
-                        ? "—"
-                        : audit.technical.robotsTxtOk
-                          ? "OK"
-                          : "hiányzik/hiba"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>sitemap.xml</dt>
-                    <dd>
-                      {audit.technical.sitemapOk == null
-                        ? "—"
-                        : audit.technical.sitemapOk
-                          ? "OK"
-                          : "hiányzik/hiba"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>TLS</dt>
-                    <dd>
-                      {audit.technical.tls.ok == null
-                        ? "—"
-                        : audit.technical.tls.ok
-                          ? audit.technical.tls.protocol || "OK"
-                          : audit.technical.tls.error || "hiba"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>PageSpeed</dt>
-                    <dd>
-                      {audit.technical.pagespeed.attempted
-                        ? audit.technical.pagespeed.ok
-                          ? `${audit.technical.pagespeed.performanceScore}/100`
-                          : audit.technical.pagespeed.error || "hiba"
-                        : "kihagyva"}
-                    </dd>
-                  </div>
-                </dl>
-
-                {audit.technical.redirectChain.length > 0 ? (
-                  <>
-                    <h4>Redirect lánc</h4>
-                    <ol className="admin-redirects">
-                      {audit.technical.redirectChain.map((u) => (
-                        <li key={u} className="admin-break">
-                          {u}
-                        </li>
-                      ))}
-                    </ol>
-                  </>
-                ) : null}
-
-                <h4>HTTP headerek</h4>
-                <ul className="admin-headers">
-                  {Object.entries(audit.technical.headers).map(
-                    ([key, value]) => (
-                      <li key={key}>
-                        <strong>{key}</strong>
-                        <span className="admin-break">{value}</span>
-                      </li>
-                    )
-                  )}
-                </ul>
+            <section className="admin-report-block">
+              <h4>Lépések</h4>
+              <div className="admin-report-table-wrap">
+                <table className="admin-report-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Állapot</th>
+                      <th scope="col">Lépés</th>
+                      <th scope="col">Részlet</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(audit.progress || []).map((step) => (
+                      <tr
+                        key={step.id}
+                        className={`admin-report-row--${step.status}`}
+                      >
+                        <td>{stepLabel(step.status)}</td>
+                        <td>{step.label}</td>
+                        <td className="admin-break">{step.detail || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            </section>
+
+            <section className="admin-report-block">
+              <h4>Kategóriapontok</h4>
+              <div className="admin-report-table-wrap">
+                <table className="admin-report-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Kategória</th>
+                      <th scope="col">Pont</th>
+                      <th scope="col">Találatok</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {audit.categories.map((cat) => (
+                      <tr key={cat.id}>
+                        <td>{cat.label}</td>
+                        <td>
+                          <strong>{cat.score}/100</strong>
+                        </td>
+                        <td>{cat.findingCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="admin-report-block">
+              <h4>Technikai adatok</h4>
+              <div className="admin-report-table-wrap">
+                <table className="admin-report-table">
+                  <tbody>
+                    <tr>
+                      <th scope="row">HTTP státusz</th>
+                      <td>{audit.technical.statusCode ?? "—"}</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Válaszidő</th>
+                      <td>
+                        {audit.technical.responseMs != null
+                          ? `${audit.technical.responseMs} ms`
+                          : "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Méret</th>
+                      <td>
+                        {audit.technical.responseBytes != null
+                          ? `${audit.technical.responseBytes} B`
+                          : "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Content-Type</th>
+                      <td className="admin-break">
+                        {audit.technical.contentType || "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Végső URL</th>
+                      <td className="admin-break">
+                        {audit.technical.finalUrl || "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Title</th>
+                      <td className="admin-break">
+                        {audit.technical.title || "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Meta description</th>
+                      <td className="admin-break">
+                        {audit.technical.metaDescription || "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">H1</th>
+                      <td className="admin-break">
+                        {audit.technical.h1Count} ·{" "}
+                        {audit.technical.h1Texts.join(" | ") || "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Canonical</th>
+                      <td className="admin-break">
+                        {audit.technical.canonical || "—"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">robots.txt</th>
+                      <td>
+                        {audit.technical.robotsTxtOk == null
+                          ? "—"
+                          : audit.technical.robotsTxtOk
+                            ? "OK"
+                            : "hiányzik/hiba"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">sitemap.xml</th>
+                      <td>
+                        {audit.technical.sitemapOk == null
+                          ? "—"
+                          : audit.technical.sitemapOk
+                            ? "OK"
+                            : "hiányzik/hiba"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">TLS</th>
+                      <td className="admin-break">
+                        {audit.technical.tls.ok == null
+                          ? "—"
+                          : audit.technical.tls.ok
+                            ? audit.technical.tls.protocol || "OK"
+                            : audit.technical.tls.error || "hiba"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">PageSpeed</th>
+                      <td className="admin-break">
+                        {audit.technical.pagespeed.ok
+                          ? `${audit.technical.pagespeed.performanceScore}/100`
+                          : audit.technical.pagespeed.error || "hiba"}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {audit.technical.redirectChain.length > 0 ? (
+              <section className="admin-report-block">
+                <h4>Redirect lánc</h4>
+                <div className="admin-report-table-wrap">
+                  <table className="admin-report-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">URL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {audit.technical.redirectChain.map((u, i) => (
+                        <tr key={`${i}-${u}`}>
+                          <td>{i + 1}</td>
+                          <td className="admin-break">{u}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             ) : null}
-          </>
+
+            <section className="admin-report-block">
+              <h4>HTTP headerek</h4>
+              <div className="admin-report-table-wrap">
+                <table className="admin-report-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Header</th>
+                      <th scope="col">Érték</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(audit.technical.headers).length === 0 ? (
+                      <tr>
+                        <td colSpan={2}>Nincs header adat.</td>
+                      </tr>
+                    ) : (
+                      Object.entries(audit.technical.headers).map(
+                        ([key, value]) => (
+                          <tr key={key}>
+                            <th scope="row">{key}</th>
+                            <td className="admin-break">{value}</td>
+                          </tr>
+                        )
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="admin-report-block">
+              <h4>Találatok ({audit.findings.length})</h4>
+              <div className="admin-report-table-wrap">
+                <table className="admin-report-table admin-report-findings">
+                  <thead>
+                    <tr>
+                      <th scope="col">Súlyosság</th>
+                      <th scope="col">Kategória</th>
+                      <th scope="col">Cím</th>
+                      <th scope="col">Részlet</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {audit.findings.map((f) => (
+                      <tr
+                        key={f.id}
+                        className={`admin-finding--${f.severity}`}
+                      >
+                        <td>
+                          <span
+                            className={`admin-finding-tag admin-finding-tag--inline`}
+                          >
+                            {severityLabel(f.severity)}
+                          </span>
+                        </td>
+                        <td>{f.category}</td>
+                        <td>{f.title}</td>
+                        <td className="admin-break">
+                          {f.detail}
+                          {f.evidence ? (
+                            <pre className="admin-evidence">{f.evidence}</pre>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </article>
         ) : null}
       </section>
 
