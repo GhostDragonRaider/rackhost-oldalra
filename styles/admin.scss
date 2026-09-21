@@ -6,8 +6,15 @@ body.admin-active {
 
 .admin-shell {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 40px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 12% 0%, rgba(63, 95, 134, 0.16), transparent 42%),
     linear-gradient(180deg, #f3f6fb 0%, #e8eef6 100%);
@@ -21,8 +28,10 @@ body.admin-active {
 
 .admin-card,
 .admin-login {
-  width: min(920px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
   padding: 28px;
   border: 1px solid #dce5f0;
   border-radius: 18px;
@@ -32,6 +41,7 @@ body.admin-active {
 
 .admin-login {
   width: min(420px, 100%);
+  margin: 0 auto;
   display: grid;
   gap: 14px;
 }
@@ -120,9 +130,12 @@ body.admin-active {
 
 .admin-dash {
   width: min(980px, 100%);
+  max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
   display: grid;
   gap: 18px;
+  justify-items: stretch;
 }
 
 .admin-top {
@@ -339,6 +352,93 @@ body.admin-active {
   font-size: 1rem;
 }
 
+.admin-gsc-indexing {
+  margin-top: 22px;
+}
+
+.admin-gsc-index-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+  border: 1px solid #dce5f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-gsc-index-table {
+  min-width: 860px;
+  width: 100%;
+  margin: 0;
+}
+
+.admin-gsc-index-table th,
+.admin-gsc-index-table td {
+  font-size: 0.82rem;
+  vertical-align: top;
+}
+
+.admin-gsc-index-table td a {
+  color: #3f5f86;
+  word-break: break-all;
+}
+
+.admin-index-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-index-badge--ok {
+  background: #e3f8e9;
+  color: #067647;
+}
+
+.admin-index-badge--bad {
+  background: #fef0c7;
+  color: #93370d;
+}
+
+.admin-index-badge--unknown {
+  background: #e8eef6;
+  color: #3f5f86;
+}
+
+.admin-index-badge--error {
+  background: #fee4e2;
+  color: #b42318;
+}
+
+.admin-index-verdict {
+  display: block;
+  margin-top: 4px;
+  color: #52637a;
+  font-size: 0.75rem;
+}
+
+.admin-index-error {
+  display: block;
+  margin-top: 4px;
+  color: #b42318;
+  font-size: 0.75rem;
+}
+
+.admin-index-canonical {
+  max-width: 220px;
+  word-break: break-all;
+}
+
+.admin-gsc-index-table tr.is-not-indexed td:nth-child(2),
+.admin-gsc-index-table tr.is-error td:nth-child(2) {
+  font-weight: 700;
+}
+
 .admin-seo-issues {
   margin-top: 18px;
 }
@@ -406,6 +506,105 @@ body.admin-active {
   color: #3f5f86;
 }
 
+.admin-day-details {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.admin-day-block {
+  border: 1px solid #dce5f0;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.admin-day-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  background: #f5f8fc;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.admin-day-toggle:hover {
+  background: #eef3f9;
+}
+
+.admin-day-toggle span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-day-toggle strong {
+  font-size: 0.95rem;
+}
+
+.admin-day-toggle em {
+  font-style: normal;
+  color: #52637a;
+  font-size: 0.82rem;
+}
+
+.admin-day-body {
+  padding: 12px 14px 16px;
+  border-top: 1px solid #dce5f0;
+}
+
+.admin-hour-chart {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 3px;
+  align-items: end;
+  height: 110px;
+  margin: 4px 0 14px;
+}
+
+.admin-hour-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.admin-hour-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.admin-hour-bar {
+  width: 100%;
+  max-width: 14px;
+  border-radius: 4px 4px 0 0;
+  background: #c5d4e8;
+}
+
+.admin-hour-bar.is-active {
+  background: linear-gradient(180deg, #6f97c8, #3f5f86);
+}
+
+.admin-hour-label {
+  margin-top: 4px;
+  font-size: 0.58rem;
+  color: #7a8ba3;
+  line-height: 1;
+}
+
+.admin-hour-table {
+  margin-top: 4px;
+}
+
 @media (max-width: 800px) {
   .admin-kpis {
     grid-template-columns: 1fr;
@@ -413,6 +612,12 @@ body.admin-active {
 
   .admin-chart {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .admin-hour-chart {
+    overflow-x: auto;
+    grid-template-columns: repeat(24, 18px);
+    justify-content: start;
   }
 
   .admin-seo-status {

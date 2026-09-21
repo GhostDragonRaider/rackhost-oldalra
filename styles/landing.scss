@@ -790,17 +790,17 @@ body.landing-active .mock-card-accent .mock-card-text{
   .price-categories{grid-template-columns:1fr}
 }
 
-/* Fixed CTA size: one line in HU/EN/DE, no resize on locale switch */
+/* Fixed CTA size: longest of HU/EN/DE + arrow — no resize on locale switch */
 body.landing-active .nav-actions .btn{
   box-sizing:border-box;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:14.5rem;
-  min-width:14.5rem;
-  max-width:14.5rem;
+  width:11.25rem;
+  min-width:11.25rem;
+  max-width:11.25rem;
   height:2.75rem;
-  padding:0 14px;
+  padding:0 12px;
   gap:0.45em;
   flex-shrink:0;
   white-space:nowrap;
@@ -821,6 +821,7 @@ body.landing-active .nav-actions .theme{
   justify-content:center;
   line-height:1;
   padding:0;
+  flex-shrink:0;
 }
 /* Hamburger: desktop always hidden; only shown in mobile media query */
 body.landing-active .nav-actions .menu{
@@ -830,13 +831,17 @@ body.landing-active .nav-actions .menu{
   line-height:1;
   padding:0;
 }
-body.landing-active .links a{
+body.landing-active .links a,
+body.landing-active .links a[data-nav-slot]{
+  box-sizing:border-box;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   white-space:nowrap;
   line-height:1;
   text-align:center;
+  flex:0 0 auto;
+  padding:10px 6px;
 }
 body.landing-active .hero .actions .btn{
   box-sizing:border-box;
@@ -866,13 +871,28 @@ body.landing-active .subpage-hero .actions .btn.secondary{
   min-width:10.5rem;
 }
 
-/* Nav labels: reserve width for longest locale per item */
-body.landing-active .links a:nth-child(1){ min-width:7.6rem; text-align:center; }
-body.landing-active .links a:nth-child(2){ min-width:4.2rem; text-align:center; }
-body.landing-active .links a:nth-child(3){ min-width:6.4rem; text-align:center; }
-body.landing-active .links a:nth-child(4){ min-width:9.2rem; text-align:center; }
-body.landing-active .links a:nth-child(5){ min-width:5.2rem; text-align:center; }
-body.landing-active .links a:nth-child(6){ min-width:5rem; text-align:center; }
+/* Nav labels: fixed width = longest HU/EN/DE label per slot (no jump on locale switch) */
+body.landing-active .links a[data-nav-slot="services"]{
+  width:6.9rem; min-width:6.9rem; max-width:6.9rem;
+}
+body.landing-active .links a[data-nav-slot="pricing"]{
+  width:4rem; min-width:4rem; max-width:4rem;
+}
+body.landing-active .links a[data-nav-slot="knowledge"]{
+  width:7.4rem; min-width:7.4rem; max-width:7.4rem;
+}
+body.landing-active .links a[data-nav-slot="work"]{
+  width:5.8rem; min-width:5.8rem; max-width:5.8rem;
+}
+body.landing-active .links a[data-nav-slot="process"]{
+  width:8.5rem; min-width:8.5rem; max-width:8.5rem;
+}
+body.landing-active .links a[data-nav-slot="about"]{
+  width:5.4rem; min-width:5.4rem; max-width:5.4rem;
+}
+body.landing-active .links a[data-nav-slot="contact"]{
+  width:5.1rem; min-width:5.1rem; max-width:5.1rem;
+}
 
 /* Reserve space so locale switches don’t reflow the page */
 body.landing-active .hero > div:first-of-type{
@@ -980,54 +1000,128 @@ body.landing-active .nav{
   max-width:100vw;
 }
 body.landing-active .nav .container{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  column-gap:16px;
   max-width:100%;
   min-width:0;
   box-sizing:border-box;
-  width:min(1180px,calc(100% - 40px)) !important;
+  /* Wider than page content so fixed nav slots + CTA fit without overlap */
+  width:min(1280px,calc(100% - 32px)) !important;
+}
+body.landing-active .nav .brand{
+  justify-self:start;
+  flex-shrink:0;
+  z-index:2;
+  position:relative;
 }
 body.landing-active .links{
+  justify-self:stretch;
+  justify-content:center;
+  align-items:center;
   min-width:0;
+  width:100%;
   max-width:100%;
   flex-wrap:nowrap;
+  gap:0;
+  overflow:hidden; /* never paint over brand / actions */
+  position:relative;
+  z-index:1;
 }
 body.landing-active .nav-actions{
+  justify-self:end;
+  display:flex;
+  align-items:center;
+  gap:8px;
   flex-shrink:0;
-  min-width:0;
+  min-width:max-content;
+  z-index:2;
+  position:relative;
+}
+body.landing-active .nav-actions .lang-switcher{
+  flex-shrink:0;
 }
 
-/* Wide desktop: keep airy gutters. Below 1400px tighten so full nav still fits. */
+/* Page content container stays narrower; nav uses its own wider rule above. */
 @media(max-width:1400px){
   body.landing-active .container{
     width:min(1180px,calc(100% - 64px));
   }
+  body.landing-active .nav .container{
+    width:min(1280px,calc(100% - 32px)) !important;
+  }
 }
 
-/* Fixed CTA + lang + reserved nav labels need room — compact before hamburger */
-@media(max-width:1240px){
+/*
+  Fixed-width slots + CTA need ~1200px free.
+  Below that: hamburger (keep theme + language). Never shrink slot widths — locale jump.
+*/
+@media(max-width:1240px) and (min-width:851px){
   body.landing-active .container{
     width:min(1180px,calc(100% - 48px));
   }
   body.landing-active .nav{
     height:68px;
   }
-  body.landing-active .links{
-    gap:2px;
+  body.landing-active .nav .container{
+    grid-template-columns:1fr auto !important;
+    column-gap:12px;
+    width:min(1180px,calc(100% - 32px)) !important;
   }
-  body.landing-active .links a{
-    min-width:0 !important;
-    padding:8px 8px;
-    font-size:.84rem;
-  }
+  body.landing-active .links,
   body.landing-active .nav-actions .btn{
-    width:auto;
-    min-width:0;
-    max-width:none;
-    padding:0 12px;
-    font-size:.86rem;
+    display:none !important;
   }
-  body.landing-active .nav-actions{
-    gap:8px;
+  body.landing-active .nav-actions .lang-switcher{
+    display:inline-flex !important;
   }
+  body.landing-active .nav-actions .menu{
+    display:inline-flex !important;
+  }
+  body.landing-active .mobile-nav{
+    display:grid;
+    gap:14px;
+    position:fixed;
+    inset:68px 0 auto;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    padding:20px;
+    z-index:19;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(-8px);
+    transition:opacity .22s ease,visibility .22s ease,transform .22s ease;
+  }
+  body.landing-active .mobile-nav.open{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:none;
+  }
+  body.landing-active .mobile-nav a{
+    padding:10px;
+    color:var(--muted);
+    font-weight:800;
+    opacity:0;
+    transform:translateY(10px);
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+    justify-content:flex-start;
+  }
+  body.landing-active .mobile-nav.open a{
+    animation:mobileNavItemIn .32s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  body.landing-active .mobile-nav.open a:nth-child(1){animation-delay:.03s}
+  body.landing-active .mobile-nav.open a:nth-child(2){animation-delay:.07s}
+  body.landing-active .mobile-nav.open a:nth-child(3){animation-delay:.11s}
+  body.landing-active .mobile-nav.open a:nth-child(4){animation-delay:.15s}
+  body.landing-active .mobile-nav.open a:nth-child(5){animation-delay:.19s}
+  body.landing-active .mobile-nav.open a:nth-child(6){animation-delay:.23s}
+  body.landing-active .mobile-nav.open a:nth-child(7){animation-delay:.27s}
+  body.landing-active .mobile-nav.open a:nth-child(8){animation-delay:.31s}
 }
 
 @keyframes mobileNavItemIn{
@@ -1057,16 +1151,22 @@ body.landing-active .nav-actions{
     max-width:100%;
   }
   body.landing-active .links,
-  body.landing-active .nav-actions .btn,
-  body.landing-active .nav-actions .lang-switcher{
+  body.landing-active .nav-actions .btn{
     display:none !important;
+  }
+  body.landing-active .nav-actions .lang-switcher{
+    display:inline-flex !important;
   }
   body.landing-active .nav-actions .menu{
     display:inline-flex !important;
   }
-  body.landing-active .links a{
-    min-width:0;
+  body.landing-active .links a,
+  body.landing-active .mobile-nav a{
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
     text-align:left;
+    justify-content:flex-start;
   }
   body.landing-active .mobile-nav{
     display:grid;

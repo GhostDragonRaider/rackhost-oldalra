@@ -5,6 +5,8 @@ import path from "path";
 export type DayStats = {
   views: number;
   visitors: string[]; // hashed visitor ids for the day
+  /** Hourly view counts keyed by "00".."23" (local server time). */
+  hours?: Record<string, number>;
 };
 
 type Store = {
@@ -13,6 +15,7 @@ type Store = {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "analytics.json");
+const DETAIL_DAYS = 30;
 
 function visitorSecret(): string {
   return (
@@ -59,6 +62,10 @@ function dayKey(d = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
+function hourKey(d = new Date()): string {
+  return String(d.getHours()).padStart(2, "0");
+}
+
 function startOfLocalDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -73,6 +80,24 @@ function isoWeekKey(d: Date): string {
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
+function normalizeHours(hours?: Record<string, number>): Array<{
+  hour: string;
+  label: string;
+  views: number;
+}> {
+  const out: Array<{ hour: string; label: string; views: number }> = [];
+  for (let h = 0; h < 24; h++) {
+    const key = String(h).padStart(2, "0");
+    const views = Math.max(0, Math.floor(Number(hours?.[key] || 0)));
+    out.push({
+      hour: key,
+      label: `${key}:00`,
+      views,
+    });
+  }
+  return out;
+}
+
 export function hashVisitor(ip: string, ua: string): string {
   return crypto
     .createHmac("sha256", visitorSecret())
@@ -81,12 +106,32 @@ export function hashVisitor(ip: string, ua: string): string {
     .slice(0, 24);
 }
 
+/** Same visitor + path within this window counts once (covers double beacons). */
+const SERVER_DEDUPE_MS = 3000;
+const recentHits = new Map<string, number>();
+
+function shouldSkipServerDuplicate(visitor: string, page: string): boolean {
+  const now = Date.now();
+  const key = `${visitor}|${page}`;
+  const last = recentHits.get(key) || 0;
+  if (now - last < SERVER_DEDUPE_MS) return true;
+  recentHits.set(key, now);
+  if (recentHits.size > 5000) {
+    for (const [k, at] of recentHits) {
+      if (now - at > SERVER_DEDUPE_MS) recentHits.delete(k);
+    }
+  }
+  return false;
+}
+
 export function recordPageview(input: {
   ip: string;
   userAgent: string;
   path?: string;
 }): void {
-  const page = String(input.path || "/").slice(0, 200);
+  let page = String(input.path || "/").slice(0, 200);
+  page = page.split("?")[0].split("#")[0] || "/";
+  if (page.length > 1 && page.endsWith("/")) page = page.slice(0, -1);
   if (
     page.startsWith("/admin") ||
     page.startsWith("/api/") ||
@@ -95,11 +140,18 @@ export function recordPageview(input: {
     return;
   }
 
+  const now = new Date();
   const store = ensureStore();
-  const key = dayKey();
+  const key = dayKey(now);
+  const hour = hourKey(now);
   const visitor = hashVisitor(input.ip, input.userAgent || "unknown");
-  const day = store.days[key] || { views: 0, visitors: [] };
+  if (shouldSkipServerDuplicate(visitor, page)) {
+    return;
+  }
+  const day = store.days[key] || { views: 0, visitors: [], hours: {} };
   day.views += 1;
+  day.hours = day.hours || {};
+  day.hours[hour] = (day.hours[hour] || 0) + 1;
   if (!day.visitors.includes(visitor)) {
     day.visitors.push(visitor);
     // cap stored visitor ids per day to keep file small
@@ -131,6 +183,21 @@ function sumRange(store: Store, fromKey: string, toKey: string) {
   return { views, visitors: visitors.size };
 }
 
+export type DayHourBucket = {
+  hour: string;
+  label: string;
+  views: number;
+};
+
+export type DayDetail = {
+  date: string;
+  views: number;
+  visitors: number;
+  hours: DayHourBucket[];
+  /** Only hours that had traffic — handy for compact lists. */
+  activeHours: DayHourBucket[];
+};
+
 export type AnalyticsSummary = {
   today: { views: number; visitors: number };
   week: { views: number; visitors: number };
@@ -142,6 +209,8 @@ export type AnalyticsSummary = {
     visitors: number;
   }>;
   last7Days: Array<{ date: string; views: number; visitors: number }>;
+  /** Last 30 days with hourly breakdown (local time). */
+  dayDetails: DayDetail[];
 };
 
 export function getAnalyticsSummary(): AnalyticsSummary {
@@ -166,6 +235,22 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       date: key,
       views: row.views,
       visitors: row.visitors.length,
+    });
+  }
+
+  const dayDetails: DayDetail[] = [];
+  for (let i = DETAIL_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = dayKey(d);
+    const row = store.days[key] || { views: 0, visitors: [], hours: {} };
+    const hours = normalizeHours(row.hours);
+    dayDetails.push({
+      date: key,
+      views: row.views,
+      visitors: row.visitors.length,
+      hours,
+      activeHours: hours.filter((h) => h.views > 0),
     });
   }
 
@@ -207,5 +292,6 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     month: sumRange(store, dayKey(monthStart), todayKey),
     weeks,
     last7Days,
+    dayDetails,
   };
 }
