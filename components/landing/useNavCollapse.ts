@@ -1,8 +1,8 @@
 import { RefObject, useLayoutEffect, useState } from "react";
 
 /**
- * Collapse desktop nav links into the hamburger when brand + links + actions
- * no longer fit the nav container (mid-width viewports / long locales).
+ * Collapse desktop nav links into the hamburger when the link row would
+ * overlap the action cluster (theme / CTA / lang).
  */
 export function useNavCollapse(
   navContainerRef: RefObject<HTMLElement | null>,
@@ -23,40 +23,54 @@ export function useNavCollapse(
     const measure = () => {
       // Force expanded metrics: links visible, hamburger hidden.
       nav.classList.add("nav-measuring");
+      nav.classList.remove("nav-collapsed");
       void links.offsetWidth;
 
-      const styles = getComputedStyle(container);
-      const colGap = parseFloat(styles.columnGap || styles.gap || "0") || 0;
-      const linkStyles = getComputedStyle(links);
-      const linkGap = parseFloat(linkStyles.columnGap || linkStyles.gap || "0") || 0;
-      const pad =
-        (parseFloat(styles.paddingLeft) || 0) +
-        (parseFloat(styles.paddingRight) || 0);
-
       const linkChildren = Array.from(links.children) as HTMLElement[];
-      const linksWidth =
-        linkChildren.reduce((sum, el) => sum + el.offsetWidth, 0) +
-        Math.max(0, linkChildren.length - 1) * linkGap;
+      const lastLink = linkChildren[linkChildren.length - 1];
+      // First *visible* action (menu is display:none while measuring).
+      const actionItems = Array.from(actions.children) as HTMLElement[];
+      const firstAction = actionItems.find(
+        (el) => getComputedStyle(el).display !== "none"
+      );
 
-      // Menu is display:none while measuring; reserve space for it so
-      // collapsing does not immediately overflow the action cluster.
-      const menu = actions.querySelector<HTMLElement>(".menu");
-      const menuReserve = menu ? 42 + 8 : 0;
+      let overflow = false;
+      let roomy = true;
 
-      const available =
-        container.clientWidth -
-        brand.offsetWidth -
-        actions.offsetWidth -
-        menuReserve -
-        colGap * 2 -
-        pad;
-
-      const overflow = linksWidth > available - 8;
-      const roomy = linksWidth <= available - 36;
+      if (lastLink && firstAction) {
+        const linkRight = lastLink.getBoundingClientRect().right;
+        const actionLeft = firstAction.getBoundingClientRect().left;
+        const gap = actionLeft - linkRight;
+        // Need a clear gap; collapse if touching/overlapping.
+        overflow = gap < 12;
+        roomy = gap >= 28;
+      } else {
+        // Fallback: compare content width vs free middle space.
+        const styles = getComputedStyle(container);
+        const colGap = parseFloat(styles.columnGap || styles.gap || "0") || 0;
+        const linkStyles = getComputedStyle(links);
+        const linkGap =
+          parseFloat(linkStyles.columnGap || linkStyles.gap || "0") || 0;
+        const linksWidth =
+          linkChildren.reduce((sum, el) => sum + el.offsetWidth, 0) +
+          Math.max(0, linkChildren.length - 1) * linkGap;
+        const available =
+          container.clientWidth -
+          brand.offsetWidth -
+          actions.offsetWidth -
+          colGap * 2;
+        overflow = linksWidth > available - 8;
+        roomy = linksWidth <= available - 36;
+      }
 
       nav.classList.remove("nav-measuring");
 
-      setCollapsed((prev) => (overflow ? true : roomy ? false : prev));
+      setCollapsed((prev) => {
+        const next = overflow ? true : roomy ? false : prev;
+        // Keep DOM class in sync immediately for CSS sibling mobile-nav.
+        nav.classList.toggle("nav-collapsed", next);
+        return next;
+      });
     };
 
     measure();
@@ -68,7 +82,7 @@ export function useNavCollapse(
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", measure);
-      nav.classList.remove("nav-measuring");
+      nav.classList.remove("nav-measuring", "nav-collapsed");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- caller passes locale/nav deps
   }, [navContainerRef, ...deps]);
