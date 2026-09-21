@@ -115,9 +115,15 @@ export default function AdminShell({
     const onActivity = () => bumpIdle();
     window.addEventListener("pointerdown", onActivity);
     window.addEventListener("keydown", onActivity);
+    window.addEventListener("scroll", onActivity, { passive: true, capture: true });
+    window.addEventListener("wheel", onActivity, { passive: true });
+    window.addEventListener("touchmove", onActivity, { passive: true });
     return () => {
       window.removeEventListener("pointerdown", onActivity);
       window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("scroll", onActivity, true);
+      window.removeEventListener("wheel", onActivity);
+      window.removeEventListener("touchmove", onActivity);
       if (idleTimer.current) clearTimeout(idleTimer.current);
     };
   }, [authed, bumpIdle]);
