@@ -368,9 +368,13 @@ function MonitorWorkspace({
 
       {statsError ? <p className="admin-error">{statsError}</p> : null}
 
-      <header className="admin-section-label">
-        <h2>Látogatottság</h2>
-      </header>
+            <header className="admin-section-label">
+              <h2>Látogatottság</h2>
+              <p className="admin-muted">
+                A saját böngésződ megtekintései (admin belépés után) nem
+                számítanak bele.
+              </p>
+            </header>
 
       {stats ? (
         <>
