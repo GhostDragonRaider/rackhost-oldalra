@@ -233,12 +233,36 @@ function MonitorWorkspace({
       }
       if (data.report) setSeo(data.report);
 
-      // GSC indexing finishes in the background — poll for the table.
+      // GSC indexing finishes in the background — poll until the URL list appears
+      // or we hit a soft timeout (~2.5 min for ~17 URL inspections).
       if (data.indexingRefresh === "started") {
-        for (const delayMs of [2500, 6000, 12000]) {
+        const started = Date.now();
+        const maxMs = 150_000;
+        let delayMs = 2500;
+        while (Date.now() - started < maxMs) {
           await new Promise((r) => setTimeout(r, delayMs));
           bumpIdle();
           await loadSeo();
+          // loadSeo sets state asynchronously via setSeo — read via API again
+          const check = await fetch("/api/admin/seo", {
+            credentials: "same-origin",
+          });
+          if (check.ok) {
+            const body = (await check.json()) as {
+              ok?: boolean;
+              report?: SeoReport;
+            };
+            if (
+              body.ok &&
+              body.report?.gscIndexing &&
+              (body.report.gscIndexing.urls.length > 0 ||
+                body.report.gscIndexing.error)
+            ) {
+              setSeo(body.report);
+              break;
+            }
+          }
+          delayMs = Math.min(delayMs + 1500, 10_000);
         }
       }
     } catch {
@@ -567,6 +591,19 @@ function MonitorWorkspace({
                     )}
                   </>
                 )}
+              </div>
+            ) : seo.gscConnected ? (
+              <div
+                className="admin-gsc admin-gsc-indexing"
+                aria-label="GSC indexeltség"
+              >
+                <h3>Indexeltség (GSC · folyamatos ellenőrzés)</h3>
+                <p className="admin-muted">
+                  Még nincs indexeltségi lista. Nyomd meg az „Ellenőrzés most”
+                  gombot — a technikai ellenőrzés után a GSC URL Inspection
+                  háttérben feltölti az oldalankénti listát (indexelve / nincs
+                  indexelve).
+                </p>
               </div>
             ) : null}
 
