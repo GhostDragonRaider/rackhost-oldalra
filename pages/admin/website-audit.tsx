@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AdminShell from "../../components/admin/AdminShell";
 import {
+  AuditSectionTitle,
   CategoryBars,
   ScoreRing,
   SeverityDistribution,
@@ -9,6 +10,7 @@ import {
   severityLabel,
   scoreTone,
 } from "../../components/admin/audit/AuditDashboardParts";
+import { DelayedHelpTip } from "../../components/admin/audit/DelayedHelpTip";
 import type {
   AuditCategoryId,
   AuditFinding,
@@ -17,6 +19,15 @@ import type {
   WebsiteAuditSummary,
 } from "../../lib/website-audit/types";
 import { CATEGORY_LABELS } from "../../lib/website-audit/types";
+import {
+  CATEGORY_HELP,
+  FINDING_HELP,
+  SECTION_HELP,
+  SEVERITY_HELP,
+  SOURCE_HELP,
+  TECH_FIELD_HELP,
+  findingHelpText,
+} from "../../lib/website-audit/help-texts";
 
 type FindingFilter = "all" | "problems" | "pass" | "critical_high";
 
@@ -368,7 +379,11 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 </p>
                 <p className="admin-muted">
                   Egy URL pillanatképe — nem a Monitor teljes site crawl
-                  skálája.
+                  skálája.{" "}
+                  <span className="audit-help-hint">
+                    Magyarázat: tartsd az egeret ~2 mp-ig egy elemen (pontszám,
+                    kategória, súlyosság, ellenőrzés).
+                  </span>
                 </p>
                 <div className="admin-audit-actions">
                   <button
@@ -390,12 +405,16 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             </header>
 
             <section aria-label="Súlyosság eloszlás">
-              <h4 className="audit-section-title">Súlyosság eloszlás</h4>
+              <AuditSectionTitle help={SECTION_HELP.severity}>
+                Súlyosság eloszlás
+              </AuditSectionTitle>
               <SeverityDistribution counts={severityCounts} />
             </section>
 
             <section aria-label="Kategóriák">
-              <h4 className="audit-section-title">Kategóriák</h4>
+              <AuditSectionTitle help={SECTION_HELP.categories}>
+                Kategóriák
+              </AuditSectionTitle>
               <CategoryBars
                 categories={categoriesSorted}
                 activeId={activeCategory}
@@ -412,7 +431,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               className="audit-priority"
               aria-label="Mit javítsak először"
             >
-              <h4 className="audit-section-title">Mit javítsak először?</h4>
+              <AuditSectionTitle help={SECTION_HELP.priority}>
+                Mit javítsak először?
+              </AuditSectionTitle>
               {priorityFixes.length === 0 ? (
                 <p className="admin-report-ok">
                   Nincs prioritásos javítanivaló — erős állapot.
@@ -421,6 +442,10 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 <ol className="audit-priority-list">
                   {priorityFixes.map((f, i) => {
                     const sev = normalizeSeverity(f.severity);
+                    const help =
+                      findingHelpText(f.id) ||
+                      CATEGORY_HELP[f.category as AuditCategoryId] ||
+                      f.detail;
                     return (
                       <li
                         key={`${f.id}-${i}`}
@@ -428,33 +453,55 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                           sev === "critical" ? " is-critical" : ""
                         }`}
                       >
-                        <div className="audit-priority-item__top">
-                          <span className="audit-priority-item__n" aria-hidden>
-                            {i + 1}
-                          </span>
-                          <strong>{f.title}</strong>
-                          <span
-                            className={`admin-finding-tag audit-sev--${sev}`}
-                          >
-                            <span aria-hidden>{severityIcon(sev)} </span>
-                            {severityLabel(sev)}
-                          </span>
-                          <span className="audit-cat-pill">
-                            {CATEGORY_LABELS[f.category as AuditCategoryId] ||
-                              f.category}
-                          </span>
-                        </div>
-                        <p>{f.detail}</p>
-                        {f.detectedValue ? (
-                          <p className="admin-muted admin-break">
-                            Detektált: {f.detectedValue}
-                          </p>
-                        ) : null}
-                        {f.recommendation ? (
-                          <p className="audit-fix">
-                            <strong>Javaslat:</strong> {f.recommendation}
-                          </p>
-                        ) : null}
+                        <DelayedHelpTip text={help} placement="top" display="block">
+                          <div className="audit-priority-item__inner">
+                            <div className="audit-priority-item__top">
+                              <span
+                                className="audit-priority-item__n"
+                                aria-hidden
+                              >
+                                {i + 1}
+                              </span>
+                              <strong tabIndex={0}>{f.title}</strong>
+                              <DelayedHelpTip
+                                text={SEVERITY_HELP[sev]}
+                                placement="top"
+                              >
+                                <span
+                                  className={`admin-finding-tag audit-sev--${sev}`}
+                                  tabIndex={0}
+                                >
+                                  <span aria-hidden>{severityIcon(sev)} </span>
+                                  {severityLabel(sev)}
+                                </span>
+                              </DelayedHelpTip>
+                              <DelayedHelpTip
+                                text={
+                                  CATEGORY_HELP[f.category as AuditCategoryId] ||
+                                  ""
+                                }
+                                placement="top"
+                              >
+                                <span className="audit-cat-pill" tabIndex={0}>
+                                  {CATEGORY_LABELS[
+                                    f.category as AuditCategoryId
+                                  ] || f.category}
+                                </span>
+                              </DelayedHelpTip>
+                            </div>
+                            <p>{f.detail}</p>
+                            {f.detectedValue ? (
+                              <p className="admin-muted admin-break">
+                                Detektált: {f.detectedValue}
+                              </p>
+                            ) : null}
+                            {f.recommendation ? (
+                              <p className="audit-fix">
+                                <strong>Javaslat:</strong> {f.recommendation}
+                              </p>
+                            ) : null}
+                          </div>
+                        </DelayedHelpTip>
                       </li>
                     );
                   })}
@@ -467,14 +514,18 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 className={`audit-indexability audit-indexability--${audit.technical.indexability.status}`}
                 aria-label="Indexelhetőség"
               >
-                <h4 className="audit-section-title">Indexelhetőség</h4>
+                <AuditSectionTitle help={SECTION_HELP.indexability}>
+                  Indexelhetőség
+                </AuditSectionTitle>
                 <p>{audit.technical.indexability.summary}</p>
               </section>
             ) : null}
 
             <section aria-label="Részletes audit">
               <div className="audit-detail-head">
-                <h4 className="audit-section-title">Részletes ellenőrzések</h4>
+                <AuditSectionTitle help={SECTION_HELP.details}>
+                  Részletes ellenőrzések
+                </AuditSectionTitle>
                 <div
                   className="admin-audit-filters"
                   role="group"
@@ -508,32 +559,43 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   if (filter !== "all" && items.length === 0) return null;
                   const open = openCats[cat.id] ?? false;
                   const catTone = scoreTone(cat.score);
+                  const catHelp =
+                    CATEGORY_HELP[cat.id as AuditCategoryId] || "";
                   return (
                     <div
                       key={cat.id}
                       id={`audit-cat-${cat.id}`}
                       className={`audit-acc audit-acc--${catTone}`}
                     >
-                      <button
-                        type="button"
-                        className="audit-acc__summary"
-                        aria-expanded={open}
-                        onClick={() => toggleCat(cat.id)}
-                      >
-                        <span>
-                          {cat.label} — {cat.score}/100
-                        </span>
-                        <span className="admin-muted">
-                          {items.length} tétel · {open ? "bezár" : "kinyit"}
-                        </span>
-                      </button>
+                      <DelayedHelpTip text={catHelp} placement="bottom" display="block">
+                        <button
+                          type="button"
+                          className="audit-acc__summary"
+                          aria-expanded={open}
+                          onClick={() => toggleCat(cat.id)}
+                        >
+                          <span>
+                            {cat.label} — {cat.score}/100
+                          </span>
+                          <span className="admin-muted">
+                            {items.length} tétel · {open ? "bezár" : "kinyit"}
+                          </span>
+                        </button>
+                      </DelayedHelpTip>
                       {open ? (
                         <ul className="audit-acc__list">
                           {items.length === 0 ? (
-                            <li className="admin-muted">Nincs találat a szűrőben.</li>
+                            <li className="admin-muted">
+                              Nincs találat a szűrőben.
+                            </li>
                           ) : (
                             items.map((f) => {
                               const sev = normalizeSeverity(f.severity);
+                              const help =
+                                findingHelpText(f.id) ||
+                                FINDING_HELP[f.id] ||
+                                catHelp ||
+                                f.detail;
                               return (
                                 <li
                                   key={f.id}
@@ -541,45 +603,70 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                                     sev === "critical" ? " is-critical" : ""
                                   }`}
                                 >
-                                  <div className="audit-finding__top">
-                                    <span
-                                      className={`admin-finding-tag audit-sev--${sev}`}
-                                      title={severityLabel(sev)}
-                                    >
-                                      <span aria-hidden>
-                                        {severityIcon(sev)}{" "}
-                                      </span>
-                                      {severityLabel(sev)}
-                                    </span>
-                                    <strong>{f.title}</strong>
-                                    {f.source === "pagespeed_api" ? (
-                                      <span className="audit-source">
-                                        PageSpeed / Lighthouse mérés
-                                      </span>
-                                    ) : null}
-                                    {f.source === "local_estimate" ? (
-                                      <span className="audit-source audit-source--local">
-                                        Helyi becslés
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                  <p>{f.detail}</p>
-                                  {f.detectedValue ? (
-                                    <p className="admin-muted admin-break">
-                                      Érték: {f.detectedValue}
-                                    </p>
-                                  ) : null}
-                                  {f.recommendation ? (
-                                    <p className="audit-fix">
-                                      <strong>Javaslat:</strong>{" "}
-                                      {f.recommendation}
-                                    </p>
-                                  ) : null}
-                                  {f.evidence ? (
-                                    <pre className="admin-evidence">
-                                      {f.evidence}
-                                    </pre>
-                                  ) : null}
+                                  <DelayedHelpTip text={help} placement="top" display="block">
+                                    <div className="audit-finding__body">
+                                      <div className="audit-finding__top">
+                                        <DelayedHelpTip
+                                          text={SEVERITY_HELP[sev]}
+                                          placement="top"
+                                        >
+                                          <span
+                                            className={`admin-finding-tag audit-sev--${sev}`}
+                                            tabIndex={0}
+                                          >
+                                            <span aria-hidden>
+                                              {severityIcon(sev)}{" "}
+                                            </span>
+                                            {severityLabel(sev)}
+                                          </span>
+                                        </DelayedHelpTip>
+                                        <strong tabIndex={0}>{f.title}</strong>
+                                        {f.source === "pagespeed_api" ? (
+                                          <DelayedHelpTip
+                                            text={SOURCE_HELP.pagespeed_api}
+                                            placement="top"
+                                          >
+                                            <span
+                                              className="audit-source"
+                                              tabIndex={0}
+                                            >
+                                              PageSpeed / Lighthouse mérés
+                                            </span>
+                                          </DelayedHelpTip>
+                                        ) : null}
+                                        {f.source === "local_estimate" ? (
+                                          <DelayedHelpTip
+                                            text={SOURCE_HELP.local_estimate}
+                                            placement="top"
+                                          >
+                                            <span
+                                              className="audit-source audit-source--local"
+                                              tabIndex={0}
+                                            >
+                                              Helyi becslés
+                                            </span>
+                                          </DelayedHelpTip>
+                                        ) : null}
+                                      </div>
+                                      <p>{f.detail}</p>
+                                      {f.detectedValue ? (
+                                        <p className="admin-muted admin-break">
+                                          Érték: {f.detectedValue}
+                                        </p>
+                                      ) : null}
+                                      {f.recommendation ? (
+                                        <p className="audit-fix">
+                                          <strong>Javaslat:</strong>{" "}
+                                          {f.recommendation}
+                                        </p>
+                                      ) : null}
+                                      {f.evidence ? (
+                                        <pre className="admin-evidence">
+                                          {f.evidence}
+                                        </pre>
+                                      ) : null}
+                                    </div>
+                                  </DelayedHelpTip>
                                 </li>
                               );
                             })
@@ -593,103 +680,123 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             </section>
 
             <details className="audit-tech-details">
-              <summary>Technikai részletek</summary>
+              <summary>
+                <DelayedHelpTip text={SECTION_HELP.technical} placement="bottom">
+                  <span tabIndex={0}>Technikai részletek</span>
+                </DelayedHelpTip>
+              </summary>
               <div className="admin-report-table-wrap">
                 <table className="admin-report-table">
                   <tbody>
-                    <tr>
-                      <th scope="row">Eredeti URL</th>
-                      <td className="admin-break">{audit.inputUrl}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Végső URL</th>
-                      <td className="admin-break">
-                        {audit.technical.finalUrl || "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">HTTP státusz</th>
-                      <td>{audit.technical.statusCode ?? "—"}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Válaszidő</th>
-                      <td>
-                        {audit.technical.responseMs != null
-                          ? `${audit.technical.responseMs} ms`
-                          : "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Méret</th>
-                      <td>
-                        {audit.technical.responseBytes != null
-                          ? `${audit.technical.responseBytes} B`
-                          : "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Content-Type</th>
-                      <td className="admin-break">
-                        {audit.technical.contentType || "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Canonical</th>
-                      <td className="admin-break">
-                        {audit.technical.canonical || "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">html lang</th>
-                      <td>{audit.technical.htmlLang || "—"}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">robots / X-Robots</th>
-                      <td className="admin-break">
-                        {audit.technical.indexability
-                          ? [
-                              audit.technical.indexability.metaRobots,
-                              audit.technical.indexability.xRobotsTag,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ") || "—"
-                          : "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">TLS</th>
-                      <td className="admin-break">
-                        {audit.technical.tls.ok == null
-                          ? "—"
-                          : audit.technical.tls.ok
-                            ? audit.technical.tls.protocol || "OK"
-                            : audit.technical.tls.error || "hiba"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">PageSpeed forrás</th>
-                      <td className="admin-break">
-                        {audit.technical.pagespeed.source === "pagespeed_api"
-                          ? "PageSpeed / Lighthouse mérés"
-                          : audit.technical.pagespeed.source ===
-                              "local_estimate"
-                            ? "Helyi becslés"
-                            : "—"}
-                        {audit.technical.pagespeed.performanceScore != null
-                          ? ` · ${audit.technical.pagespeed.performanceScore}/100`
-                          : ""}
-                        {audit.technical.pagespeed.error ? (
-                          <span className="admin-muted">
-                            {" "}
-                            — {audit.technical.pagespeed.error}
-                          </span>
-                        ) : null}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Audit időpont</th>
-                      <td>{formatWhen(audit.createdAt)}</td>
-                    </tr>
+                    {(
+                      [
+                        ["inputUrl", "Eredeti URL", audit.inputUrl],
+                        [
+                          "finalUrl",
+                          "Végső URL",
+                          audit.technical.finalUrl || "—",
+                        ],
+                        [
+                          "statusCode",
+                          "HTTP státusz",
+                          audit.technical.statusCode ?? "—",
+                        ],
+                        [
+                          "responseMs",
+                          "Válaszidő",
+                          audit.technical.responseMs != null
+                            ? `${audit.technical.responseMs} ms`
+                            : "—",
+                        ],
+                        [
+                          "responseBytes",
+                          "Méret",
+                          audit.technical.responseBytes != null
+                            ? `${audit.technical.responseBytes} B`
+                            : "—",
+                        ],
+                        [
+                          "contentType",
+                          "Content-Type",
+                          audit.technical.contentType || "—",
+                        ],
+                        [
+                          "canonical",
+                          "Canonical",
+                          audit.technical.canonical || "—",
+                        ],
+                        [
+                          "htmlLang",
+                          "html lang",
+                          audit.technical.htmlLang || "—",
+                        ],
+                        [
+                          "robots",
+                          "robots / X-Robots",
+                          audit.technical.indexability
+                            ? [
+                                audit.technical.indexability.metaRobots,
+                                audit.technical.indexability.xRobotsTag,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ") || "—"
+                            : "—",
+                        ],
+                        [
+                          "tls",
+                          "TLS",
+                          audit.technical.tls.ok == null
+                            ? "—"
+                            : audit.technical.tls.ok
+                              ? audit.technical.tls.protocol || "OK"
+                              : audit.technical.tls.error || "hiba",
+                        ],
+                        [
+                          "pagespeed",
+                          "PageSpeed forrás",
+                          [
+                            audit.technical.pagespeed.source ===
+                            "pagespeed_api"
+                              ? "PageSpeed / Lighthouse mérés"
+                              : audit.technical.pagespeed.source ===
+                                  "local_estimate"
+                                ? "Helyi becslés"
+                                : "—",
+                            audit.technical.pagespeed.performanceScore != null
+                              ? `${audit.technical.pagespeed.performanceScore}/100`
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" · "),
+                        ],
+                        [
+                          "auditedAt",
+                          "Audit időpont",
+                          formatWhen(audit.createdAt),
+                        ],
+                      ] as Array<[string, string, string | number]>
+                    ).map(([key, label, value]) => (
+                      <tr key={key}>
+                        <th scope="row">
+                          <DelayedHelpTip
+                            text={TECH_FIELD_HELP[key] || ""}
+                            placement="top"
+                          >
+                            <span tabIndex={0}>{label}</span>
+                          </DelayedHelpTip>
+                        </th>
+                        <td className="admin-break">
+                          {value}
+                          {key === "pagespeed" &&
+                          audit.technical.pagespeed.error ? (
+                            <span className="admin-muted">
+                              {" "}
+                              — {audit.technical.pagespeed.error}
+                            </span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
