@@ -499,45 +499,83 @@ body.admin-active {
 
 .admin-gsc-indexing {
   margin-top: 22px;
+  min-width: 0;
 }
 
-.admin-gsc-index-table-wrap {
+.admin-gsc-index-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
   width: 100%;
-  max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin-top: 12px;
+}
+
+.admin-gsc-index-item {
+  min-width: 0;
+  padding: 12px 14px;
   border: 1px solid #dce5f0;
   border-radius: 12px;
   background: #fff;
 }
 
-.admin-gsc-index-table {
-  min-width: 720px;
-  width: 100%;
-  margin: 0;
+.admin-gsc-index-item.is-not-indexed {
+  border-color: #f5d0a9;
+  background: #fffaf3;
 }
 
-.admin-gsc-index-table th,
-.admin-gsc-index-table td {
-  font-size: 0.82rem;
-  vertical-align: top;
+.admin-gsc-index-item.is-error {
+  border-color: #fecdca;
+  background: #fff8f7;
 }
 
-.admin-gsc-index-table td a {
+.admin-gsc-index-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.admin-gsc-index-path {
+  flex: 1 1 140px;
+  min-width: 0;
   color: #3f5f86;
-  word-break: break-all;
+  font-weight: 800;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-gsc-index-path:hover {
+  color: #2a4a6e;
+  text-decoration: underline;
+}
+
+.admin-gsc-index-gsc {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #3f5f86;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-gsc-index-gsc:hover {
+  text-decoration: underline;
 }
 
 .admin-index-badge {
   display: inline-block;
+  flex: 0 0 auto;
+  max-width: 100%;
   padding: 4px 8px;
   border-radius: 8px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .admin-index-badge--ok {
@@ -560,28 +598,59 @@ body.admin-active {
   color: #b42318;
 }
 
-.admin-index-verdict {
-  display: block;
-  margin-top: 4px;
-  color: #52637a;
+.admin-index-verdict,
+.admin-index-error {
+  margin: 6px 0 0;
   font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-index-verdict {
+  color: #52637a;
 }
 
 .admin-index-error {
-  display: block;
-  margin-top: 4px;
   color: #b42318;
-  font-size: 0.75rem;
 }
 
-.admin-index-canonical {
-  max-width: 220px;
-  word-break: break-all;
+.admin-gsc-index-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 10px 0 0;
+  min-width: 0;
 }
 
-.admin-gsc-index-table tr.is-not-indexed td:nth-child(2),
-.admin-gsc-index-table tr.is-error td:nth-child(2) {
-  font-weight: 700;
+.admin-gsc-index-meta > div {
+  min-width: 0;
+}
+
+.admin-gsc-index-meta-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-gsc-index-meta dt {
+  margin: 0;
+  color: #52637a;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-gsc-index-meta dd {
+  margin: 2px 0 0;
+  color: #0b1b36;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (min-width: 801px) {
+  .admin-gsc-index-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .admin-seo-issues {
@@ -1314,8 +1383,8 @@ body.admin-active {
     grid-template-columns: 1fr;
   }
 
-  .admin-gsc-index-table {
-    min-width: 640px;
+  .admin-gsc-index-meta {
+    grid-template-columns: 1fr;
   }
 
   .admin-table th,
@@ -1357,11 +1426,7 @@ body.admin-active {
     padding: 10px 6px;
   }
 
-  .admin-gsc-index-table {
-    min-width: 560px;
-  }
-
-  .admin-index-canonical {
-    max-width: 140px;
+  .admin-gsc-index-item {
+    padding: 10px 12px;
   }
 }
