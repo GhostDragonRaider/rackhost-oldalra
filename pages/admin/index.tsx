@@ -482,115 +482,105 @@ function MonitorWorkspace({
                       frissíti.
                     </p>
                     {seo.gscIndexing.urls.length > 0 ? (
-                      <div className="admin-gsc-index-table-wrap">
-                        <table className="admin-table admin-gsc-index-table">
-                          <thead>
-                            <tr>
-                              <th>Oldal</th>
-                              <th>Állapot</th>
-                              <th>Lefedettség</th>
-                              <th>Utolsó crawl</th>
-                              <th>Robots</th>
-                              <th>Fetch</th>
-                              <th>Canonical</th>
-                              <th>Mobil</th>
-                              <th></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {seo.gscIndexing.urls.map((row) => (
-                              <tr
-                                key={row.url}
-                                className={
-                                  row.indexed === true
-                                    ? "is-indexed"
-                                    : row.indexed === false
-                                      ? "is-not-indexed"
-                                      : row.error
-                                        ? "is-error"
-                                        : "is-unknown"
-                                }
-                              >
-                                <td>
+                      <ul className="admin-gsc-index-list" aria-label="URL indexeltség">
+                        {seo.gscIndexing.urls.map((row) => {
+                          const statusClass =
+                            row.indexed === true
+                              ? "is-indexed"
+                              : row.indexed === false
+                                ? "is-not-indexed"
+                                : row.error
+                                  ? "is-error"
+                                  : "is-unknown";
+                          const badgeTone = row.error
+                            ? "error"
+                            : row.indexed === true
+                              ? "ok"
+                              : row.indexed === false
+                                ? "bad"
+                                : "unknown";
+                          const fetchLabel =
+                            [
+                              row.pageFetchState,
+                              row.crawledAs ? `(${row.crawledAs})` : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" ") || "—";
+                          const canonical =
+                            row.googleCanonical || row.userCanonical || "—";
+
+                          return (
+                            <li
+                              key={row.url}
+                              className={`admin-gsc-index-item ${statusClass}`}
+                            >
+                              <div className="admin-gsc-index-item-head">
+                                <a
+                                  href={row.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="admin-gsc-index-path"
+                                  title={row.url}
+                                >
+                                  {shortPath(row.url)}
+                                </a>
+                                <span
+                                  className={`admin-index-badge admin-index-badge--${badgeTone}`}
+                                >
+                                  {indexedLabel(row.indexed, row.error)}
+                                </span>
+                                {row.inspectionResultLink ? (
                                   <a
-                                    href={row.url}
+                                    href={row.inspectionResultLink}
                                     target="_blank"
                                     rel="noreferrer"
-                                    title={row.url}
+                                    className="admin-gsc-index-gsc"
                                   >
-                                    {shortPath(row.url)}
+                                    GSC
                                   </a>
-                                </td>
-                                <td>
-                                  <span
-                                    className={`admin-index-badge admin-index-badge--${
-                                      row.error
-                                        ? "error"
-                                        : row.indexed === true
-                                          ? "ok"
-                                          : row.indexed === false
-                                            ? "bad"
-                                            : "unknown"
-                                    }`}
-                                  >
-                                    {indexedLabel(row.indexed, row.error)}
-                                  </span>
-                                  {row.verdict ? (
-                                    <span className="admin-index-verdict">
-                                      {row.verdict}
-                                    </span>
-                                  ) : null}
-                                  {row.error ? (
-                                    <span className="admin-index-error">
-                                      {row.error}
-                                    </span>
-                                  ) : null}
-                                </td>
-                                <td>{row.coverageState || "—"}</td>
-                                <td>{formatCrawlTime(row.lastCrawlTime)}</td>
-                                <td>{row.robotsTxtState || "—"}</td>
-                                <td>
-                                  {[
-                                    row.pageFetchState,
-                                    row.crawledAs
-                                      ? `(${row.crawledAs})`
-                                      : null,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" ") || "—"}
-                                </td>
-                                <td className="admin-index-canonical">
-                                  {row.googleCanonical ||
-                                    row.userCanonical ||
-                                    "—"}
-                                  {row.sitemaps.length > 0 ? (
-                                    <span className="admin-muted">
-                                      {" "}
-                                      · sitemap: {row.sitemaps.length}
-                                    </span>
-                                  ) : null}
-                                </td>
-                                <td>
-                                  {row.mobileUsabilityVerdict || "—"}
-                                </td>
-                                <td>
-                                  {row.inspectionResultLink ? (
-                                    <a
-                                      href={row.inspectionResultLink}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                    >
-                                      GSC
-                                    </a>
-                                  ) : (
-                                    "—"
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                                ) : null}
+                              </div>
+                              {row.verdict ? (
+                                <p className="admin-index-verdict">{row.verdict}</p>
+                              ) : null}
+                              {row.error ? (
+                                <p className="admin-index-error">{row.error}</p>
+                              ) : null}
+                              <dl className="admin-gsc-index-meta">
+                                <div>
+                                  <dt>Lefedettség</dt>
+                                  <dd>{row.coverageState || "—"}</dd>
+                                </div>
+                                <div>
+                                  <dt>Utolsó crawl</dt>
+                                  <dd>{formatCrawlTime(row.lastCrawlTime)}</dd>
+                                </div>
+                                <div>
+                                  <dt>Robots</dt>
+                                  <dd>{row.robotsTxtState || "—"}</dd>
+                                </div>
+                                <div>
+                                  <dt>Fetch</dt>
+                                  <dd>{fetchLabel}</dd>
+                                </div>
+                                <div>
+                                  <dt>Mobil</dt>
+                                  <dd>{row.mobileUsabilityVerdict || "—"}</dd>
+                                </div>
+                                <div className="admin-gsc-index-meta-wide">
+                                  <dt>Canonical</dt>
+                                  <dd className="admin-break">
+                                    {canonical}
+                                    {row.sitemaps.length > 0
+                                      ? ` · sitemap: ${row.sitemaps.length}`
+                                      : ""}
+                                  </dd>
+                                </div>
+                              </dl>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     ) : (
                       <p className="admin-muted">
                         Az indexeltségi lista még töltődik (háttérben fut), vagy
