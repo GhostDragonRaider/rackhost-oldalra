@@ -790,15 +790,15 @@ body.landing-active .mock-card-accent .mock-card-text{
   .price-categories{grid-template-columns:1fr}
 }
 
-/* Fixed CTA size: one line in HU/EN/DE, no resize on locale switch */
+/* Fixed CTA size: content-sized with a stable floor for locale switches */
 body.landing-active .nav-actions .btn{
   box-sizing:border-box;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:14.5rem;
-  min-width:14.5rem;
-  max-width:14.5rem;
+  width:auto;
+  min-width:10.5rem;
+  max-width:none;
   height:2.75rem;
   padding:0 14px;
   gap:0.45em;
@@ -837,6 +837,7 @@ body.landing-active .links a{
   white-space:nowrap;
   line-height:1;
   text-align:center;
+  min-width:0;
 }
 body.landing-active .hero .actions .btn{
   box-sizing:border-box;
@@ -865,14 +866,6 @@ body.landing-active .price-callout .actions .btn.secondary,
 body.landing-active .subpage-hero .actions .btn.secondary{
   min-width:10.5rem;
 }
-
-/* Nav labels: reserve width for longest locale per item */
-body.landing-active .links a:nth-child(1){ min-width:7.6rem; text-align:center; }
-body.landing-active .links a:nth-child(2){ min-width:4.2rem; text-align:center; }
-body.landing-active .links a:nth-child(3){ min-width:6.4rem; text-align:center; }
-body.landing-active .links a:nth-child(4){ min-width:9.2rem; text-align:center; }
-body.landing-active .links a:nth-child(5){ min-width:5.2rem; text-align:center; }
-body.landing-active .links a:nth-child(6){ min-width:5rem; text-align:center; }
 
 /* Reserve space so locale switches don’t reflow the page */
 body.landing-active .hero > div:first-of-type{
@@ -979,20 +972,94 @@ body.landing-active .nav{
   overflow:hidden;
   max-width:100vw;
 }
+/* Brand + actions take natural width; links get the remaining middle space */
 body.landing-active .nav .container{
   max-width:100%;
   min-width:0;
   box-sizing:border-box;
   width:min(1180px,calc(100% - 40px)) !important;
+  grid-template-columns:auto minmax(0,1fr) auto !important;
+  column-gap:12px;
+  align-items:center;
 }
 body.landing-active .links{
   min-width:0;
   max-width:100%;
   flex-wrap:nowrap;
+  justify-self:center;
+  justify-content:center;
+  overflow:hidden;
 }
 body.landing-active .nav-actions{
   flex-shrink:0;
   min-width:0;
+  justify-self:end;
+}
+body.landing-active .nav .brand{
+  flex-shrink:0;
+  justify-self:start;
+}
+
+/* Fit-based collapse (JS adds .nav-collapsed when links no longer fit) */
+body.landing-active .nav.nav-collapsed .container{
+  grid-template-columns:auto auto !important;
+}
+body.landing-active .nav.nav-collapsed .links{
+  display:none !important;
+}
+body.landing-active .nav.nav-collapsed .nav-actions .menu{
+  display:inline-flex !important;
+}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav{
+  display:grid;
+  gap:14px;
+  position:fixed;
+  inset:68px 0 auto;
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  padding:20px;
+  z-index:19;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(-8px);
+  transition:opacity .22s ease,visibility .22s ease,transform .22s ease;
+}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:none;
+}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav a{
+  padding:10px;
+  color:var(--muted);
+  font-weight:800;
+  opacity:0;
+  transform:translateY(10px);
+}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a{
+  animation:mobileNavItemIn .32s cubic-bezier(.22,1,.36,1) forwards;
+}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(1){animation-delay:.03s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(2){animation-delay:.07s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(3){animation-delay:.11s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(4){animation-delay:.15s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(5){animation-delay:.19s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(6){animation-delay:.23s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(7){animation-delay:.27s}
+body.landing-active .nav.nav-collapsed ~ .mobile-nav.open a:nth-child(8){animation-delay:.31s}
+
+/* Measuring pass: force full desktop row so fit can be calculated */
+body.landing-active .nav.nav-measuring .container{
+  grid-template-columns:auto minmax(0,1fr) auto !important;
+}
+body.landing-active .nav.nav-measuring .links{
+  display:flex !important;
+  overflow:visible;
+}
+body.landing-active .nav.nav-measuring .nav-actions .menu{
+  display:none !important;
 }
 
 /* Wide desktop: keep airy gutters. Below 1400px tighten so full nav still fits. */
@@ -1002,21 +1069,24 @@ body.landing-active .nav-actions{
   }
 }
 
-/* Fixed CTA + lang + reserved nav labels need room — compact before hamburger */
-@media(max-width:1240px){
+/* Shrink labels/CTA before collapse — frees space on mid-width desktops */
+@media(max-width:1360px){
   body.landing-active .container{
     width:min(1180px,calc(100% - 48px));
   }
   body.landing-active .nav{
     height:68px;
   }
+  body.landing-active .nav .container{
+    column-gap:10px;
+  }
   body.landing-active .links{
-    gap:2px;
+    gap:0;
   }
   body.landing-active .links a{
     min-width:0 !important;
-    padding:8px 8px;
-    font-size:.84rem;
+    padding:8px 6px;
+    font-size:.82rem;
   }
   body.landing-active .nav-actions .btn{
     width:auto;
@@ -1028,6 +1098,58 @@ body.landing-active .nav-actions{
   body.landing-active .nav-actions{
     gap:8px;
   }
+}
+
+/* CSS fallback: if JS fit detection is unavailable, still hamburger early */
+@media(max-width:1180px){
+  body.landing-active .nav:not(.nav-measuring) .container{
+    grid-template-columns:auto auto !important;
+  }
+  body.landing-active .nav:not(.nav-measuring) .links{
+    display:none !important;
+  }
+  body.landing-active .nav:not(.nav-measuring) .nav-actions .menu{
+    display:inline-flex !important;
+  }
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav{
+    display:grid;
+    gap:14px;
+    position:fixed;
+    inset:68px 0 auto;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    padding:20px;
+    z-index:19;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(-8px);
+    transition:opacity .22s ease,visibility .22s ease,transform .22s ease;
+  }
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:none;
+  }
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav a{
+    padding:10px;
+    color:var(--muted);
+    font-weight:800;
+    opacity:0;
+    transform:translateY(10px);
+  }
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a{
+    animation:mobileNavItemIn .32s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(1){animation-delay:.03s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(2){animation-delay:.07s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(3){animation-delay:.11s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(4){animation-delay:.15s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(5){animation-delay:.19s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(6){animation-delay:.23s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(7){animation-delay:.27s}
+  body.landing-active .nav:not(.nav-measuring) ~ .mobile-nav.open a:nth-child(8){animation-delay:.31s}
 }
 
 @keyframes mobileNavItemIn{
