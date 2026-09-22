@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { requireAdmin } from "../../../lib/admin-auth";
-import { runSeoCheck } from "../../../lib/seo-checker";
+import {
+  computeTechnicalSeoScore,
+  refreshSeoIndexingInBackground,
+  runSeoCheck,
+} from "../../../lib/seo-checker";
 import { getSeoReport } from "../../../lib/seo-store";
 
 export const config = {
@@ -20,7 +24,15 @@ export default async function handler(
   if (req.method === "GET") {
     try {
       const report = getSeoReport();
-      return res.status(200).json({ ok: true, report });
+      // Recompute so older saves (e.g. traffic-gsc-ok −1) match current rules.
+      const score = computeTechnicalSeoScore(report.issues || []);
+      return res.status(200).json({
+        ok: true,
+        report: {
+          ...report,
+          summary: { ...report.summary, score },
+        },
+      });
     } catch (e) {
       console.error("[admin/seo] get", e);
       return res.status(500).json({ ok: false, error: "SEO jelentés nem elérhető." });
@@ -30,8 +42,15 @@ export default async function handler(
   if (req.method === "POST") {
     try {
       const sendAlert = req.body?.sendAlert !== false;
-      const report = await runSeoCheck({ sendAlert });
-      return res.status(200).json({ ok: true, report });
+      // Defer GSC URL Inspection so nginx (default 60s) does not cut the response.
+      // Indexing continues in the background and is patched onto the saved report.
+      const report = await runSeoCheck({ sendAlert, deferIndexing: true });
+      refreshSeoIndexingInBackground();
+      return res.status(200).json({
+        ok: true,
+        report,
+        indexingRefresh: "started",
+      });
     } catch (e) {
       console.error("[admin/seo] run", e);
       return res

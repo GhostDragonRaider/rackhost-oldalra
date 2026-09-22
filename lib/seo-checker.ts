@@ -1,13 +1,16 @@
 import nodemailer from "nodemailer";
-import { fetchGscTrafficSummary } from "./gsc-client";
+import { fetchGscIndexingSummary, fetchGscTrafficSummary } from "./gsc-client";
 import { SITE_EMAIL, SITE_URL } from "./site";
 import {
   getSeoReport,
+  patchSeoGscIndexing,
   saveSeoReport,
   type SeoIssue,
   type SeoReport,
 } from "./seo-store";
 import { getMonitoredUrls } from "./seo-urls";
+
+let indexingRefreshInFlight: Promise<void> | null = null;
 
 const FETCH_TIMEOUT_MS = 12_000;
 const PERF_WARN_MS = 2500;
@@ -144,7 +147,9 @@ async function headOrGetStatus(url: string): Promise<number> {
         "User-Agent": "AntiCodeSEOMonitor/1.0 (+https://anticode.hu)",
       },
     });
-    if (head.status !== 405 && head.status !== 501) {
+    // Trust successful HEAD. Many hosts (e.g. Google support) answer 404/403
+    // on HEAD while GET returns 200 — always verify failures with GET.
+    if (head.ok) {
       return head.status;
     }
   } catch {
@@ -157,14 +162,96 @@ async function headOrGetStatus(url: string): Promise<number> {
   return page.status;
 }
 
-function computeScore(issues: SeoIssue[]): number {
+function isNonScoringIssue(issue: SeoIssue): boolean {
+  // Status / Google lag — shown in panels, not technical SEO penalties.
+  return (
+    issue.id === "gsc-indexing-summary" ||
+    issue.id.startsWith("gsc-not-indexed-") ||
+    issue.id.startsWith("gsc-inspect-error-") ||
+    issue.id === "gsc-indexing-error" ||
+    issue.id === "traffic-gsc-ok" ||
+    issue.id === "traffic-gsc" ||
+    issue.id === "gsc-not-connected"
+  );
+}
+
+/** Technical site-crawl score (0–100). Status infos do not deduct. */
+export function computeTechnicalSeoScore(issues: SeoIssue[]): number {
   let score = 100;
   for (const issue of issues) {
+    if (isNonScoringIssue(issue)) continue;
     if (issue.severity === "critical") score -= 12;
     else if (issue.severity === "warning") score -= 4;
     else score -= 1;
   }
   return Math.max(0, Math.min(100, score));
+}
+
+function isGscCoverageIssue(issue: SeoIssue): boolean {
+  return isNonScoringIssue(issue);
+}
+
+function computeScore(issues: SeoIssue[]): number {
+  return computeTechnicalSeoScore(issues);
+}
+
+function buildGscIndexingIssues(
+  gscIndexing: NonNullable<SeoReport["gscIndexing"]>,
+  gscConnected: boolean
+): SeoIssue[] {
+  if (!gscConnected) return [];
+  const issues: SeoIssue[] = [];
+
+  if (gscIndexing.error) {
+    issues.push({
+      id: "gsc-indexing-error",
+      severity: "warning",
+      category: "indexing",
+      title: "GSC indexelés-ellenőrzés hiba",
+      detail: gscIndexing.error,
+    });
+    return issues;
+  }
+
+  issues.push({
+    id: "gsc-indexing-summary",
+    severity: "info",
+    category: "indexing",
+    title: "GSC indexeltség",
+    detail: `${gscIndexing.indexedCount}/${gscIndexing.total} indexelve · ${gscIndexing.notIndexedCount} nincs indexelve · ${gscIndexing.unknownCount} ismeretlen · ${gscIndexing.errorCount} hiba`,
+  });
+
+  for (const row of gscIndexing.urls) {
+    if (row.indexed === false) {
+      issues.push({
+        id: `gsc-not-indexed-${row.url}`,
+        severity: "info",
+        category: "indexing",
+        title: "Oldal még nincs indexelve (GSC)",
+        detail: [
+          row.coverageState,
+          row.verdict ? `verdict: ${row.verdict}` : null,
+          row.pageFetchState ? `fetch: ${row.pageFetchState}` : null,
+          row.robotsTxtState ? `robots: ${row.robotsTxtState}` : null,
+          "A Google indexelése napok–hetek alatt történik; ez nem technikai hiba.",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        url: row.url,
+      });
+    } else if (row.error) {
+      issues.push({
+        id: `gsc-inspect-error-${row.url}`,
+        severity: "warning",
+        category: "indexing",
+        title: "URL Inspection hiba",
+        detail: row.error,
+        url: row.url,
+      });
+    }
+  }
+
+  return issues;
 }
 
 async function maybeSendAlert(report: SeoReport): Promise<boolean> {
@@ -230,9 +317,77 @@ async function maybeSendAlert(report: SeoReport): Promise<boolean> {
   }
 }
 
+/**
+ * Refresh GSC URL Inspection in the background and patch the latest report.
+ * Safe to call after a deferred admin check — does not block the HTTP response.
+ */
+export function refreshSeoIndexingInBackground(): void {
+  if (indexingRefreshInFlight) return;
+
+  indexingRefreshInFlight = (async () => {
+    try {
+      const gscIndexing = await fetchGscIndexingSummary();
+      applyGscIndexingToLatestReport(gscIndexing);
+    } catch (err) {
+      console.error("[seo-checker] background indexing refresh failed:", err);
+    } finally {
+      indexingRefreshInFlight = null;
+    }
+  })();
+}
+
+/** Merge a fresh GSC indexing snapshot into the saved report (issues + score). */
+export function applyGscIndexingToLatestReport(
+  gscIndexing: NonNullable<SeoReport["gscIndexing"]>
+): SeoReport | null {
+  const current = getSeoReport();
+  if (!current.summary.lastCheckedAt && current.pages.length === 0) {
+    return patchSeoGscIndexing(gscIndexing);
+  }
+
+  const gscConnected = Boolean(
+    process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
+  );
+  const baseIssues = current.issues.filter((i) => !isGscCoverageIssue(i));
+  const issues = [
+    ...baseIssues,
+    ...buildGscIndexingIssues(gscIndexing, gscConnected),
+  ];
+
+  const criticalCount = issues.filter((i) => i.severity === "critical").length;
+  const warningCount = issues.filter((i) => i.severity === "warning").length;
+  const infoCount = issues.filter((i) => i.severity === "info").length;
+  const indexingOk =
+    !issues.some(
+      (i) =>
+        i.category === "indexing" &&
+        (i.severity === "critical" || i.severity === "warning") &&
+        !isGscCoverageIssue(i)
+    ) &&
+    !(gscConnected && !gscIndexing.error && gscIndexing.notIndexedCount > 0);
+
+  return patchSeoGscIndexing(gscIndexing, {
+    issues,
+    summary: {
+      ...current.summary,
+      score: computeScore(issues),
+      criticalCount,
+      warningCount,
+      infoCount,
+      indexingOk,
+    },
+  });
+}
+
 export async function runSeoCheck(options?: {
   baseUrl?: string;
   sendAlert?: boolean;
+  /**
+   * When true, reuse the previous GSC indexing snapshot so the HTTP response
+   * stays under reverse-proxy timeouts. Call refreshSeoIndexingInBackground()
+   * after responding to update indexing asynchronously.
+   */
+  deferIndexing?: boolean;
 }): Promise<SeoReport> {
   const baseUrl = (options?.baseUrl || process.env.SEO_BASE_URL || SITE_URL).replace(
     /\/$/,
@@ -489,6 +644,24 @@ export async function runSeoCheck(options?: {
   }
 
   const gsc = await fetchGscTrafficSummary(28);
+  const previousIndexing = getSeoReport().gscIndexing;
+  const gscIndexing = options?.deferIndexing
+    ? previousIndexing ||
+      ({
+        connected: Boolean(
+          process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
+        ),
+        siteUrl: null,
+        checkedAt: new Date().toISOString(),
+        total: 0,
+        indexedCount: 0,
+        notIndexedCount: 0,
+        unknownCount: 0,
+        errorCount: 0,
+        urls: [],
+        error: null,
+      } as NonNullable<SeoReport["gscIndexing"]>)
+    : await fetchGscIndexingSummary();
   const gscConnected = Boolean(
     process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY
   );
@@ -532,6 +705,10 @@ export async function runSeoCheck(options?: {
     });
   }
 
+  if (gscConnected) {
+    issues.push(...buildGscIndexingIssues(gscIndexing, gscConnected));
+  }
+
   const criticalCount = issues.filter((i) => i.severity === "critical").length;
   const warningCount = issues.filter((i) => i.severity === "warning").length;
   const infoCount = issues.filter((i) => i.severity === "info").length;
@@ -544,7 +721,13 @@ export async function runSeoCheck(options?: {
     !issues.some(
       (i) =>
         i.category === "indexing" &&
-        (i.severity === "critical" || i.severity === "warning")
+        (i.severity === "critical" || i.severity === "warning") &&
+        !isGscCoverageIssue(i)
+    ) &&
+    !(
+      gscConnected &&
+      !gscIndexing.error &&
+      gscIndexing.notIndexedCount > 0
     );
 
   const summary = {
@@ -568,6 +751,7 @@ export async function runSeoCheck(options?: {
     pages,
     gscConnected,
     gsc,
+    gscIndexing,
   };
 
   let alertSent = false;
