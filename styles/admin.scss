@@ -463,6 +463,93 @@ body.admin-active {
   font-size: 1rem;
 }
 
+.admin-gsc-indexing {
+  margin-top: 22px;
+}
+
+.admin-gsc-index-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+  border: 1px solid #dce5f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-gsc-index-table {
+  min-width: 860px;
+  width: 100%;
+  margin: 0;
+}
+
+.admin-gsc-index-table th,
+.admin-gsc-index-table td {
+  font-size: 0.82rem;
+  vertical-align: top;
+}
+
+.admin-gsc-index-table td a {
+  color: #3f5f86;
+  word-break: break-all;
+}
+
+.admin-index-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-index-badge--ok {
+  background: #e3f8e9;
+  color: #067647;
+}
+
+.admin-index-badge--bad {
+  background: #fef0c7;
+  color: #93370d;
+}
+
+.admin-index-badge--unknown {
+  background: #e8eef6;
+  color: #3f5f86;
+}
+
+.admin-index-badge--error {
+  background: #fee4e2;
+  color: #b42318;
+}
+
+.admin-index-verdict {
+  display: block;
+  margin-top: 4px;
+  color: #52637a;
+  font-size: 0.75rem;
+}
+
+.admin-index-error {
+  display: block;
+  margin-top: 4px;
+  color: #b42318;
+  font-size: 0.75rem;
+}
+
+.admin-index-canonical {
+  max-width: 220px;
+  word-break: break-all;
+}
+
+.admin-gsc-index-table tr.is-not-indexed td:nth-child(2),
+.admin-gsc-index-table tr.is-error td:nth-child(2) {
+  font-weight: 700;
+}
+
 .admin-seo-issues {
   margin-top: 18px;
 }
