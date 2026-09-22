@@ -88,10 +88,15 @@ export function emptyTechnical(): WebsiteAuditRecord["technical"] {
     h1Count: 0,
     h1Texts: [],
     canonical: null,
+    htmlLang: null,
     robotsTxtUrl: null,
     robotsTxtOk: null,
+    robotsTxtStatus: null,
     sitemapUrl: null,
     sitemapOk: null,
+    sitemapStatus: null,
+    sitemapKind: null,
+    indexability: null,
     tls: {
       ok: null,
       protocol: null,
@@ -104,6 +109,7 @@ export function emptyTechnical(): WebsiteAuditRecord["technical"] {
       performanceScore: null,
       error: null,
       source: null,
+      metrics: null,
     },
   };
 }

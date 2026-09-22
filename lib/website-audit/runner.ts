@@ -13,15 +13,27 @@ import {
 import {
   computeCategoryScores,
   computeOverallScore,
+  countSeverities,
+  prioritizeFixes,
+  scoreBandLabel,
   summarizeFindings,
 } from "./score";
 import { getCachedAuditId, setCachedAuditId } from "./rate-limit";
+import { parseHtmlDocument } from "./html";
 import {
-  extractCanonical,
-  extractH1s,
-  extractTitle,
-  metaContent,
-} from "./html";
+  buildIndexability,
+  checkAccessibility,
+  checkAvailability,
+  checkBestPractices,
+  checkContent,
+  checkPerformance,
+  checkSecurity,
+  checkSeo,
+  estimateLocalPerformance,
+  finding,
+  robotsTxtLikelyBlocks,
+} from "./checks";
+import { fetchPagespeed } from "./pagespeed";
 import type {
   AuditFinding,
   AuditProgressStep,
@@ -72,7 +84,8 @@ async function fetchWithLimits(
       signal: controller.signal,
       headers: {
         "User-Agent": "AntiCodeWebsiteAudit/1.0 (+https://anticode.hu)",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       },
     });
     const maxBytes = options?.maxBytes ?? MAX_BODY_BYTES;
@@ -88,7 +101,12 @@ async function fetchWithLimits(
         total += value.byteLength;
         if (total > maxBytes) {
           truncated = true;
-          chunks.push(value.subarray(0, Math.max(0, maxBytes - (total - value.byteLength))));
+          chunks.push(
+            value.subarray(
+              0,
+              Math.max(0, maxBytes - (total - value.byteLength))
+            )
+          );
           try {
             await reader.cancel();
           } catch {
@@ -147,6 +165,7 @@ async function followRedirects(startUrl: string): Promise<{
         }
         const next = new URL(loc, current).toString();
         const nextHost = new URL(next).hostname;
+        // Re-validate every redirect target before following (SSRF).
         await assertPublicHostname(nextHost);
         current = next;
         continue;
@@ -193,7 +212,9 @@ async function followRedirects(startUrl: string): Promise<{
   }
 }
 
-function checkTls(hostname: string): Promise<WebsiteAuditRecord["technical"]["tls"]> {
+function checkTls(
+  hostname: string
+): Promise<WebsiteAuditRecord["technical"]["tls"]> {
   return new Promise((resolve) => {
     const socket = tls.connect(
       {
@@ -237,170 +258,99 @@ function checkTls(hostname: string): Promise<WebsiteAuditRecord["technical"]["tl
   });
 }
 
-async function fetchOptional(
-  url: string
-): Promise<{ ok: boolean; status: number; ms: number }> {
+async function fetchTextResource(
+  url: string,
+  maxBytes = 200_000
+): Promise<{ ok: boolean; status: number; body: string | null; ms: number }> {
   try {
     await assertPublicHostname(new URL(url).hostname);
-    const { response, ms } = await fetchWithLimits(url, {
+    const { response, buffer, ms } = await fetchWithLimits(url, {
       method: "GET",
-      maxBytes: 200_000,
+      maxBytes,
     });
-    return { ok: response.ok, status: response.status, ms };
+    return {
+      ok: response.ok,
+      status: response.status,
+      body: buffer.toString("utf8"),
+      ms,
+    };
   } catch {
-    return { ok: false, status: 0, ms: 0 };
+    return { ok: false, status: 0, body: null, ms: 0 };
   }
 }
 
-async function maybePagespeed(
-  url: string
-): Promise<WebsiteAuditRecord["technical"]["pagespeed"]> {
-  const key = process.env.PAGESPEED_API_KEY?.trim();
-  const params = new URLSearchParams({
-    url,
-    category: "performance",
-    strategy: "mobile",
-  });
-  if (key) params.set("key", key);
-  const endpoint =
-    `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params.toString()}`;
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45_000);
-    const res = await fetch(endpoint, { signal: controller.signal });
-    clearTimeout(timer);
-    const data = (await res.json()) as {
-      error?: { message?: string };
-      lighthouseResult?: { categories?: { performance?: { score?: number } } };
-    };
-    if (!res.ok) {
+function classifySitemap(
+  body: string | null,
+  ok: boolean
+): {
+  ok: boolean;
+  kind: "urlset" | "index" | "unknown" | "invalid" | null;
+  error?: string;
+} {
+  if (!ok || !body) {
+    return { ok: false, kind: null };
+  }
+  const trimmed = body.trim();
+  if (!trimmed.includes("<") || !/xml/i.test(trimmed.slice(0, 200)) && !trimmed.includes("<urlset") && !trimmed.includes("<sitemapindex")) {
+    if (!/<urlset\b/i.test(trimmed) && !/<sitemapindex\b/i.test(trimmed)) {
       return {
-        attempted: true,
         ok: false,
-        performanceScore: null,
-        error: data.error?.message || `PageSpeed HTTP ${res.status}`,
-        source: null,
+        kind: "invalid",
+        error: "A válasz nem tűnik XML sitemapnek.",
       };
     }
-    const score = data.lighthouseResult?.categories?.performance?.score;
+  }
+  if (/<sitemapindex\b/i.test(trimmed)) {
+    return { ok: true, kind: "index" };
+  }
+  if (/<urlset\b/i.test(trimmed)) {
+    return { ok: true, kind: "urlset" };
+  }
+  if (/<\?xml/i.test(trimmed)) {
     return {
-      attempted: true,
-      ok: typeof score === "number",
-      performanceScore:
-        typeof score === "number" ? Math.round(score * 100) : null,
-      error:
-        typeof score === "number"
-          ? null
-          : "A PageSpeed válasz nem tartalmazott performance pontszámot.",
-      source: typeof score === "number" ? "pagespeed_api" : null,
-    };
-  } catch (e) {
-    return {
-      attempted: true,
       ok: false,
-      performanceScore: null,
-      error:
-        e instanceof Error
-          ? e.name === "AbortError"
-            ? "PageSpeed időtúllépés."
-            : e.message
-          : "PageSpeed hiba.",
-      source: null,
+      kind: "invalid",
+      error: "XML válasz, de nem urlset / sitemapindex.",
     };
   }
-}
-
-/** Local performance estimate when Google PSI quota/API is unavailable. */
-function estimateLocalPerformance(input: {
-  responseMs: number | null;
-  responseBytes: number | null;
-  headers: Record<string, string>;
-  html: string | null;
-  contentType: string | null;
-}): { score: number; detail: string } {
-  let score = 100;
-  const notes: string[] = [];
-  const ms = input.responseMs;
-  if (ms == null) {
-    score -= 20;
-    notes.push("nincs válaszidő");
-  } else if (ms > 3000) {
-    score -= 35;
-    notes.push(`lassú TTFB ${ms} ms`);
-  } else if (ms > 1500) {
-    score -= 22;
-    notes.push(`közepes TTFB ${ms} ms`);
-  } else if (ms > 800) {
-    score -= 10;
-    notes.push(`TTFB ${ms} ms`);
-  } else {
-    notes.push(`gyors TTFB ${ms} ms`);
-  }
-
-  const bytes = input.responseBytes;
-  if (bytes != null) {
-    if (bytes > 1_500_000) {
-      score -= 25;
-      notes.push(`nagy HTML ${Math.round(bytes / 1024)} KB`);
-    } else if (bytes > 500_000) {
-      score -= 12;
-      notes.push(`HTML ${Math.round(bytes / 1024)} KB`);
-    } else {
-      notes.push(`HTML ${Math.round(bytes / 1024)} KB`);
-    }
-  }
-
-  const enc = (input.headers["content-encoding"] || "").toLowerCase();
-  if (!enc.includes("gzip") && !enc.includes("br") && !enc.includes("deflate")) {
-    score -= 10;
-    notes.push("nincs tömörítés");
-  } else {
-    notes.push(`tömörítés: ${enc}`);
-  }
-
-  const cache = input.headers["cache-control"] || input.headers["expires"];
-  if (!cache) {
-    score -= 6;
-    notes.push("nincs cache-control");
-  }
-
-  const html = input.html || "";
-  if (html) {
-    const scripts = (html.match(/<script\b/gi) || []).length;
-    const images = (html.match(/<img\b/gi) || []).length;
-    if (scripts > 25) {
-      score -= 12;
-      notes.push(`${scripts} script`);
-    } else if (scripts > 12) {
-      score -= 6;
-      notes.push(`${scripts} script`);
-    }
-    if (images > 40) {
-      score -= 8;
-      notes.push(`${images} kép`);
-    }
-    if (!/<link[^>]+rel=["']preconnect["']/i.test(html) && scripts > 5) {
-      score -= 3;
-    }
-  } else if (input.contentType && !/html/i.test(input.contentType)) {
-    notes.push("nem HTML — becslés a válaszból");
-  }
-
-  score = Math.max(0, Math.min(100, Math.round(score)));
-  return { score, detail: notes.join(" · ") };
+  return {
+    ok: false,
+    kind: "invalid",
+    error: "Értelmezhetetlen sitemap tartalom.",
+  };
 }
 
 function initialProgress(): AuditProgressStep[] {
   return [
-    { id: "validate", label: "URL ellenőrzés (SSRF)", status: "pending" },
-    { id: "fetch", label: "Oldal lekérése", status: "pending" },
-    { id: "tls", label: "TLS / tanúsítvány", status: "pending" },
+    { id: "validate", label: "URL ellenőrzése", status: "pending" },
+    { id: "fetch", label: "Weboldal lekérése", status: "pending" },
+    { id: "tls", label: "Biztonság ellenőrzése (TLS)", status: "pending" },
     { id: "headers", label: "Biztonsági headerek", status: "pending" },
-    { id: "html", label: "HTML / SEO jelek", status: "pending" },
+    { id: "html", label: "SEO és tartalom elemzése", status: "pending" },
+    { id: "a11y", label: "Akadálymentesség", status: "pending" },
     { id: "robots", label: "robots.txt / sitemap", status: "pending" },
     { id: "pagespeed", label: "PageSpeed", status: "pending" },
     { id: "score", label: "Pontszámítás", status: "pending" },
   ];
+}
+
+function finalize(
+  record: WebsiteAuditRecord,
+  findings: AuditFinding[],
+  progress: AuditProgressStep[]
+): WebsiteAuditRecord {
+  const categories = computeCategoryScores(findings);
+  const overall = computeOverallScore(categories);
+  record.categories = categories;
+  record.findings = findings;
+  record.priorityFixes = prioritizeFixes(findings).slice(0, 12);
+  record.severityCounts = countSeverities(findings);
+  record.overallScore = overall;
+  record.overallLabel = scoreBandLabel(overall);
+  record.summary = summarizeFindings(overall, findings);
+  record.progress = progress;
+  record.updatedAt = new Date().toISOString();
+  return record;
 }
 
 export async function runWebsiteAudit(options: {
@@ -419,32 +369,45 @@ export async function runWebsiteAudit(options: {
     normalizedUrl: options.inputUrl,
     status: "running",
     overallScore: 0,
+    overallLabel: scoreBandLabel(0),
     summary: "Fut…",
     error: null,
     categories: [],
     findings: [],
+    priorityFixes: [],
+    severityCounts: {
+      pass: 0,
+      info: 0,
+      low: 0,
+      medium: 0,
+      high: 0,
+      critical: 0,
+    },
     technical: emptyTechnical(),
     progress,
+    beta: true,
   };
 
   setStep(progress, "validate", "running");
   const validated = await validateAndResolveAuditUrl(options.inputUrl);
   if (validated.ok === false) {
     setStep(progress, "validate", "error", validated.error);
+    findings.push(
+      finding({
+        id: "url-invalid",
+        category: "availability",
+        severity: "critical",
+        title: "URL elutasítva",
+        detail: validated.error,
+        recommendation: "Adj meg publikus http(s) URL-t (localhost / privát IP tiltott).",
+        source: "http",
+      })
+    );
     record.status = "failed";
     record.error = validated.error;
-    record.summary = validated.error;
-    record.updatedAt = new Date().toISOString();
-    findings.push({
-      id: "url-invalid",
-      category: "availability",
-      severity: "critical",
-      title: "URL elutasítva",
-      detail: validated.error,
-    });
-    record.findings = findings;
-    record.categories = computeCategoryScores(findings);
+    record = finalize(record, findings, progress);
     record.overallScore = 0;
+    record.summary = validated.error;
     return saveAudit(record);
   }
 
@@ -464,6 +427,7 @@ export async function runWebsiteAudit(options: {
           updatedAt: new Date().toISOString(),
           inputUrl: options.inputUrl,
           summary: `${cached.summary} (cache · 10 perc)`,
+          beta: true,
         };
       }
     }
@@ -471,7 +435,11 @@ export async function runWebsiteAudit(options: {
 
   try {
     setStep(progress, "fetch", "running");
-    record = saveAudit({ ...record, progress, updatedAt: new Date().toISOString() });
+    record = saveAudit({
+      ...record,
+      progress,
+      updatedAt: new Date().toISOString(),
+    });
 
     const fetched = await followRedirects(validated.normalized);
     record.technical.finalUrl = fetched.finalUrl;
@@ -482,379 +450,233 @@ export async function runWebsiteAudit(options: {
     record.technical.responseBytes = fetched.buffer.length;
     record.technical.contentType = fetched.headers["content-type"] || null;
 
-    if (fetched.error) {
-      findings.push({
-        id: "redirect-error",
-        category: "availability",
-        severity: "critical",
-        title: "Átirányítási hiba",
-        detail: fetched.error,
-      });
-    }
-    if (fetched.chain.length > 3) {
-      findings.push({
-        id: "redirect-chain-long",
-        category: "performance",
-        severity: "warning",
-        title: "Hosszú redirect lánc",
-        detail: `${fetched.chain.length} lépés a végső URL-ig.`,
-        evidence: fetched.chain.join(" → "),
-      });
-    }
-    if (fetched.truncated) {
-      findings.push({
-        id: "body-too-large",
-        category: "performance",
-        severity: "warning",
-        title: "Nagy válaszméret",
-        detail: `A válasz ${MAX_BODY_BYTES}+ bájt — a vizsgálat részleges.`,
-      });
-    }
-
-    const httpStart = validated.url.protocol === "http:";
-    if (httpStart) {
-      const httpsUpgrade = fetched.chain.some((u) => u.startsWith("https://"));
-      findings.push({
-        id: httpStart && httpsUpgrade ? "http-to-https" : "http-only",
-        category: "security",
-        severity: httpsUpgrade ? "pass" : "critical",
-        title: httpsUpgrade
-          ? "HTTP → HTTPS átirányítás rendben"
-          : "Nincs HTTPS átirányítás",
-        detail: httpsUpgrade
-          ? "A HTTP kérés HTTPS-re irányít."
-          : "A kiinduló URL HTTP, és nem került át HTTPS-re.",
-      });
-    }
+    findings.push(
+      ...checkAvailability({
+        status: fetched.status,
+        ms: fetched.ms,
+        chain: fetched.chain,
+        truncated: fetched.truncated,
+        error: fetched.error,
+        maxRedirects: MAX_REDIRECTS,
+        maxBodyBytes: MAX_BODY_BYTES,
+      })
+    );
 
     if (fetched.status === 0) {
-      findings.push({
-        id: "fetch-failed",
-        category: "availability",
-        severity: "critical",
-        title: "Az oldal nem érhető el",
-        detail: fetched.error || "Hálózati / időtúllépési hiba.",
-      });
       setStep(progress, "fetch", "error", fetched.error || "fetch failed");
-    } else if (fetched.status >= 500) {
-      findings.push({
-        id: "status-5xx",
-        category: "availability",
-        severity: "critical",
-        title: `Szerverhiba (HTTP ${fetched.status})`,
-        detail: "Az oldal 5xx választ adott.",
-      });
-      setStep(progress, "fetch", "done", `HTTP ${fetched.status}`);
-    } else if (fetched.status === 404) {
-      findings.push({
-        id: "status-404",
-        category: "availability",
-        severity: "critical",
-        title: "404 — az oldal nem található",
-        detail: "A végleges URL 404-et adott.",
-      });
-      setStep(progress, "fetch", "done", "HTTP 404");
-    } else if (fetched.status >= 400) {
-      findings.push({
-        id: "status-4xx",
-        category: "availability",
-        severity: "warning",
-        title: `HTTP ${fetched.status}`,
-        detail: "Az oldal hibás kliensválaszt adott.",
-      });
-      setStep(progress, "fetch", "done", `HTTP ${fetched.status}`);
     } else {
-      findings.push({
-        id: "status-ok",
-        category: "availability",
-        severity: "pass",
-        title: `Elérhető (HTTP ${fetched.status})`,
-        detail: `Válaszidő: ${fetched.ms} ms`,
-      });
-      setStep(progress, "fetch", "done", `HTTP ${fetched.status} · ${fetched.ms} ms`);
+      setStep(
+        progress,
+        "fetch",
+        "done",
+        `HTTP ${fetched.status} · ${fetched.ms} ms`
+      );
     }
 
-    // TLS
     const finalUrl = new URL(fetched.finalUrl || validated.normalized);
+
+    // TLS
     if (finalUrl.protocol === "https:") {
       setStep(progress, "tls", "running");
       const tlsInfo = await checkTls(finalUrl.hostname);
       record.technical.tls = tlsInfo;
-      if (tlsInfo.ok) {
-        findings.push({
-          id: "tls-ok",
-          category: "security",
-          severity: "pass",
-          title: "TLS tanúsítvány rendben",
-          detail: tlsInfo.protocol ? `Protokoll: ${tlsInfo.protocol}` : "OK",
-        });
-        setStep(progress, "tls", "done", tlsInfo.protocol || "OK");
-      } else {
-        findings.push({
-          id: "tls-fail",
-          category: "security",
-          severity: "critical",
-          title: "TLS / SSL probléma",
-          detail: tlsInfo.error || "Ismeretlen TLS hiba.",
-        });
-        setStep(progress, "tls", "error", tlsInfo.error);
-      }
+      setStep(
+        progress,
+        "tls",
+        tlsInfo.ok ? "done" : "error",
+        tlsInfo.ok ? tlsInfo.protocol || "OK" : tlsInfo.error || "hiba"
+      );
     } else {
-      setStep(progress, "tls", "done", "Nem HTTPS — TLS ellenőrzés lefutott (hiba)");
-      findings.push({
-        id: "tls-no-https",
-        category: "security",
-        severity: "critical",
-        title: "Nincs HTTPS",
-        detail: "A végső URL nem HTTPS — a TLS tanúsítvány nem ellenőrizhető biztonságosan.",
-      });
+      setStep(progress, "tls", "done", "Nem HTTPS");
     }
 
-    // Security headers
-    setStep(progress, "headers", "running");
-    const h = fetched.headers;
-    const securityChecks: Array<{ id: string; header: string; title: string }> = [
-      { id: "hdr-csp", header: "content-security-policy", title: "Content-Security-Policy" },
-      { id: "hdr-xfo", header: "x-frame-options", title: "X-Frame-Options" },
-      { id: "hdr-cto", header: "x-content-type-options", title: "X-Content-Type-Options" },
-      { id: "hdr-ref", header: "referrer-policy", title: "Referrer-Policy" },
-      {
-        id: "hdr-hsts",
-        header: "strict-transport-security",
-        title: "Strict-Transport-Security",
-      },
-    ];
-    for (const check of securityChecks) {
-      if (h[check.header]) {
-        findings.push({
-          id: check.id,
-          category: "security",
-          severity: "pass",
-          title: `${check.title} jelen van`,
-          detail: h[check.header].slice(0, 180),
-          evidence: h[check.header],
-        });
-      } else {
-        findings.push({
-          id: check.id,
-          category: "security",
-          severity: check.header === "strict-transport-security" ? "warning" : "info",
-          title: `Hiányzó header: ${check.title}`,
-          detail: "Ajánlott biztonsági válaszfejléc hiányzik.",
-        });
-      }
-    }
-    setStep(progress, "headers", "done");
-
-    // HTML / SEO
-    setStep(progress, "html", "running");
-    const ctype = (record.technical.contentType || "").toLowerCase();
-    const looksHtml = ctype.includes("text/html") || ctype.includes("application/xhtml");
-    const html = looksHtml || fetched.buffer.slice(0, 200).toString("utf8").includes("<html")
-      ? fetched.buffer.toString("utf8")
-      : "";
-
-    if (!html) {
-      findings.push({
-        id: "not-html",
-        category: "content",
-        severity: "warning",
-        title: "Nem HTML tartalom",
-        detail: ctype || "Ismeretlen Content-Type — SEO jelek nem értékelhetők.",
-      });
-      setStep(progress, "html", "done", "nem HTML");
-    } else {
-      const title = extractTitle(html);
-      const description = metaContent(html, "description");
-      const canonical = extractCanonical(html);
-      const h1s = extractH1s(html);
-      record.technical.title = title;
-      record.technical.metaDescription = description;
-      record.technical.canonical = canonical;
-      record.technical.h1Count = h1s.length;
-      record.technical.h1Texts = h1s.slice(0, 5);
-
-      if (!title) {
-        findings.push({
-          id: "title-missing",
-          category: "seo",
-          severity: "critical",
-          title: "Hiányzó <title>",
-          detail: "Nincs title elem a HTML-ben.",
-        });
-      } else if (title.length < 10) {
-        findings.push({
-          id: "title-short",
-          category: "seo",
-          severity: "warning",
-          title: "Rövid title",
-          detail: `Title: „${title}”`,
-          evidence: title,
-        });
-      } else {
-        findings.push({
-          id: "title-ok",
-          category: "seo",
-          severity: "pass",
-          title: "Title rendben",
-          detail: title,
-          evidence: title,
-        });
-      }
-
-      if (!description) {
-        findings.push({
-          id: "desc-missing",
-          category: "seo",
-          severity: "warning",
-          title: "Hiányzó meta description",
-          detail: "Nincs meta description.",
-        });
-      } else if (description.length < 50) {
-        findings.push({
-          id: "desc-short",
-          category: "seo",
-          severity: "info",
-          title: "Rövid meta description",
-          detail: description,
-          evidence: description,
-        });
-      } else {
-        findings.push({
-          id: "desc-ok",
-          category: "seo",
-          severity: "pass",
-          title: "Meta description rendben",
-          detail: description.slice(0, 160),
-          evidence: description,
-        });
-      }
-
-      if (h1s.length === 0) {
-        findings.push({
-          id: "h1-missing",
-          category: "content",
-          severity: "warning",
-          title: "Hiányzó H1",
-          detail: "Nincs H1 az oldalon.",
-        });
-      } else if (h1s.length > 1) {
-        findings.push({
-          id: "h1-multiple",
-          category: "content",
-          severity: "warning",
-          title: "Több H1",
-          detail: `${h1s.length} db H1 található.`,
-          evidence: h1s.join(" | "),
-        });
-      } else {
-        findings.push({
-          id: "h1-ok",
-          category: "content",
-          severity: "pass",
-          title: "H1 rendben",
-          detail: h1s[0],
-          evidence: h1s[0],
-        });
-      }
-
-      if (!canonical) {
-        findings.push({
-          id: "canonical-missing",
-          category: "seo",
-          severity: "info",
-          title: "Hiányzó canonical",
-          detail: "Nincs rel=canonical link.",
-        });
-      } else {
-        findings.push({
-          id: "canonical-ok",
-          category: "seo",
-          severity: "pass",
-          title: "Canonical jelen van",
-          detail: canonical,
-          evidence: canonical,
-        });
-      }
-
-      if (fetched.ms > 3000) {
-        findings.push({
-          id: "slow-ttfb",
-          category: "performance",
-          severity: "warning",
-          title: "Lassú válasz",
-          detail: `${fetched.ms} ms a teljes redirect+válasz.`,
-        });
-      } else {
-        findings.push({
-          id: "ttfb-ok",
-          category: "performance",
-          severity: "pass",
-          title: "Elfogadható válaszidő",
-          detail: `${fetched.ms} ms`,
-        });
-      }
-
-      setStep(progress, "html", "done");
-    }
-
-    // robots + sitemap
+    // Parallel: robots + sitemap (independent, SSRF-checked)
     setStep(progress, "robots", "running");
     const origin = `${finalUrl.protocol}//${finalUrl.host}`;
     const robotsUrl = `${origin}/robots.txt`;
     const sitemapUrl = `${origin}/sitemap.xml`;
     record.technical.robotsTxtUrl = robotsUrl;
     record.technical.sitemapUrl = sitemapUrl;
-    const robots = await fetchOptional(robotsUrl);
-    const sitemap = await fetchOptional(sitemapUrl);
-    record.technical.robotsTxtOk = robots.ok;
-    record.technical.sitemapOk = sitemap.ok;
 
-    findings.push({
-      id: robots.ok ? "robots-ok" : "robots-missing",
-      category: "best_practices",
-      severity: robots.ok ? "pass" : "warning",
-      title: robots.ok ? "robots.txt elérhető" : "robots.txt hiányzik / hibás",
-      detail: robots.ok ? `HTTP ${robots.status}` : `HTTP ${robots.status || "n/a"}`,
-    });
-    findings.push({
-      id: sitemap.ok ? "sitemap-ok" : "sitemap-missing",
-      category: "seo",
-      severity: sitemap.ok ? "pass" : "warning",
-      title: sitemap.ok ? "sitemap.xml elérhető" : "sitemap.xml hiányzik / hibás",
-      detail: sitemap.ok ? `HTTP ${sitemap.status}` : `HTTP ${sitemap.status || "n/a"}`,
-    });
-    setStep(progress, "robots", "done");
+    const [robotsRes, sitemapRes] = await Promise.all([
+      fetchTextResource(robotsUrl),
+      fetchTextResource(sitemapUrl),
+    ]);
 
-    // PageSpeed API, with local performance fallback on quota/API failure
+    record.technical.robotsTxtOk = robotsRes.ok;
+    record.technical.robotsTxtStatus = robotsRes.status;
+    const sitemapClass = classifySitemap(sitemapRes.body, sitemapRes.ok);
+    record.technical.sitemapOk = sitemapClass.ok;
+    record.technical.sitemapStatus = sitemapRes.status;
+    record.technical.sitemapKind = sitemapClass.kind;
+    setStep(
+      progress,
+      "robots",
+      "done",
+      `robots ${robotsRes.status} · sitemap ${sitemapRes.status}`
+    );
+
+    // HTML parse
+    setStep(progress, "headers", "running");
+    setStep(progress, "html", "running");
+    const ctype = (record.technical.contentType || "").toLowerCase();
+    const looksHtml =
+      ctype.includes("text/html") ||
+      ctype.includes("application/xhtml") ||
+      fetched.buffer.slice(0, 200).toString("utf8").includes("<html");
+    const html = looksHtml ? fetched.buffer.toString("utf8") : "";
+    const pageIsHttps = finalUrl.protocol === "https:";
+    const doc = html
+      ? parseHtmlDocument(html, { pageIsHttps })
+      : null;
+
+    if (doc) {
+      record.technical.title = doc.title;
+      record.technical.metaDescription = doc.metaDescription;
+      record.technical.canonical = doc.canonical;
+      record.technical.h1Count = doc.h1Texts.length;
+      record.technical.h1Texts = doc.h1Texts.slice(0, 5);
+      record.technical.htmlLang = doc.htmlLang;
+    } else if (fetched.status > 0) {
+      findings.push(
+        finding({
+          id: "not-html",
+          category: "content",
+          severity: "medium",
+          title: "Nem HTML tartalom",
+          detail: ctype || "Ismeretlen Content-Type — SEO/tartalom jelek nem értékelhetők.",
+          source: "http",
+        })
+      );
+    }
+
+    const robotsBlocks = robotsTxtLikelyBlocks(
+      robotsRes.body,
+      finalUrl.pathname || "/"
+    );
+    const indexability = buildIndexability({
+      metaRobots: doc?.metaRobots || null,
+      xRobotsTag: fetched.headers["x-robots-tag"] || null,
+      robotsTxtBlocksPath: robotsBlocks,
+    });
+    record.technical.indexability = indexability;
+
+    findings.push(
+      ...checkSecurity({
+        startProtocol: validated.url.protocol,
+        finalProtocol: finalUrl.protocol,
+        chain: fetched.chain,
+        headers: fetched.headers,
+        tls: record.technical.tls,
+        mixedContentUrls: doc?.mixedContentUrls || [],
+      })
+    );
+    setStep(progress, "headers", "done");
+
+    findings.push(
+      ...checkSeo({
+        doc,
+        pageUrl: fetched.finalUrl || validated.normalized,
+        xRobotsTag: fetched.headers["x-robots-tag"] || null,
+        robotsTxtBlocksPath: robotsBlocks,
+        sitemap: {
+          ok: sitemapClass.ok,
+          status: sitemapRes.status,
+          kind: sitemapClass.kind,
+          error: sitemapClass.error,
+        },
+        indexability,
+      })
+    );
+    findings.push(...checkContent(doc));
+    setStep(progress, "html", "done");
+
+    setStep(progress, "a11y", "running");
+    // a11y first pass without lighthouse; enrich after PSI
+    findings.push(
+      ...checkAccessibility({
+        doc,
+        lighthouseA11yScore: null,
+      })
+    );
+    setStep(progress, "a11y", "done");
+
+    findings.push(
+      ...checkBestPractices({
+        doc,
+        finalProtocol: finalUrl.protocol,
+        robots: {
+          ok: robotsRes.ok,
+          status: robotsRes.status,
+          body: robotsRes.body,
+        },
+        mixedContentUrls: doc?.mixedContentUrls || [],
+      })
+    );
+
+    // PageSpeed
     setStep(progress, "pagespeed", "running");
-    const ps = await maybePagespeed(fetched.finalUrl || validated.normalized);
+    const ps = await fetchPagespeed(fetched.finalUrl || validated.normalized);
     if (ps.ok && ps.performanceScore != null) {
-      record.technical.pagespeed = ps;
-      setStep(progress, "pagespeed", "done", `${ps.performanceScore}/100 (API)`);
-      findings.push({
-        id: "pagespeed-score",
-        category: "performance",
-        severity: ps.performanceScore >= 50 ? "pass" : "warning",
-        title: `PageSpeed: ${ps.performanceScore}/100`,
-        detail: "Google PageSpeed Insights (mobile Lighthouse).",
-      });
+      record.technical.pagespeed = {
+        attempted: true,
+        ok: true,
+        performanceScore: ps.performanceScore,
+        error: null,
+        source: "pagespeed_api",
+        metrics: ps.metrics,
+      };
+      setStep(
+        progress,
+        "pagespeed",
+        "done",
+        `${ps.performanceScore}/100 (PageSpeed / Lighthouse)`
+      );
+      findings.push(
+        ...checkPerformance({
+          responseMs: fetched.ms,
+          responseBytes: fetched.buffer.byteLength,
+          headers: fetched.headers,
+          pagespeedScore: ps.performanceScore,
+          pagespeedSource: "pagespeed_api",
+          pagespeedError: null,
+          metrics: ps.metrics,
+        })
+      );
+      // Replace a11y lighthouse N/A with real score
+      if (ps.metrics?.accessibilityScore != null) {
+        const idx = findings.findIndex((f) => f.id === "a11y-lighthouse-na");
+        if (idx >= 0) findings.splice(idx, 1);
+        const score = ps.metrics.accessibilityScore;
+        findings.push(
+          finding({
+            id: "a11y-lighthouse",
+            category: "accessibility",
+            severity: score >= 90 ? "pass" : score >= 70 ? "low" : "medium",
+            title: `Lighthouse Accessibility: ${score}/100`,
+            detail:
+              "PageSpeed / Lighthouse mérés. Ez nem egyenlő teljes WCAG audittal.",
+            detectedValue: `${score}/100`,
+            source: "pagespeed_api",
+          })
+        );
+      }
     } else {
       const local = estimateLocalPerformance({
         responseMs: fetched.ms,
         responseBytes: fetched.buffer.byteLength,
         headers: fetched.headers,
-        html:
-          fetched.headers["content-type"]?.includes("html") ||
-          !fetched.headers["content-type"]
-            ? fetched.buffer.toString("utf8")
-            : null,
+        html: html || null,
         contentType: fetched.headers["content-type"] || null,
       });
       const apiNote = ps.error
-        ? ps.error.length > 160
-          ? `${ps.error.slice(0, 160)}…`
-          : ps.error
+        ? ps.quotaExceeded
+          ? `kvóta / rate limit: ${ps.error}`
+          : ps.timedOut
+            ? "PageSpeed időtúllépés"
+            : ps.error.length > 160
+              ? `${ps.error.slice(0, 160)}…`
+              : ps.error
         : "API hiba";
       record.technical.pagespeed = {
         attempted: true,
@@ -862,6 +684,7 @@ export async function runWebsiteAudit(options: {
         performanceScore: local.score,
         error: `Google PSI nem elérhető (${apiNote}). Helyi becslés használva.`,
         source: "local_estimate",
+        metrics: null,
       };
       setStep(
         progress,
@@ -869,27 +692,25 @@ export async function runWebsiteAudit(options: {
         "done",
         `${local.score}/100 (helyi becslés)`
       );
-      findings.push({
-        id: "pagespeed-local",
-        category: "performance",
-        severity: local.score >= 50 ? "pass" : "warning",
-        title: `Teljesítmény (helyi): ${local.score}/100`,
-        detail: `A Google PageSpeed API most nem volt használható (${apiNote}). Saját becslés: ${local.detail}`,
-      });
+      findings.push(
+        ...checkPerformance({
+          responseMs: fetched.ms,
+          responseBytes: fetched.buffer.byteLength,
+          headers: fetched.headers,
+          pagespeedScore: local.score,
+          pagespeedSource: "local_estimate",
+          pagespeedError: apiNote,
+          metrics: null,
+          localDetail: local.detail,
+        })
+      );
     }
 
     setStep(progress, "score", "running");
-    const categories = computeCategoryScores(findings);
-    const overall = computeOverallScore(categories);
-    record.categories = categories;
-    record.findings = findings;
-    record.overallScore = overall;
-    record.summary = summarizeFindings(overall, findings);
     record.status = "completed";
     record.error = null;
-    record.progress = progress;
-    record.updatedAt = new Date().toISOString();
-    setStep(progress, "score", "done", `${overall}/100`);
+    record = finalize(record, findings, progress);
+    setStep(progress, "score", "done", `${record.overallScore}/100`);
     const saved = saveAudit(record);
     setCachedAuditId(validated.normalized, saved.id);
     return saved;
@@ -900,20 +721,21 @@ export async function runWebsiteAudit(options: {
           ? "Időtúllépés a lekérés közben."
           : e.message
         : "Ismeretlen audit hiba.";
-    findings.push({
-      id: "runtime-error",
-      category: "availability",
-      severity: "critical",
-      title: "Az ellenőrzés megszakadt",
-      detail: message,
-    });
-    record.findings = findings;
-    record.categories = computeCategoryScores(findings);
-    record.overallScore = 0;
+    findings.push(
+      finding({
+        id: "runtime-error",
+        category: "availability",
+        severity: "critical",
+        title: "Az ellenőrzés megszakadt",
+        detail: message,
+        source: "http",
+      })
+    );
     record.status = "failed";
     record.error = message;
+    record = finalize(record, findings, progress);
+    record.overallScore = 0;
     record.summary = message;
-    record.updatedAt = new Date().toISOString();
     for (const step of progress) {
       if (step.status === "running" || step.status === "pending") {
         step.status = "error";

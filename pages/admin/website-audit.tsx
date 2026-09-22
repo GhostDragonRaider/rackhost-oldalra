@@ -1,26 +1,24 @@
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AdminShell from "../../components/admin/AdminShell";
+import {
+  CategoryBars,
+  ScoreRing,
+  SeverityDistribution,
+  severityIcon,
+  severityLabel,
+  scoreTone,
+} from "../../components/admin/audit/AuditDashboardParts";
 import type {
+  AuditCategoryId,
   AuditFinding,
+  AuditSeverity,
   WebsiteAuditRecord,
   WebsiteAuditSummary,
 } from "../../lib/website-audit/types";
+import { CATEGORY_LABELS } from "../../lib/website-audit/types";
 
-function severityLabel(s: AuditFinding["severity"]): string {
-  switch (s) {
-    case "critical":
-      return "kritikus";
-    case "warning":
-      return "figyelmeztetés";
-    case "info":
-      return "infó";
-    case "pass":
-      return "rendben";
-    default:
-      return s;
-  }
-}
+type FindingFilter = "all" | "problems" | "pass" | "critical_high";
 
 function formatWhen(iso: string): string {
   const d = new Date(iso);
@@ -44,9 +42,35 @@ function stepLabel(status: string): string {
       return "kész";
     case "error":
       return "hiba";
+    case "skipped":
+      return "kihagyva";
     default:
       return status;
   }
+}
+
+function normalizeSeverity(s: string): AuditSeverity {
+  if (s === "warning") return "medium";
+  if (
+    s === "pass" ||
+    s === "info" ||
+    s === "low" ||
+    s === "medium" ||
+    s === "high" ||
+    s === "critical"
+  ) {
+    return s;
+  }
+  return "info";
+}
+
+function isProblem(f: AuditFinding): boolean {
+  const sev = normalizeSeverity(f.severity);
+  return (
+    sev !== "pass" &&
+    f.status !== "not_available" &&
+    f.status !== "not_applicable"
+  );
 }
 
 function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
@@ -57,6 +81,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [statusMsg, setStatusMsg] = useState("");
   const [audit, setAudit] = useState<WebsiteAuditRecord | null>(null);
   const [history, setHistory] = useState<WebsiteAuditSummary[]>([]);
+  const [filter, setFilter] = useState<FindingFilter>("problems");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({});
 
   const loadHistory = useCallback(async () => {
     const res = await fetch("/api/admin/website-audit", {
@@ -86,6 +113,8 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setAudit(data.audit as WebsiteAuditRecord);
     setUrl(data.audit.inputUrl || data.audit.normalizedUrl || "https://");
     setStatusMsg(`Betöltve: ${formatWhen(data.audit.createdAt)}`);
+    setFilter("problems");
+    setActiveCategory(null);
   }
 
   async function startAudit(e?: FormEvent, opts?: { force?: boolean }) {
@@ -94,6 +123,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setError("");
     setStatusMsg("Ellenőrzés fut…");
     setAudit(null);
+    setActiveCategory(null);
     try {
       const res = await fetch("/api/admin/website-audit", {
         method: "POST",
@@ -125,56 +155,71 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     }
   }
 
-  const tone =
-    !audit
-      ? "neutral"
-      : audit.overallScore >= 80
-        ? "good"
-        : audit.overallScore >= 55
-          ? "warn"
-          : "bad";
+  const tone = audit ? scoreTone(audit.overallScore) : "neutral";
 
-  const problemFindings = (audit?.findings || [])
-    .filter((f) => f.severity === "critical" || f.severity === "warning")
-    .sort((a, b) => {
-      const rank = { critical: 0, warning: 1, info: 2, pass: 3 };
-      return (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9);
-    });
+  const severityCounts = useMemo(() => {
+    if (!audit) return {};
+    if (audit.severityCounts) return audit.severityCounts;
+    const counts: Record<string, number> = {};
+    for (const f of audit.findings || []) {
+      const s = normalizeSeverity(f.severity);
+      counts[s] = (counts[s] || 0) + 1;
+    }
+    return counts;
+  }, [audit]);
 
-  const infoFindings = (audit?.findings || []).filter(
-    (f) => f.severity === "info"
-  );
+  const priorityFixes = useMemo(() => {
+    if (!audit) return [];
+    if (audit.priorityFixes?.length) return audit.priorityFixes;
+    return (audit.findings || [])
+      .filter(isProblem)
+      .slice()
+      .sort((a, b) => {
+        const rank: Record<string, number> = {
+          critical: 0,
+          high: 1,
+          medium: 2,
+          warning: 2,
+          low: 3,
+          info: 4,
+        };
+        return (
+          (rank[normalizeSeverity(a.severity)] ?? 9) -
+          (rank[normalizeSeverity(b.severity)] ?? 9)
+        );
+      })
+      .slice(0, 12);
+  }, [audit]);
 
-  const criticalCount = (audit?.findings || []).filter(
-    (f) => f.severity === "critical"
-  ).length;
-  const warningCount = (audit?.findings || []).filter(
-    (f) => f.severity === "warning"
-  ).length;
-  const infoCount = infoFindings.length;
+  const categoriesSorted = useMemo(() => {
+    if (!audit) return [];
+    return [...(audit.categories || [])].sort((a, b) => b.score - a.score);
+  }, [audit]);
 
-  function problemSummaryText(
-    critical: number,
-    warning: number,
-    info: number
-  ): string {
-    if (critical === 0 && warning === 0 && info === 0) {
-      return "Nem találtunk javítandó hibát.";
-    }
-    if (critical > 0 && warning > 0) {
-      return `${critical} kritikus és ${warning} hibát találtunk.`;
-    }
-    if (critical > 0) {
-      return `${critical} kritikus hibát találtunk.`;
-    }
-    if (warning > 0 && info > 0) {
-      return `${warning} hibát és ${info} egyéb hibát találtunk.`;
-    }
-    if (warning > 0) {
-      return `${warning} hibát találtunk.`;
-    }
-    return `${info} egyéb hibát találtunk.`;
+  function matchesFilter(f: AuditFinding): boolean {
+    const sev = normalizeSeverity(f.severity);
+    if (filter === "all") return true;
+    if (filter === "pass") return sev === "pass";
+    if (filter === "critical_high") return sev === "critical" || sev === "high";
+    return isProblem(f);
   }
+
+  function toggleCat(id: string) {
+    setOpenCats((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  useEffect(() => {
+    if (!audit) return;
+    // Auto-open categories that have problems
+    const next: Record<string, boolean> = {};
+    for (const cat of audit.categories || []) {
+      const hasProblem = (audit.findings || []).some(
+        (f) => f.category === cat.id && isProblem(f)
+      );
+      next[cat.id] = hasProblem;
+    }
+    setOpenCats(next);
+  }, [audit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const offerHref = audit
     ? `/kapcsolat?${new URLSearchParams({
@@ -183,8 +228,11 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
         message: [
           "Weboldal-ellenőrző alapján szeretnék ajánlatot kérni a hibák javítására.",
           `Ellenőrzött URL: ${audit.normalizedUrl || audit.inputUrl}`,
-          `Eredmény: ${problemSummaryText(criticalCount, warningCount, infoCount)}`,
-          `Összpontszám: ${audit.overallScore}/100`,
+          `Összpontszám: ${audit.overallScore}/100 (${audit.overallLabel || ""})`,
+          `Prioritás: ${priorityFixes
+            .slice(0, 5)
+            .map((f) => f.title)
+            .join("; ")}`,
         ].join("\n"),
       }).toString()}`
     : "/kapcsolat";
@@ -192,12 +240,18 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   return (
     <>
       <section className="admin-card admin-audit" aria-label="Weboldal-ellenőrző">
-        <div className="admin-seo-head">
+        <div className="admin-seo-head admin-audit-head">
           <div>
-            <h2>Weboldal-ellenőrző</h2>
+            <div className="admin-audit-title-row">
+              <h2>Weboldal-ellenőrző</h2>
+              <span className="admin-audit-beta" title="Teszt verzió">
+                BETA
+              </span>
+            </div>
             <p className="admin-muted">
-              Admin tesztverzió — tetszőleges publikus URL teljes technikai
-              auditja (SSRF-védelemmel). Nem publikus szolgáltatás.
+              Admin tesztverzió — egyetlen publikus URL részletes technikai
+              auditja (SSRF-védelemmel). Nem publikus szolgáltatás, nem
+              website-crawl.
             </p>
           </div>
         </div>
@@ -236,8 +290,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             </button>
           </div>
           <p id="audit-url-hint" className="admin-muted">
-            Csak publikus http(s) URL. Localhost / privát IP tiltott. Minden
-            lépés lefut (PageSpeed is).
+            Csak publikus http(s) URL. Localhost / privát IP tiltott.
           </p>
           <label className="admin-audit-check">
             <input
@@ -255,37 +308,67 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           {error ? <p className="admin-error">{error}</p> : null}
         </div>
 
+        {running ? (
+          <div className="audit-loading" aria-busy="true" aria-live="polite">
+            <p className="audit-loading__title">Audit folyamatban…</p>
+            <p className="admin-muted">
+              URL → lekérés → biztonság → SEO / tartalom → akadálymentesség →
+              robots/sitemap → PageSpeed → pontszámítás
+            </p>
+            <ol className="audit-loading__steps">
+              {[
+                "URL ellenőrzése",
+                "Weboldal lekérése",
+                "Biztonság ellenőrzése",
+                "SEO elemzés",
+                "Tartalom elemzése",
+                "Akadálymentesség",
+                "robots.txt / sitemap",
+                "PageSpeed",
+                "Pontszámítás",
+              ].map((label, i) => (
+                <li key={label} className="audit-loading__step is-pulse">
+                  <span className="audit-loading__dot" aria-hidden />
+                  {label}
+                  <span className="admin-sr-only"> — fázis {i + 1}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+
         {audit ? (
           <article
-            className={`admin-audit-report admin-seo--${tone}`}
-            aria-label="Audit jelentés"
+            className={`admin-audit-report admin-seo--${tone} audit-dashboard`}
+            aria-label="Audit dashboard"
           >
-            <header className="admin-report-head">
-              <div className="admin-report-score">
-                <span>URL-audit pontszám</span>
-                <strong>{audit.overallScore}/100</strong>
-              </div>
-              <div className="admin-report-meta">
-                <h3>Audit jelentés</h3>
-                <p>{audit.summary}</p>
-                <p className="admin-muted">
-                  Egy oldal pillanatképe (biztonság, SEO, teljesítmény) —{" "}
-                  <strong>nem ugyanaz a skála</strong>, mint a Monitor
-                  technikai SEO pontszáma (teljes site crawl).
-                </p>
-                <p className="admin-muted">
+            <header className="audit-dash-head">
+              <ScoreRing
+                score={audit.overallScore}
+                label={audit.overallLabel || "Eredmény"}
+              />
+              <div className="audit-dash-meta">
+                <div className="admin-audit-title-row">
+                  <h3>Weboldal health</h3>
+                  <span className="admin-audit-beta">Teszt verzió</span>
+                </div>
+                <p className="audit-dash-summary">{audit.summary}</p>
+                <p className="admin-muted admin-break">
                   {formatWhen(audit.createdAt)} · {audit.status}
+                  {audit.error ? ` · ${audit.error}` : ""}
                 </p>
-                <p>
-                  Cél:{" "}
+                <p className="admin-break">
                   <a
                     href={audit.normalizedUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="admin-break"
                   >
                     {audit.normalizedUrl}
                   </a>
+                </p>
+                <p className="admin-muted">
+                  Egy URL pillanatképe — nem a Monitor teljes site crawl
+                  skálája.
                 </p>
                 <div className="admin-audit-actions">
                   <button
@@ -299,174 +382,231 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   >
                     Újraellenőrzés
                   </button>
+                  <Link href={offerHref} className="admin-report-offer-cta">
+                    Kérj ajánlatot
+                  </Link>
                 </div>
               </div>
             </header>
 
-            <section
-              className="admin-report-block admin-report-offer"
-              aria-label="Hibák összefoglalója"
-            >
-              <p className="admin-report-offer-count">
-                {problemSummaryText(criticalCount, warningCount, infoCount)}
-              </p>
-              {criticalCount + warningCount + infoCount > 0 ? (
-                <>
-                  <p className="admin-report-offer-ask">
-                    Szeretnéd, hogy ezeket a hibákat kijavítsuk?
-                  </p>
-                  <Link href={offerHref} className="admin-report-offer-cta">
-                    Kérj ajánlatot
-                  </Link>
-                </>
-              ) : (
-                <p className="admin-muted" style={{ margin: 0 }}>
-                  Az oldal jelenlegi állapotában nincs azonnali javítanivaló.
-                </p>
-              )}
+            <section aria-label="Súlyosság eloszlás">
+              <h4 className="audit-section-title">Súlyosság eloszlás</h4>
+              <SeverityDistribution counts={severityCounts} />
+            </section>
+
+            <section aria-label="Kategóriák">
+              <h4 className="audit-section-title">Kategóriák</h4>
+              <CategoryBars
+                categories={categoriesSorted}
+                activeId={activeCategory}
+                onSelect={(id) => {
+                  setActiveCategory(id);
+                  setOpenCats((prev) => ({ ...prev, [id]: true }));
+                  const el = document.getElementById(`audit-cat-${id}`);
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
             </section>
 
             <section
-              className="admin-report-block admin-report-problems"
-              aria-label="Weboldal hibái"
+              className="audit-priority"
+              aria-label="Mit javítsak először"
             >
-              <h4>Weboldal hibái</h4>
-              {problemFindings.length === 0 ? (
-                <p className="admin-muted admin-report-ok">
-                  Nincs kritikus hiba vagy figyelmeztetés.
+              <h4 className="audit-section-title">Mit javítsak először?</h4>
+              {priorityFixes.length === 0 ? (
+                <p className="admin-report-ok">
+                  Nincs prioritásos javítanivaló — erős állapot.
                 </p>
               ) : (
-                <div className="admin-report-table-wrap">
-                  <table className="admin-report-table admin-report-findings">
-                    <thead>
-                      <tr>
-                        <th scope="col">Súlyosság</th>
-                        <th scope="col">Kategória</th>
-                        <th scope="col">Hiba</th>
-                        <th scope="col">Részlet</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {problemFindings.map((f) => (
-                        <tr
-                          key={f.id}
-                          className={`admin-finding--${f.severity}`}
-                        >
-                          <td>
-                            <span className="admin-finding-tag admin-finding-tag--inline">
-                              {severityLabel(f.severity)}
-                            </span>
-                          </td>
-                          <td>{f.category}</td>
-                          <td>{f.title}</td>
-                          <td className="admin-break">
-                            {f.detail}
-                            {f.evidence ? (
-                              <pre className="admin-evidence">{f.evidence}</pre>
-                            ) : null}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {infoFindings.length > 0 ? (
-                <details className="admin-report-info-details">
-                  <summary>
-                    További infók ({infoFindings.length}) — nem kritikus
-                  </summary>
-                  <div className="admin-report-table-wrap">
-                    <table className="admin-report-table admin-report-findings">
-                      <thead>
-                        <tr>
-                          <th scope="col">Súlyosság</th>
-                          <th scope="col">Kategória</th>
-                          <th scope="col">Megjegyzés</th>
-                          <th scope="col">Részlet</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {infoFindings.map((f) => (
-                          <tr
-                            key={f.id}
-                            className={`admin-finding--${f.severity}`}
-                          >
-                            <td>
-                              <span className="admin-finding-tag admin-finding-tag--inline">
-                                {severityLabel(f.severity)}
-                              </span>
-                            </td>
-                            <td>{f.category}</td>
-                            <td>{f.title}</td>
-                            <td className="admin-break">{f.detail}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </details>
-              ) : null}
-            </section>
-
-            <section className="admin-report-block">
-              <h4>Lépések</h4>
-              <div className="admin-report-table-wrap">
-                <table className="admin-report-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Állapot</th>
-                      <th scope="col">Lépés</th>
-                      <th scope="col">Részlet</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(audit.progress || []).map((step) => (
-                      <tr
-                        key={step.id}
-                        className={`admin-report-row--${step.status}`}
+                <ol className="audit-priority-list">
+                  {priorityFixes.map((f, i) => {
+                    const sev = normalizeSeverity(f.severity);
+                    return (
+                      <li
+                        key={`${f.id}-${i}`}
+                        className={`audit-priority-item audit-sev--${sev}${
+                          sev === "critical" ? " is-critical" : ""
+                        }`}
                       >
-                        <td>{stepLabel(step.status)}</td>
-                        <td>{step.label}</td>
-                        <td className="admin-break">{step.detail || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        <div className="audit-priority-item__top">
+                          <span className="audit-priority-item__n" aria-hidden>
+                            {i + 1}
+                          </span>
+                          <strong>{f.title}</strong>
+                          <span
+                            className={`admin-finding-tag audit-sev--${sev}`}
+                          >
+                            <span aria-hidden>{severityIcon(sev)} </span>
+                            {severityLabel(sev)}
+                          </span>
+                          <span className="audit-cat-pill">
+                            {CATEGORY_LABELS[f.category as AuditCategoryId] ||
+                              f.category}
+                          </span>
+                        </div>
+                        <p>{f.detail}</p>
+                        {f.detectedValue ? (
+                          <p className="admin-muted admin-break">
+                            Detektált: {f.detectedValue}
+                          </p>
+                        ) : null}
+                        {f.recommendation ? (
+                          <p className="audit-fix">
+                            <strong>Javaslat:</strong> {f.recommendation}
+                          </p>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+
+            {audit.technical.indexability ? (
+              <section
+                className={`audit-indexability audit-indexability--${audit.technical.indexability.status}`}
+                aria-label="Indexelhetőség"
+              >
+                <h4 className="audit-section-title">Indexelhetőség</h4>
+                <p>{audit.technical.indexability.summary}</p>
+              </section>
+            ) : null}
+
+            <section aria-label="Részletes audit">
+              <div className="audit-detail-head">
+                <h4 className="audit-section-title">Részletes ellenőrzések</h4>
+                <div
+                  className="admin-audit-filters"
+                  role="group"
+                  aria-label="Szűrés"
+                >
+                  {(
+                    [
+                      ["problems", "Problémák"],
+                      ["critical_high", "Kritikus / magas"],
+                      ["pass", "Sikeres"],
+                      ["all", "Összes"],
+                    ] as Array<[FindingFilter, string]>
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={filter === id ? "is-active" : ""}
+                      onClick={() => setFilter(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="audit-accordions">
+                {(audit.categories || []).map((cat) => {
+                  const items = (audit.findings || []).filter(
+                    (f) => f.category === cat.id && matchesFilter(f)
+                  );
+                  if (filter !== "all" && items.length === 0) return null;
+                  const open = openCats[cat.id] ?? false;
+                  const catTone = scoreTone(cat.score);
+                  return (
+                    <div
+                      key={cat.id}
+                      id={`audit-cat-${cat.id}`}
+                      className={`audit-acc audit-acc--${catTone}`}
+                    >
+                      <button
+                        type="button"
+                        className="audit-acc__summary"
+                        aria-expanded={open}
+                        onClick={() => toggleCat(cat.id)}
+                      >
+                        <span>
+                          {cat.label} — {cat.score}/100
+                        </span>
+                        <span className="admin-muted">
+                          {items.length} tétel · {open ? "bezár" : "kinyit"}
+                        </span>
+                      </button>
+                      {open ? (
+                        <ul className="audit-acc__list">
+                          {items.length === 0 ? (
+                            <li className="admin-muted">Nincs találat a szűrőben.</li>
+                          ) : (
+                            items.map((f) => {
+                              const sev = normalizeSeverity(f.severity);
+                              return (
+                                <li
+                                  key={f.id}
+                                  className={`audit-finding audit-sev--${sev}${
+                                    sev === "critical" ? " is-critical" : ""
+                                  }`}
+                                >
+                                  <div className="audit-finding__top">
+                                    <span
+                                      className={`admin-finding-tag audit-sev--${sev}`}
+                                      title={severityLabel(sev)}
+                                    >
+                                      <span aria-hidden>
+                                        {severityIcon(sev)}{" "}
+                                      </span>
+                                      {severityLabel(sev)}
+                                    </span>
+                                    <strong>{f.title}</strong>
+                                    {f.source === "pagespeed_api" ? (
+                                      <span className="audit-source">
+                                        PageSpeed / Lighthouse mérés
+                                      </span>
+                                    ) : null}
+                                    {f.source === "local_estimate" ? (
+                                      <span className="audit-source audit-source--local">
+                                        Helyi becslés
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <p>{f.detail}</p>
+                                  {f.detectedValue ? (
+                                    <p className="admin-muted admin-break">
+                                      Érték: {f.detectedValue}
+                                    </p>
+                                  ) : null}
+                                  {f.recommendation ? (
+                                    <p className="audit-fix">
+                                      <strong>Javaslat:</strong>{" "}
+                                      {f.recommendation}
+                                    </p>
+                                  ) : null}
+                                  {f.evidence ? (
+                                    <pre className="admin-evidence">
+                                      {f.evidence}
+                                    </pre>
+                                  ) : null}
+                                </li>
+                              );
+                            })
+                          )}
+                        </ul>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
-            <section className="admin-report-block">
-              <h4>Kategóriapontok</h4>
+            <details className="audit-tech-details">
+              <summary>Technikai részletek</summary>
               <div className="admin-report-table-wrap">
                 <table className="admin-report-table">
-                  <thead>
+                  <tbody>
                     <tr>
-                      <th scope="col">Kategória</th>
-                      <th scope="col">Pont</th>
-                      <th scope="col">Találatok</th>
+                      <th scope="row">Eredeti URL</th>
+                      <td className="admin-break">{audit.inputUrl}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {audit.categories.map((cat) => (
-                      <tr key={cat.id}>
-                        <td>{cat.label}</td>
-                        <td>
-                          <strong>{cat.score}/100</strong>
-                        </td>
-                        <td>{cat.findingCount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section className="admin-report-block">
-              <h4>Technikai adatok</h4>
-              <div className="admin-report-table-wrap">
-                <table className="admin-report-table">
-                  <tbody>
+                    <tr>
+                      <th scope="row">Végső URL</th>
+                      <td className="admin-break">
+                        {audit.technical.finalUrl || "—"}
+                      </td>
+                    </tr>
                     <tr>
                       <th scope="row">HTTP státusz</th>
                       <td>{audit.technical.statusCode ?? "—"}</td>
@@ -494,54 +634,26 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">Végső URL</th>
-                      <td className="admin-break">
-                        {audit.technical.finalUrl || "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Title</th>
-                      <td className="admin-break">
-                        {audit.technical.title || "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Meta description</th>
-                      <td className="admin-break">
-                        {audit.technical.metaDescription || "—"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">H1</th>
-                      <td className="admin-break">
-                        {audit.technical.h1Count} ·{" "}
-                        {audit.technical.h1Texts.join(" | ") || "—"}
-                      </td>
-                    </tr>
-                    <tr>
                       <th scope="row">Canonical</th>
                       <td className="admin-break">
                         {audit.technical.canonical || "—"}
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">robots.txt</th>
-                      <td>
-                        {audit.technical.robotsTxtOk == null
-                          ? "—"
-                          : audit.technical.robotsTxtOk
-                            ? "OK"
-                            : "hiányzik/hiba"}
-                      </td>
+                      <th scope="row">html lang</th>
+                      <td>{audit.technical.htmlLang || "—"}</td>
                     </tr>
                     <tr>
-                      <th scope="row">sitemap.xml</th>
-                      <td>
-                        {audit.technical.sitemapOk == null
-                          ? "—"
-                          : audit.technical.sitemapOk
-                            ? "OK"
-                            : "hiányzik/hiba"}
+                      <th scope="row">robots / X-Robots</th>
+                      <td className="admin-break">
+                        {audit.technical.indexability
+                          ? [
+                              audit.technical.indexability.metaRobots,
+                              audit.technical.indexability.xRobotsTag,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || "—"
+                          : "—"}
                       </td>
                     </tr>
                     <tr>
@@ -555,22 +667,18 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">PageSpeed</th>
+                      <th scope="row">PageSpeed forrás</th>
                       <td className="admin-break">
-                        {audit.technical.pagespeed.ok
-                          ? `${audit.technical.pagespeed.performanceScore}/100${
-                              audit.technical.pagespeed.source ===
+                        {audit.technical.pagespeed.source === "pagespeed_api"
+                          ? "PageSpeed / Lighthouse mérés"
+                          : audit.technical.pagespeed.source ===
                               "local_estimate"
-                                ? " (helyi becslés)"
-                                : audit.technical.pagespeed.source ===
-                                    "pagespeed_api"
-                                  ? " (Google PSI)"
-                                  : ""
-                            }`
-                          : audit.technical.pagespeed.error || "hiba"}
-                        {audit.technical.pagespeed.error &&
-                        audit.technical.pagespeed.source ===
-                          "local_estimate" ? (
+                            ? "Helyi becslés"
+                            : "—"}
+                        {audit.technical.pagespeed.performanceScore != null
+                          ? ` · ${audit.technical.pagespeed.performanceScore}/100`
+                          : ""}
+                        {audit.technical.pagespeed.error ? (
                           <span className="admin-muted">
                             {" "}
                             — {audit.technical.pagespeed.error}
@@ -578,104 +686,58 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                         ) : null}
                       </td>
                     </tr>
+                    <tr>
+                      <th scope="row">Audit időpont</th>
+                      <td>{formatWhen(audit.createdAt)}</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
-            </section>
 
-            {audit.technical.redirectChain.length > 0 ? (
-              <section className="admin-report-block">
-                <h4>Redirect lánc</h4>
-                <div className="admin-report-table-wrap">
-                  <table className="admin-report-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">URL</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {audit.technical.redirectChain.map((u, i) => (
-                        <tr key={`${i}-${u}`}>
-                          <td>{i + 1}</td>
-                          <td className="admin-break">{u}</td>
+              {(audit.progress || []).length > 0 ? (
+                <>
+                  <h5 className="audit-tech-sub">Futási lépések</h5>
+                  <div className="admin-report-table-wrap">
+                    <table className="admin-report-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Állapot</th>
+                          <th scope="col">Lépés</th>
+                          <th scope="col">Részlet</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : null}
-
-            <section className="admin-report-block">
-              <h4>HTTP headerek</h4>
-              <div className="admin-report-table-wrap">
-                <table className="admin-report-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Header</th>
-                      <th scope="col">Érték</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(audit.technical.headers).length === 0 ? (
-                      <tr>
-                        <td colSpan={2}>Nincs header adat.</td>
-                      </tr>
-                    ) : (
-                      Object.entries(audit.technical.headers).map(
-                        ([key, value]) => (
-                          <tr key={key}>
-                            <th scope="row">{key}</th>
-                            <td className="admin-break">{value}</td>
-                          </tr>
-                        )
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section className="admin-report-block">
-              <h4>Találatok ({audit.findings.length})</h4>
-              <div className="admin-report-table-wrap">
-                <table className="admin-report-table admin-report-findings">
-                  <thead>
-                    <tr>
-                      <th scope="col">Súlyosság</th>
-                      <th scope="col">Kategória</th>
-                      <th scope="col">Cím</th>
-                      <th scope="col">Részlet</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {audit.findings.map((f) => (
-                      <tr
-                        key={f.id}
-                        className={`admin-finding--${f.severity}`}
-                      >
-                        <td>
-                          <span
-                            className={`admin-finding-tag admin-finding-tag--inline`}
+                      </thead>
+                      <tbody>
+                        {audit.progress.map((step) => (
+                          <tr
+                            key={step.id}
+                            className={`admin-report-row--${step.status}`}
                           >
-                            {severityLabel(f.severity)}
-                          </span>
-                        </td>
-                        <td>{f.category}</td>
-                        <td>{f.title}</td>
-                        <td className="admin-break">
-                          {f.detail}
-                          {f.evidence ? (
-                            <pre className="admin-evidence">{f.evidence}</pre>
-                          ) : null}
-                        </td>
-                      </tr>
+                            <td>{stepLabel(step.status)}</td>
+                            <td>{step.label}</td>
+                            <td className="admin-break">
+                              {step.detail || "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : null}
+
+              {audit.technical.redirectChain.length > 0 ? (
+                <>
+                  <h5 className="audit-tech-sub">Redirect lánc</h5>
+                  <ol className="audit-redirect-list">
+                    {audit.technical.redirectChain.map((u, i) => (
+                      <li key={`${i}-${u}`} className="admin-break">
+                        {u}
+                      </li>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                  </ol>
+                </>
+              ) : null}
+            </details>
           </article>
         ) : null}
       </section>
@@ -699,7 +761,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                     void loadAudit(item.id);
                   }}
                 >
-                  <span className="admin-history-score">{item.overallScore}</span>
+                  <span className="admin-history-score">
+                    {item.overallScore}
+                  </span>
                   <span>
                     <strong className="admin-break">{item.inputUrl}</strong>
                     <em className="admin-muted">
@@ -721,7 +785,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
 export default function WebsiteAuditAdminPage() {
   return (
-    <AdminShell active="audit" title="Weboldal-ellenőrző">
+    <AdminShell active="audit" title="Weboldal-ellenőrző (BETA)">
       {({ authed, bumpIdle }) =>
         authed ? <WebsiteAuditWorkspace bumpIdle={bumpIdle} /> : null
       }
