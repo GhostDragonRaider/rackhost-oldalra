@@ -162,25 +162,37 @@ async function headOrGetStatus(url: string): Promise<number> {
   return page.status;
 }
 
-function isGscCoverageIssue(issue: SeoIssue): boolean {
+function isNonScoringIssue(issue: SeoIssue): boolean {
+  // Status / Google lag — shown in panels, not technical SEO penalties.
   return (
     issue.id === "gsc-indexing-summary" ||
     issue.id.startsWith("gsc-not-indexed-") ||
     issue.id.startsWith("gsc-inspect-error-") ||
-    issue.id === "gsc-indexing-error"
+    issue.id === "gsc-indexing-error" ||
+    issue.id === "traffic-gsc-ok" ||
+    issue.id === "traffic-gsc" ||
+    issue.id === "gsc-not-connected"
   );
 }
 
-function computeScore(issues: SeoIssue[]): number {
+/** Technical site-crawl score (0–100). Status infos do not deduct. */
+export function computeTechnicalSeoScore(issues: SeoIssue[]): number {
   let score = 100;
   for (const issue of issues) {
-    // Google indexing lag is tracked in the GSC panel — not a technical SEO penalty.
-    if (isGscCoverageIssue(issue)) continue;
+    if (isNonScoringIssue(issue)) continue;
     if (issue.severity === "critical") score -= 12;
     else if (issue.severity === "warning") score -= 4;
     else score -= 1;
   }
   return Math.max(0, Math.min(100, score));
+}
+
+function isGscCoverageIssue(issue: SeoIssue): boolean {
+  return isNonScoringIssue(issue);
+}
+
+function computeScore(issues: SeoIssue[]): number {
+  return computeTechnicalSeoScore(issues);
 }
 
 function buildGscIndexingIssues(
