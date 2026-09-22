@@ -262,12 +262,17 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           >
             <header className="admin-report-head">
               <div className="admin-report-score">
-                <span>Összpontszám</span>
+                <span>URL-audit pontszám</span>
                 <strong>{audit.overallScore}/100</strong>
               </div>
               <div className="admin-report-meta">
                 <h3>Audit jelentés</h3>
                 <p>{audit.summary}</p>
+                <p className="admin-muted">
+                  Egy oldal pillanatképe (biztonság, SEO, teljesítmény) —{" "}
+                  <strong>nem ugyanaz a skála</strong>, mint a Monitor
+                  technikai SEO pontszáma (teljes site crawl).
+                </p>
                 <p className="admin-muted">
                   {formatWhen(audit.createdAt)} · {audit.status}
                 </p>

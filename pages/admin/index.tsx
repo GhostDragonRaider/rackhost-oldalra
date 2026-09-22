@@ -319,8 +319,10 @@ function MonitorWorkspace({
           <div>
             <h2>SEO Monitor</h2>
             <p className="admin-muted">
-              Napi technikai ellenőrzés: 404, törött linkek, meta, teljesítmény,
-              indexelés, sitemap. Tartalmat nem ír át automatikusan.
+              Napi technikai ellenőrzés a teljes oldalon: 404, törött linkek,
+              meta, teljesítmény, sitemap. A GSC indexelés külön panelen van — a
+              pontszám csak a technikai hibákat vonja le. Nem azonos a
+              Weboldal-ellenőrző egy-URL auditjával.
             </p>
           </div>
           <button
@@ -342,10 +344,13 @@ function MonitorWorkspace({
               aria-label="SEO státusz összefoglaló"
             >
               <div className="admin-seo-score">
-                <span>SEO státusz</span>
+                <span>Technikai SEO</span>
                 <strong>
                   {seo.summary.score}/100
-                  {seo.summary.criticalCount === 0 ? " ✓" : ""}
+                  {seo.summary.criticalCount === 0 &&
+                  seo.summary.warningCount === 0
+                    ? " ✓"
+                    : ""}
                 </strong>
               </div>
               <ul className="admin-seo-metrics">
@@ -374,14 +379,17 @@ function MonitorWorkspace({
             </div>
 
             <p className="admin-muted admin-seo-meta">
-              {seo.summary.pagesChecked} oldal · átl. válasz{" "}
-              {seo.summary.avgResponseMs} ms · hiányzó/gyenge meta:{" "}
-              {seo.summary.missingMetaCount}
+              Teljes site crawl ({seo.summary.pagesChecked} oldal) · átl.
+              válasz {seo.summary.avgResponseMs} ms · hiányzó/gyenge meta:{" "}
+              {seo.summary.missingMetaCount}. Ez a pontszám{" "}
+              <strong>nem azonos</strong> a Weboldal-ellenőrző egy-URL
+              auditjával
               {seo.gscConnected
                 ? seo.gsc?.error
                   ? " · GSC: hiba"
                   : " · GSC csatlakoztatva"
                 : " · GSC: nincs API (opcionális)"}
+              .
             </p>
 
             {seo.gscConnected && seo.gsc && !seo.gsc.error ? (

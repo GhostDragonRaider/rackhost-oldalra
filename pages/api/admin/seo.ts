@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { requireAdmin } from "../../../lib/admin-auth";
 import {
+  computeTechnicalSeoScore,
   refreshSeoIndexingInBackground,
   runSeoCheck,
 } from "../../../lib/seo-checker";
@@ -23,7 +24,15 @@ export default async function handler(
   if (req.method === "GET") {
     try {
       const report = getSeoReport();
-      return res.status(200).json({ ok: true, report });
+      // Recompute so older saves (e.g. traffic-gsc-ok −1) match current rules.
+      const score = computeTechnicalSeoScore(report.issues || []);
+      return res.status(200).json({
+        ok: true,
+        report: {
+          ...report,
+          summary: { ...report.summary, score },
+        },
+      });
     } catch (e) {
       console.error("[admin/seo] get", e);
       return res.status(500).json({ ok: false, error: "SEO jelentés nem elérhető." });
