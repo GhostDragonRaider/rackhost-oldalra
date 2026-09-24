@@ -36,6 +36,13 @@ export type CvLanguageItem = {
   level: CvLocalizedString;
 };
 
+export type CvPortfolioItem = {
+  title: CvLocalizedString;
+  urlLabel: string;
+  url: string;
+  description: CvLocalizedString;
+};
+
 export type CvContent = {
   personal: CvPersonal;
   labels: Record<
@@ -46,12 +53,14 @@ export type CvContent = {
     | "drivingLicence"
     | "skills"
     | "contact"
-    | "present",
+    | "present"
+    | "portfolio",
     CvLocalizedString
   >;
   profile: CvLocalizedString;
   experience: CvExperienceItem[];
   education: CvEducationItem[];
+  portfolio: CvPortfolioItem[];
   languages: CvLanguageItem[];
   drivingLicence: {
     category: string;

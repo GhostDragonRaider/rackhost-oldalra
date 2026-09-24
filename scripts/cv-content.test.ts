@@ -42,8 +42,15 @@ describe("cv content integrity", () => {
       ["2022-11", "2017-07"]
     );
   });
-});
 
+  it("includes anticode.hu portfolio entry", () => {
+    assert.equal(CV_CONTENT.portfolio.length, 1);
+    assert.equal(CV_CONTENT.portfolio[0].urlLabel, "anticode.hu");
+    assert.equal(CV_CONTENT.portfolio[0].url, "https://anticode.hu");
+    assert.equal(CV_CONTENT.labels.portfolio.hu, "Portfólió");
+    assert.equal(CV_CONTENT.labels.portfolio.en, "Portfolio");
+  });
+});
 describe("cv application stub", () => {
   it("validates draft fields", () => {
     const bad = validateApplicationDraft({ locale: "hu" });

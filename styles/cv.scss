@@ -1,18 +1,18 @@
-/* CV document — print-friendly light document (independent of admin dark theme) */
+/* CV — compact single A4 document */
 
 .cv-workspace {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .cv-workspace-head {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .cv-workspace-head h2 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   letter-spacing: -0.03em;
 }
 
@@ -92,7 +92,7 @@
 .cv-preview-shell {
   margin: 0 auto;
   width: min(100%, 210mm);
-  padding: 12px;
+  padding: 10px;
   border-radius: 14px;
   border: 1px solid #dce5f0;
   background: #e8eef5;
@@ -109,16 +109,16 @@
 
   box-sizing: border-box;
   width: 100%;
-  min-height: 297mm;
+  min-height: 277mm;
   margin: 0 auto;
-  padding: 14mm 13mm;
+  padding: 11mm 12mm;
   background: var(--cv-surface);
   color: var(--cv-ink);
   border-radius: 4px;
   box-shadow: 0 10px 30px rgba(16, 42, 77, 0.12);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  font-size: 10.5pt;
-  line-height: 1.45;
+  font-size: 10pt;
+  line-height: 1.35;
 }
 
 .cv-doc *,
@@ -129,200 +129,148 @@
 
 .cv-doc__header {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 16px 20px;
-  padding-bottom: 14px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.85fr);
+  gap: 10px 16px;
+  align-items: center;
+  padding-bottom: 10px;
   border-bottom: 2px solid var(--cv-accent);
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .cv-doc__identity {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   align-items: center;
   min-width: 0;
 }
 
 .cv-doc__photo {
-  width: 96px;
-  height: 96px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 3px solid #e8eef5;
+  border: 2px solid #e8eef5;
   background: #eef3f8;
 }
 
 .cv-doc__name {
-  margin: 0 0 4px;
-  font-size: 1.55rem;
+  margin: 0 0 3px;
+  font-size: 1.4rem;
   letter-spacing: -0.03em;
-  line-height: 1.15;
-  color: var(--cv-ink);
+  line-height: 1.1;
 }
 
-.cv-doc__meta,
-.cv-doc__role-hint {
+.cv-doc__meta {
   margin: 0;
   color: var(--cv-muted);
-  font-size: 0.92rem;
-}
-
-.cv-doc__role-hint {
-  margin-top: 4px;
-  font-weight: 600;
-  color: var(--cv-accent);
+  font-size: 0.8rem;
 }
 
 .cv-doc__contact {
   margin: 0;
   font-style: normal;
   display: grid;
-  gap: 4px;
+  gap: 1px;
   justify-items: start;
-  align-content: start;
-  font-size: 0.9rem;
-}
-
-.cv-doc__contact-label {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--cv-accent);
-  margin-bottom: 2px;
+  font-size: 0.8rem;
 }
 
 .cv-doc__contact a {
   color: var(--cv-ink);
   text-decoration: none;
-  border-bottom: 1px solid transparent;
   overflow-wrap: anywhere;
 }
 
 .cv-doc__contact a:hover,
 .cv-doc__contact a:focus-visible {
-  border-bottom-color: var(--cv-accent);
   color: var(--cv-accent);
   outline: none;
 }
 
 .cv-doc__section {
-  margin: 0 0 14px;
-  break-inside: avoid;
-  page-break-inside: avoid;
+  margin: 0 0 9px;
+  padding: 0;
+}
+
+.cv-doc__section--skills {
+  margin-bottom: 0;
 }
 
 .cv-doc__section h2 {
-  margin: 0 0 8px;
-  font-size: 0.78rem;
+  margin: 0 0 5px;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--cv-accent);
   border-bottom: 1px solid var(--cv-line);
-  padding-bottom: 4px;
+  padding-bottom: 3px;
 }
 
 .cv-doc__profile {
   margin: 0;
-  color: var(--cv-ink);
+  font-size: 0.9em;
 }
 
-.cv-doc__timeline {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 0 14px;
-  border-left: 2px solid var(--cv-line);
-  display: grid;
-  gap: 12px;
-}
-
-.cv-doc__timeline > li {
-  position: relative;
-  padding-left: 12px;
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-.cv-doc__timeline-mark {
-  position: absolute;
-  left: -19px;
-  top: 6px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--cv-accent);
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px var(--cv-accent);
-}
-
-.cv-doc__list {
+.cv-doc__dense {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 12px;
+  gap: 5px;
 }
 
-.cv-doc__list--compact li {
-  display: grid;
-  gap: 2px;
-}
-
-.cv-doc__list--compact span {
-  color: var(--cv-muted);
-  font-size: 0.92rem;
-}
-
-.cv-doc__item-head {
+.cv-doc__dense > li {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.35em;
   justify-content: space-between;
-  gap: 4px 12px;
-  align-items: baseline;
 }
 
-.cv-doc__item-head h3 {
-  margin: 0;
-  font-size: 1.02rem;
-  letter-spacing: -0.02em;
+.cv-doc__dense > li > strong {
+  font-size: 0.9em;
 }
 
-.cv-doc__item-head time {
+.cv-doc__dense > li > span:not(.cv-doc__sep) {
   color: var(--cv-muted);
-  font-size: 0.86rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  font-size: 0.84em;
 }
 
-.cv-doc__org {
-  margin: 2px 0 0;
-  color: var(--cv-muted);
+.cv-doc__dense > li > .cv-doc__sep {
+  color: #b7c4d6;
 }
 
-.cv-doc__grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 12px 20px;
-}
-
-.cv-doc__licence {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.cv-doc__licence strong {
-  display: inline-grid;
-  place-items: center;
-  min-width: 28px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--cv-soft);
-  border: 1px solid var(--cv-line);
+.cv-doc__dense > li > time,
+.cv-doc__dense > li > a:last-of-type {
+  margin-left: auto;
   color: var(--cv-accent);
+  font-size: 0.78em;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.cv-doc__dense > li > time {
+  color: var(--cv-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cv-doc__meta-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 6px 14px;
+}
+
+.cv-doc__inline {
+  margin: 0;
+  font-size: 0.88em;
+  color: var(--cv-ink);
+}
+
+.cv-doc__inline strong {
+  color: var(--cv-ink);
 }
 
 .cv-doc__skills {
@@ -331,16 +279,15 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
 .cv-doc__skills li {
-  padding: 5px 10px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: var(--cv-soft);
   border: 1px solid var(--cv-line);
-  color: var(--cv-ink);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -352,37 +299,26 @@
 
   .cv-doc {
     min-height: 0;
-    padding: 18px 16px;
+    padding: 16px 14px;
     box-shadow: none;
   }
 
-  .cv-doc__header {
+  .cv-doc__header,
+  .cv-doc__meta-row {
     grid-template-columns: 1fr;
   }
 
-  .cv-doc__photo {
-    width: 80px;
-    height: 80px;
-  }
-
-  .cv-doc__name {
-    font-size: 1.3rem;
-  }
-
-  .cv-doc__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cv-doc__item-head time {
-    white-space: normal;
+  .cv-doc__dense > li > time,
+  .cv-doc__dense > li > a:last-of-type {
+    margin-left: 0;
+    width: 100%;
   }
 }
 
-/* —— Print / PDF —— */
 @media print {
   @page {
     size: A4;
-    margin: 10mm;
+    margin: 8mm;
   }
 
   html,
@@ -443,7 +379,7 @@
     box-shadow: none !important;
     background: #fff !important;
     color: #122033 !important;
-    font-size: 9.4pt !important;
+    font-size: 9.5pt !important;
     line-height: 1.32 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -452,48 +388,48 @@
   .cv-doc__header {
     margin-bottom: 8px !important;
     padding-bottom: 8px !important;
-    gap: 10px 14px !important;
   }
 
   .cv-doc__photo {
-    width: 78px !important;
-    height: 78px !important;
+    width: 68px !important;
+    height: 68px !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .cv-doc__name {
-    font-size: 1.35rem !important;
+    font-size: 1.28rem !important;
   }
 
   .cv-doc__section {
-    margin-bottom: 8px !important;
+    margin-bottom: 7px !important;
+    padding: 0 !important;
   }
 
-  .cv-doc__timeline {
-    gap: 8px !important;
+  .cv-doc__section h2 {
+    margin-bottom: 4px !important;
   }
 
-  .cv-doc__list {
-    gap: 8px !important;
+  .cv-doc__dense {
+    gap: 4px !important;
   }
 
   .cv-doc__skills {
-    gap: 6px !important;
+    gap: 5px !important;
   }
 
   .cv-doc__skills li {
     padding: 3px 8px !important;
+    font-size: 0.76rem !important;
   }
 
   .cv-doc a {
-    color: #122033 !important;
+    color: #3f5f86 !important;
     text-decoration: none !important;
   }
 
-  /* Prefer keeping items together, but allow flow to fill one page */
-  .cv-doc__timeline > li,
-  .cv-doc__list > li {
+  .cv-doc__dense > li,
+  .cv-doc__section {
     break-inside: avoid;
     page-break-inside: avoid;
   }
