@@ -1,0 +1,457 @@
+/* CV document — print-friendly light document (independent of admin dark theme) */
+
+.cv-workspace {
+  display: grid;
+  gap: 16px;
+}
+
+.cv-workspace-head {
+  display: grid;
+  gap: 6px;
+}
+
+.cv-workspace-head h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.cv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cv-toolbar__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.cv-lang-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid #dce5f0;
+  background: #f8fbff;
+}
+
+.cv-lang-toggle button {
+  border: 0;
+  background: transparent;
+  border-radius: 9px;
+  padding: 8px 14px;
+  min-height: 40px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.cv-lang-toggle button.is-active {
+  background: #3f5f86;
+  color: #fff;
+}
+
+.cv-toolbar .admin-ghost,
+.cv-toolbar .cv-download {
+  min-height: 40px;
+}
+
+.cv-download {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  background: #3f5f86;
+  color: #fff;
+}
+
+.cv-download:hover,
+.cv-download:focus-visible {
+  background: #2a4a6e;
+  outline: none;
+}
+
+.cv-future-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed #c5d4e8;
+  background: #f8fbff;
+  color: #52637a;
+  font-size: 0.9rem;
+}
+
+.cv-preview-shell {
+  margin: 0 auto;
+  width: min(100%, 210mm);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #dce5f0;
+  background: #e8eef5;
+  overflow: auto;
+}
+
+.cv-doc {
+  --cv-ink: #122033;
+  --cv-muted: #52637a;
+  --cv-line: #d5deea;
+  --cv-accent: #3f5f86;
+  --cv-surface: #ffffff;
+  --cv-soft: #f4f7fb;
+
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 14mm 13mm;
+  background: var(--cv-surface);
+  color: var(--cv-ink);
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(16, 42, 77, 0.12);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+}
+
+.cv-doc *,
+.cv-doc *::before,
+.cv-doc *::after {
+  box-sizing: border-box;
+}
+
+.cv-doc__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--cv-accent);
+  margin-bottom: 16px;
+}
+
+.cv-doc__identity {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.cv-doc__photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 3px solid #e8eef5;
+  background: #eef3f8;
+}
+
+.cv-doc__name {
+  margin: 0 0 4px;
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--cv-ink);
+}
+
+.cv-doc__meta,
+.cv-doc__role-hint {
+  margin: 0;
+  color: var(--cv-muted);
+  font-size: 0.92rem;
+}
+
+.cv-doc__role-hint {
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--cv-accent);
+}
+
+.cv-doc__contact {
+  margin: 0;
+  font-style: normal;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  align-content: start;
+  font-size: 0.9rem;
+}
+
+.cv-doc__contact-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cv-accent);
+  margin-bottom: 2px;
+}
+
+.cv-doc__contact a {
+  color: var(--cv-ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  overflow-wrap: anywhere;
+}
+
+.cv-doc__contact a:hover,
+.cv-doc__contact a:focus-visible {
+  border-bottom-color: var(--cv-accent);
+  color: var(--cv-accent);
+  outline: none;
+}
+
+.cv-doc__section {
+  margin: 0 0 14px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cv-doc__section h2 {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cv-accent);
+  border-bottom: 1px solid var(--cv-line);
+  padding-bottom: 4px;
+}
+
+.cv-doc__profile {
+  margin: 0;
+  color: var(--cv-ink);
+}
+
+.cv-doc__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--cv-line);
+  display: grid;
+  gap: 12px;
+}
+
+.cv-doc__timeline > li {
+  position: relative;
+  padding-left: 12px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cv-doc__timeline-mark {
+  position: absolute;
+  left: -19px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cv-accent);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--cv-accent);
+}
+
+.cv-doc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.cv-doc__list--compact li {
+  display: grid;
+  gap: 2px;
+}
+
+.cv-doc__list--compact span {
+  color: var(--cv-muted);
+  font-size: 0.92rem;
+}
+
+.cv-doc__item-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.cv-doc__item-head h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+}
+
+.cv-doc__item-head time {
+  color: var(--cv-muted);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cv-doc__org {
+  margin: 2px 0 0;
+  color: var(--cv-muted);
+}
+
+.cv-doc__grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px 20px;
+}
+
+.cv-doc__licence {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.cv-doc__licence strong {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--cv-soft);
+  border: 1px solid var(--cv-line);
+  color: var(--cv-accent);
+}
+
+.cv-doc__skills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cv-doc__skills li {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--cv-soft);
+  border: 1px solid var(--cv-line);
+  color: var(--cv-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .cv-preview-shell {
+    padding: 8px;
+    width: 100%;
+  }
+
+  .cv-doc {
+    min-height: 0;
+    padding: 18px 16px;
+    box-shadow: none;
+  }
+
+  .cv-doc__header {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-doc__photo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .cv-doc__name {
+    font-size: 1.3rem;
+  }
+
+  .cv-doc__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-doc__item-head time {
+    white-space: normal;
+  }
+}
+
+/* —— Print / PDF —— */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #122033 !important;
+  }
+
+  body.admin-active {
+    background: #fff !important;
+  }
+
+  .admin-top,
+  .admin-nav,
+  .admin-nav-glass,
+  .cv-toolbar,
+  .cv-workspace-head,
+  .cv-future-note,
+  .admin-top-actions,
+  .admin-login,
+  .admin-site-link,
+  .admin-muted:not(.cv-keep) {
+    display: none !important;
+  }
+
+  .admin-shell,
+  .admin-dash,
+  .admin-card.cv-print-root,
+  .cv-workspace,
+  .cv-preview-shell {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+  }
+
+  .cv-doc {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #122033 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cv-doc__photo {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cv-doc a {
+    color: #122033 !important;
+    text-decoration: none !important;
+  }
+
+  .cv-doc__section,
+  .cv-doc__timeline > li,
+  .cv-doc__list > li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
