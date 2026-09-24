@@ -1,18 +1,21 @@
-import React, { ReactNode, useCallback, useLayoutEffect, useState } from "react";
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import BrandMark from "./BrandMark";
+import LangSwitcher from "./LangSwitcher";
 import SeoHead from "./SeoHead";
+import { useNavCollapse } from "./useNavCollapse";
+import { useLocale } from "../../lib/i18n/LocaleContext";
 import { SITE_EMAIL } from "../../lib/site";
 
 type Theme = "dark" | "light";
 const THEME_KEY = "anticode-theme";
-
-const PAGE_NAV = [
-  { href: "/#szolgaltatasok", label: "Szolgáltatások" },
-  { href: "/arak", label: "Árak" },
-  { href: "/#referenciak", label: "Referenciák" },
-  { href: "/#kapcsolat", label: "Kapcsolat" },
-] as const;
 
 function applyTheme(next: Theme) {
   document.documentElement.dataset.theme = next;
@@ -26,6 +29,8 @@ type LandingShellProps = {
   description: string;
   path: string;
   children: ReactNode;
+  noindex?: boolean;
+  ogType?: "website" | "article";
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
 
@@ -34,11 +39,16 @@ export default function LandingShell({
   description,
   path,
   children,
+  noindex = false,
+  ogType = "website",
   jsonLd,
 }: LandingShellProps) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const { t } = useLocale();
+  const [theme, setTheme] = useState<Theme>("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [year] = useState(() => new Date().getFullYear());
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const navCollapsed = useNavCollapse(navContainerRef, [t.pageNav]);
 
   const toggleTheme = useCallback(() => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -50,9 +60,33 @@ export default function LandingShell({
   useLayoutEffect(() => {
     document.body.classList.add("landing-active");
     const saved = localStorage.getItem(THEME_KEY) as Theme | null;
-    const initial: Theme = saved === "light" || saved === "dark" ? saved : "dark";
+    const initial: Theme =
+      saved === "light" || saved === "dark" ? saved : "light";
     setTheme(initial);
     applyTheme(initial);
+  }, []);
+
+  useEffect(() => {
+    if (navCollapsed) return;
+    setMenuOpen(false);
+  }, [navCollapsed]);
+
+  useEffect(() => {
+    const container = navContainerRef.current;
+    if (!container) return;
+    const nav = container.closest(".nav");
+    const reset = () => {
+      container.scrollLeft = 0;
+      if (nav instanceof HTMLElement) nav.scrollLeft = 0;
+      const links = container.querySelector(".links");
+      if (links instanceof HTMLElement) links.scrollLeft = 0;
+    };
+    container.addEventListener("focusin", reset);
+    container.addEventListener("click", reset);
+    return () => {
+      container.removeEventListener("focusin", reset);
+      container.removeEventListener("click", reset);
+    };
   }, []);
 
   const closeMenu = () => setMenuOpen(false);
@@ -63,26 +97,20 @@ export default function LandingShell({
         title={title}
         description={description}
         path={path}
+        noindex={noindex}
+        ogType={ogType}
         jsonLd={jsonLd}
       />
 
       <a className="skip-link" href="#tartalom">
-        Ugrás a tartalomra
+        {t.chrome.skip}
       </a>
 
-      <header className="nav">
-        <div
-          className="container"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "min(1180px, calc(100% - 40px))",
-          }}
-        >
+      <header className={`nav${navCollapsed ? " nav-collapsed" : ""}`}>
+        <div className="container" ref={navContainerRef}>
           <BrandMark href="/" />
-          <nav className="links" aria-label="Fő navigáció">
-            {PAGE_NAV.map((link) =>
+          <nav className="links" aria-label={t.chrome.navAria}>
+            {t.pageNav.map((link) =>
               link.href.startsWith("/") && !link.href.includes("#") ? (
                 <Link key={link.href} href={link.href}>
                   {link.label}
@@ -98,20 +126,22 @@ export default function LandingShell({
             <button
               className="theme"
               type="button"
-              aria-label="Világos vagy sötét mód váltása"
+              aria-label={t.chrome.theme}
               aria-pressed={theme === "dark"}
+              title={t.chrome.themeTitle}
               onClick={toggleTheme}
             >
               <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
             </button>
-            <a className="btn" href="/#kapcsolat">
-              <span className="btn-label">Ajánlatot kérek</span>{" "}
+            <Link className="btn" href="/kapcsolat">
+              <span className="btn-label">{t.chrome.cta}</span>{" "}
               <span aria-hidden="true">→</span>
-            </a>
+            </Link>
+            <LangSwitcher />
             <button
               className="menu"
               type="button"
-              aria-label={menuOpen ? "Menü bezárása" : "Menü megnyitása"}
+              aria-label={menuOpen ? t.chrome.menuClose : t.chrome.menuOpen}
               aria-controls="mobile-nav-sub"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
@@ -125,10 +155,10 @@ export default function LandingShell({
       <nav
         className={`mobile-nav${menuOpen ? " open" : ""}`}
         id="mobile-nav-sub"
-        aria-label="Mobil navigáció"
+        aria-label={t.chrome.mobileNavAria}
         aria-hidden={!menuOpen}
       >
-        {PAGE_NAV.map((link) => (
+        {t.pageNav.map((link) => (
           <a
             key={link.href}
             href={link.href}
@@ -147,13 +177,17 @@ export default function LandingShell({
       <footer>
         <div className="container footer">
           <p>
-            <BrandMark className="brand footer-brand" asLink={false} /> / weboldalak
-            és egyedi rendszerek
+            <BrandMark className="brand footer-brand" asLink={false} /> /{" "}
+            {t.chrome.footerTag}
           </p>
           <p>
             <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>
             {" · "}
-            <Link href="/arak">Árak</Link>
+            <Link href="/arak">{t.chrome.prices}</Link>
+            {" · "}
+            <Link href="/tudastar">Tudástár</Link>
+            {" · "}
+            <Link href="/kapcsolat">{t.chrome.cta}</Link>
             {" · "}© {year} AntiCode
           </p>
         </div>

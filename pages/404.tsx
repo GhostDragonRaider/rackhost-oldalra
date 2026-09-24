@@ -1,32 +1,21 @@
-import React from "react";
+import Head from "next/head";
 import Link from "next/link";
-import { useLang } from "../components/lang_context";
-
-const messages = {
-  en: {
-    title: "Page not found",
-    subtitle: "The page you're looking for doesn't exist or has been moved.",
-    back: "Back to home",
-  },
-  hu: {
-    title: "Az oldal nem található",
-    subtitle: "A keresett oldal nem létezik vagy áthelyezték.",
-    back: "Vissza a főoldalra",
-  },
-};
+import { useLocale } from "../lib/i18n/LocaleContext";
 
 export default function Custom404() {
-  const { lang } = useLang();
-  const t = messages[lang];
-
+  const { t } = useLocale();
   return (
-    <div className="page-404">
-      <h1 className="page-404-code">404</h1>
-      <h2 className="page-404-title">{t.title}</h2>
-      <p className="page-404-subtitle">{t.subtitle}</p>
-      <Link href="/" className="page-404-link">
-        {t.back}
-      </Link>
-    </div>
+    <>
+      <Head>
+        <title>{t.errors.notFoundTitle} | AntiCode</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className="site-error">
+        <p className="site-error-code">404</p>
+        <h1>{t.errors.notFoundTitle}</h1>
+        <p>{t.errors.notFoundBody}</p>
+        <Link href="/">{t.serviceUi.home}</Link>
+      </main>
+    </>
   );
 }

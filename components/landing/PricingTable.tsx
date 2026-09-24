@@ -1,154 +1,81 @@
 import React from "react";
+import { useLocale } from "../../lib/i18n/LocaleContext";
 
-/** Full pricing matrix used on /arak and previously on the homepage. */
+/** Full pricing matrix used on /arak. */
 export default function PricingTable() {
+  const { t } = useLocale();
+  const p = t.pricingTable;
+
   return (
     <>
       <div className="pricing-dashboard">
         <div className="pricing-stat">
-          <b>9</b>szolgáltatási tétel
+          <b>{p.rows.length}</b>
+          {p.statItems}
         </div>
         <div className="pricing-stat">
-          <b>3</b>projektkeret
+          <b>3</b>
+          {p.statFrames}
         </div>
         <div className="pricing-stat">
-          <b>1</b>egyedi ajánlat minden projektre
+          <b>1</b>
+          {p.statOffer}
         </div>
       </div>
       <div className="pricing-legend">
         <span>
           <i style={{ background: "#22c983" }} aria-hidden="true" />
-          Induló — egy világos, fókuszált feladathoz
+          {p.legendStart}
         </span>
         <span>
           <i style={{ background: "var(--blue)" }} aria-hidden="true" />
-          Jellemző — a legtöbb üzleti igényhez
+          {p.legendStandard}
         </span>
         <span>
           <i style={{ background: "var(--blue-2)" }} aria-hidden="true" />
-          Komplex — több funkcióhoz vagy nagyobb tartalomhoz
+          {p.legendComplex}
         </span>
       </div>
       <div className="pricing-table-wrap">
         <table className="pricing-table">
-          <caption className="sr-only">
-            AntiCode szolgáltatásárak induló, jellemző és komplex keretekben
-          </caption>
+          <caption className="sr-only">{p.caption}</caption>
           <thead>
             <tr>
-              <th scope="col">Szolgáltatás</th>
+              <th scope="col">{p.colService}</th>
               <th scope="col" className="start">
-                Induló
+                {p.colStart}
               </th>
               <th scope="col" className="standard">
-                Jellemző
+                {p.colStandard}
               </th>
               <th scope="col" className="complex">
-                Komplex
+                {p.colComplex}
               </th>
             </tr>
           </thead>
           <tbody>
-            <tr className="group">
-              <td colSpan={4}>WEBOLDALAK ÉS ÉRTÉKESÍTÉS</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Start oldal
-                <span className="detail">Egyoldalas, fókuszált bemutatkozás</span>
-              </td>
-              <td className="start">99 000 Ft</td>
-              <td className="standard">129 000 Ft</td>
-              <td className="complex">159 000 Ft</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Üzleti weboldal
-                <span className="detail">Többoldalas szolgáltatói jelenlét</span>
-              </td>
-              <td className="start">127 000 Ft</td>
-              <td className="standard">178 000 Ft</td>
-              <td className="complex">250 000 Ft</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Weboldal megújítás
-                <span className="detail">
-                  Tartalom, struktúra és felület újragondolása
-                </span>
-              </td>
-              <td className="start">82 000 Ft</td>
-              <td className="standard">127 000 Ft</td>
-              <td className="complex">191 000 Ft</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Webshop
-                <span className="detail">Katalógus, termékek és vásárlási út</span>
-              </td>
-              <td className="start">191 000 Ft</td>
-              <td className="standard">255 000 Ft</td>
-              <td className="complex">351 000 Ft</td>
-            </tr>
-            <tr className="group">
-              <td colSpan={4}>EGYEDI FUNKCIÓK</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Ajánlatkérő vagy jelentkezési rendszer
-                <span className="detail">
-                  Űrlap, fájlfeltöltés, értesítési folyamat
-                </span>
-              </td>
-              <td className="start">49 000 Ft</td>
-              <td className="standard">79 000 Ft</td>
-              <td className="complex">103 000 Ft</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Védett adminfelület
-                <span className="detail">Belépés, szerepkörök és adatkezelés</span>
-              </td>
-              <td className="start">99 000 Ft</td>
-              <td className="standard">127 000 Ft</td>
-              <td className="complex">199 000 Ft</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Egyedi funkció vagy integráció
-                <span className="detail">
-                  Külső szolgáltatás, automatizmus vagy egyedi logika
-                </span>
-              </td>
-              <td className="start">29 000 Ft</td>
-              <td className="standard">59 000 Ft</td>
-              <td className="complex">Egyedi becslés</td>
-            </tr>
-            <tr className="group">
-              <td colSpan={4}>FOLYAMATOS TÁMOGATÁS</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Havi karbantartás
-                <span className="detail">
-                  Frissítések, mentések és kisebb módosítások
-                </span>
-              </td>
-              <td className="start">15 000 Ft / hó</td>
-              <td className="standard">25 000 Ft / hó</td>
-              <td className="complex">45 000 Ft / hó</td>
-            </tr>
-            <tr>
-              <td className="service">
-                Tartalmi és technikai fejlesztési nap
-                <span className="detail">
-                  Előre egyeztetett fejlesztési feladatokra
-                </span>
-              </td>
-              <td className="start">25 000 Ft</td>
-              <td className="standard">35 000 Ft</td>
-              <td className="complex">50 000 Ft</td>
-            </tr>
+            {p.rows.map((row, index) => {
+              const groupBreaks = [0, 5, 8];
+              const groupIndex = groupBreaks.indexOf(index);
+              return (
+                <React.Fragment key={`${row.name}-${index}`}>
+                  {groupIndex >= 0 ? (
+                    <tr className="group">
+                      <td colSpan={4}>{p.groups[groupIndex]}</td>
+                    </tr>
+                  ) : null}
+                  <tr>
+                    <td className="service">
+                      {row.name}
+                      <span className="detail">{row.detail}</span>
+                    </td>
+                    <td className="start">{row.start}</td>
+                    <td className="standard">{row.standard}</td>
+                    <td className="complex">{row.complex}</td>
+                  </tr>
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

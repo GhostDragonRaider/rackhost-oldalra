@@ -6,13 +6,21 @@
     "dev": "node node_modules/next/dist/bin/next dev",
     "build": "node node_modules/next/dist/bin/next build",
     "start": "node node_modules/next/dist/bin/next start",
-    "lint": "node node_modules/next/dist/bin/next lint"
+    "lint": "node node_modules/next/dist/bin/next lint",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+    "test:website-audit": "tsx --test scripts/website-audit-ssrf.test.ts scripts/website-audit-score.test.ts scripts/website-audit-url-edge.test.ts scripts/website-audit-html.test.ts scripts/website-audit-checks.test.ts scripts/website-audit-help.test.ts",
+    "test:cv": "tsx --test scripts/cv-content.test.ts",
+    "test": "npm run test:website-audit && npm run test:cv",
+    "forward-mail": "node scripts/forward-inbox-to-gmail.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "framer-motion": "^12.23.24",
+    "imapflow": "^2.0.5",
+    "mailparser": "^3.9.28",
     "next": "^15.5.24",
+    "nodemailer": "^10.0.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sass": "^1.93.1"
@@ -20,8 +28,10 @@
   "devDependencies": {
     "@emotion/babel-plugin": "^11.13.5",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
