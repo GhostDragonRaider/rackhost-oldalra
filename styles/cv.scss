@@ -382,13 +382,17 @@
 @media print {
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 10mm;
   }
 
   html,
-  body {
+  body,
+  #__next {
     background: #fff !important;
     color: #122033 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
   body.admin-active {
@@ -398,6 +402,8 @@
   .admin-top,
   .admin-nav,
   .admin-nav-glass,
+  .admin-dash > h1,
+  .admin-idle-notice,
   .cv-toolbar,
   .cv-workspace-head,
   .cv-future-note,
@@ -422,25 +428,62 @@
     width: 100% !important;
     max-width: none !important;
     overflow: visible !important;
+    height: auto !important;
     min-height: 0 !important;
   }
 
   .cv-doc {
+    position: relative !important;
     width: 100% !important;
     min-height: 0 !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     background: #fff !important;
     color: #122033 !important;
+    font-size: 9.4pt !important;
+    line-height: 1.32 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
+  .cv-doc__header {
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important;
+    gap: 10px 14px !important;
+  }
+
   .cv-doc__photo {
+    width: 78px !important;
+    height: 78px !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .cv-doc__name {
+    font-size: 1.35rem !important;
+  }
+
+  .cv-doc__section {
+    margin-bottom: 8px !important;
+  }
+
+  .cv-doc__timeline {
+    gap: 8px !important;
+  }
+
+  .cv-doc__list {
+    gap: 8px !important;
+  }
+
+  .cv-doc__skills {
+    gap: 6px !important;
+  }
+
+  .cv-doc__skills li {
+    padding: 3px 8px !important;
   }
 
   .cv-doc a {
@@ -448,7 +491,7 @@
     text-decoration: none !important;
   }
 
-  .cv-doc__section,
+  /* Prefer keeping items together, but allow flow to fill one page */
   .cv-doc__timeline > li,
   .cv-doc__list > li {
     break-inside: avoid;
