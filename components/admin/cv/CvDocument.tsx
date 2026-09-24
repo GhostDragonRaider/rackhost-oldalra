@@ -4,7 +4,6 @@ import { formatCvPeriod } from "../../../lib/cv/format";
 type CvDocumentProps = {
   locale: CvLocale;
   content: CvContent;
-  /** Extra class for print/preview wrappers */
   className?: string;
 };
 
@@ -33,8 +32,8 @@ export default function CvDocument({
             className="cv-doc__photo"
             src={p.photoSrc}
             alt={p.photoAlt[locale]}
-            width={112}
-            height={112}
+            width={72}
+            height={72}
           />
           <div className="cv-doc__name-block">
             <h1 className="cv-doc__name">{p.fullName}</h1>
@@ -42,24 +41,17 @@ export default function CvDocument({
               {p.location}
               <span aria-hidden> · </span>
               {p.birthYear}
-            </p>
-            <p className="cv-doc__role-hint">
+              <span aria-hidden> · </span>
               {locale === "hu"
-                ? "IT üzemeltetés · Web- és szoftverfejlesztés"
-                : "IT operations · Web & software development"}
+                ? "IT üzemeltetés · Webfejlesztés"
+                : "IT operations · Web development"}
             </p>
           </div>
         </div>
         <address className="cv-doc__contact">
-          <span className="cv-doc__contact-label">{L.contact[locale]}</span>
           <a href={`mailto:${p.email}`}>{p.email}</a>
           <a href={`tel:${p.phone.replace(/\s+/g, "")}`}>{p.phone}</a>
-          <span>{p.location}</span>
-          <a
-            href={p.websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={p.websiteUrl} target="_blank" rel="noopener noreferrer">
             {p.websiteLabel}
           </a>
         </address>
@@ -72,66 +64,74 @@ export default function CvDocument({
 
       <section className="cv-doc__section">
         <h2>{L.experience[locale]}</h2>
-        <ol className="cv-doc__timeline">
+        <ul className="cv-doc__dense">
           {cv.experience.map((item) => (
             <li key={`${item.organization}-${item.start}`}>
-              <div className="cv-doc__timeline-mark" aria-hidden />
-              <div className="cv-doc__item-head">
-                <h3>{item.title[locale]}</h3>
-                <time dateTime={`${item.start}/${item.current ? "" : item.end.en}`}>
-                  {formatCvPeriod(item.start, item.end[locale], locale)}
-                </time>
-              </div>
-              <p className="cv-doc__org">{item.organization}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="cv-doc__section">
-        <h2>{L.education[locale]}</h2>
-        <ul className="cv-doc__list">
-          {cv.education.map((item) => (
-            <li key={`${item.institution}-${item.start}`}>
-              <div className="cv-doc__item-head">
-                <h3>{item.title[locale]}</h3>
-                <time>
-                  {formatCvPeriod(item.start, item.end, locale)}
-                </time>
-              </div>
-              <p className="cv-doc__org">
-                {item.institution}
-                <span aria-hidden> · </span>
-                {item.location[locale]}
-              </p>
+              <strong>{item.title[locale]}</strong>
+              <span className="cv-doc__sep">—</span>
+              <span>{item.organization}</span>
+              <time>{formatCvPeriod(item.start, item.end[locale], locale)}</time>
             </li>
           ))}
         </ul>
       </section>
 
-      <div className="cv-doc__grid">
+      <section className="cv-doc__section">
+        <h2>{L.education[locale]}</h2>
+        <ul className="cv-doc__dense">
+          {cv.education.map((item) => (
+            <li key={`${item.institution}-${item.start}`}>
+              <strong>{item.title[locale]}</strong>
+              <span className="cv-doc__sep">—</span>
+              <span>
+                {item.institution}
+                <span aria-hidden> · </span>
+                {item.location[locale]}
+              </span>
+              <time>{formatCvPeriod(item.start, item.end, locale)}</time>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="cv-doc__section">
+        <h2>{L.portfolio[locale]}</h2>
+        <ul className="cv-doc__dense">
+          {cv.portfolio.map((item) => (
+            <li key={item.url}>
+              <strong>{item.title[locale]}</strong>
+              <span className="cv-doc__sep">—</span>
+              <span>{item.description[locale]}</span>
+              <a href={item.url} target="_blank" rel="noopener noreferrer">
+                {item.urlLabel}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div className="cv-doc__meta-row">
         <section className="cv-doc__section">
           <h2>{L.languages[locale]}</h2>
-          <ul className="cv-doc__list cv-doc__list--compact">
+          <p className="cv-doc__inline">
             {cv.languages.map((lang) => (
-              <li key={lang.name.en}>
+              <span key={lang.name.en}>
                 <strong>{lang.name[locale]}</strong>
-                <span>{lang.level[locale]}</span>
-              </li>
+                {` — ${lang.level[locale]}`}
+              </span>
             ))}
-          </ul>
+          </p>
         </section>
-
         <section className="cv-doc__section">
           <h2>{L.drivingLicence[locale]}</h2>
-          <p className="cv-doc__licence">
+          <p className="cv-doc__inline">
             <strong>{cv.drivingLicence.category}</strong>
-            <span>{cv.drivingLicence.description[locale]}</span>
+            {` — ${cv.drivingLicence.description[locale]}`}
           </p>
         </section>
       </div>
 
-      <section className="cv-doc__section">
+      <section className="cv-doc__section cv-doc__section--skills">
         <h2>{L.skills[locale]}</h2>
         <ul className="cv-doc__skills">
           {cv.skills.map((skill) => (

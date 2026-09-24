@@ -33,10 +33,11 @@ export const CV_CONTENT: CvContent = {
     skills: { hu: "Készségek", en: "Skills" },
     contact: { hu: "Kapcsolat", en: "Contact" },
     present: { hu: "jelenleg is", en: "Present" },
+    portfolio: { hu: "Portfólió", en: "Portfolio" },
   },
   profile: {
-    hu: "IT üzemeltetés, web- és szoftverfejlesztés iránt elkötelezett, megbízható pályázó vagyok. Műszaki informatikus végzettséggel és Cisco IT Essentials alapismeretekkel rendelkezem. Célom olyan junior vagy betanulható IT pozíció, ahol rendszerszemlélettel, gyors tanulással és felelősségteljes munkával fejlődhetek.",
-    en: "I am a reliable candidate committed to IT operations, web and software development. I hold a technical IT qualification and foundational Cisco IT Essentials knowledge. I am seeking a junior or trainable IT role where I can grow through a systems-oriented mindset, fast learning, and responsible work.",
+    hu: "IT üzemeltetés, web- és szoftverfejlesztés iránt elkötelezett, megbízható pályázó vagyok. Műszaki informatikus végzettséggel és Cisco IT Essentials alapismeretekkel rendelkezem. Célom junior vagy betanulható IT pozíció, ahol rendszerszemlélettel, gyors tanulással és felelősségteljes munkával fejlődhetek.",
+    en: "Reliable candidate focused on IT operations, web and software development. Technical IT qualification and Cisco IT Essentials foundations. Seeking a junior or trainable IT role to grow through systems thinking, fast learning, and responsible work.",
   },
   experience: [
     {
@@ -82,6 +83,20 @@ export const CV_CONTENT: CvContent = {
       end: "2014-06",
     },
   ],
+  portfolio: [
+    {
+      title: {
+        hu: "AntiCode — saját weboldal és portfólió",
+        en: "AntiCode — personal website & portfolio",
+      },
+      urlLabel: "anticode.hu",
+      url: "https://anticode.hu",
+      description: {
+        hu: "Saját fejlesztésű weboldal: szolgáltatások, tudástár és szakmai bemutatkozás.",
+        en: "Self-built website featuring services, knowledge base, and professional introduction.",
+      },
+    },
+  ],
   languages: [
     {
       name: { hu: "Angol", en: "English" },
@@ -108,8 +123,8 @@ export const CV_CONTENT: CvContent = {
       en: "Office 365",
     },
     {
-      hu: "Microsoft Office korábbi verziók",
-      en: "Microsoft Office (earlier versions)",
+      hu: "Microsoft Office (korábbi)",
+      en: "Microsoft Office (legacy)",
     },
     {
       hu: "Microsoft Active Directory",
@@ -133,4 +148,3 @@ export const CV_CONTENT: CvContent = {
     en: "Milei_Sandor_Antal_CV_EN.pdf",
   },
 };
-
