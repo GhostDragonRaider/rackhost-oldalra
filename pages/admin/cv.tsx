@@ -71,7 +71,88 @@ function CvWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
   function downloadPdf() {
     bumpIdle();
-    window.print();
+    const sheet = document.querySelector(".cv-doc");
+    if (!sheet) {
+      window.print();
+      return;
+    }
+
+    const title = pdfName.replace(/\.pdf$/i, "");
+    const styleNodes = Array.from(
+      document.querySelectorAll('style, link[rel="stylesheet"]')
+    )
+      .map((node) => node.outerHTML)
+      .join("\n");
+
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.cssText =
+      "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none";
+    document.body.appendChild(frame);
+
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    if (!win || !doc) {
+      frame.remove();
+      window.print();
+      return;
+    }
+
+    doc.open();
+    doc.write(`<!doctype html>
+<html class="cv-print-standalone" lang="${locale}">
+<head>
+<meta charset="utf-8" />
+<title>${title}</title>
+<base href="${window.location.origin}/" />
+${styleNodes}
+<style>
+  @page { size: A4; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  .cv-doc { box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; }
+</style>
+</head>
+<body>${sheet.outerHTML}</body>
+</html>`);
+    doc.close();
+
+    const cleanup = () => {
+      try {
+        frame.remove();
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const runPrint = () => {
+      try {
+        win.focus();
+        win.print();
+      } finally {
+        // Allow the print dialog a moment, then remove the frame
+        window.setTimeout(cleanup, 1000);
+      }
+    };
+
+    const imgs = Array.from(doc.images || []);
+    if (!imgs.length) {
+      window.setTimeout(runPrint, 120);
+      return;
+    }
+
+    let left = imgs.length;
+    const done = () => {
+      left -= 1;
+      if (left <= 0) runPrint();
+    };
+    imgs.forEach((img) => {
+      if (img.complete) done();
+      else {
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      }
+    });
+    window.setTimeout(runPrint, 2500);
   }
 
   return (

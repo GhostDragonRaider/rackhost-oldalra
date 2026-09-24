@@ -32,8 +32,8 @@ export default function CvDocument({
             className="cv-doc__photo"
             src={p.photoSrc}
             alt={p.photoAlt[locale]}
-            width={96}
-            height={96}
+            width={100}
+            height={100}
           />
           <div className="cv-doc__name-block">
             <h1 className="cv-doc__name">{p.fullName}</h1>
@@ -65,44 +65,42 @@ export default function CvDocument({
         <p className="cv-doc__profile">{cv.profile[locale]}</p>
       </section>
 
-      <div className="cv-doc__columns">
-        <section className="cv-doc__section">
-          <h2>{L.experience[locale]}</h2>
-          <ol className="cv-doc__timeline">
-            {cv.experience.map((item) => (
-              <li key={`${item.organization}-${item.start}`}>
-                <div className="cv-doc__timeline-mark" aria-hidden />
-                <div className="cv-doc__item-head">
-                  <h3>{item.title[locale]}</h3>
-                  <time>
-                    {formatCvPeriod(item.start, item.end[locale], locale)}
-                  </time>
-                </div>
-                <p className="cv-doc__org">{item.organization}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
+      <section className="cv-doc__section">
+        <h2>{L.experience[locale]}</h2>
+        <ol className="cv-doc__timeline">
+          {cv.experience.map((item) => (
+            <li key={`${item.organization}-${item.start}`}>
+              <span className="cv-doc__timeline-mark" aria-hidden />
+              <div className="cv-doc__item-head">
+                <h3>{item.title[locale]}</h3>
+                <time>
+                  {formatCvPeriod(item.start, item.end[locale], locale)}
+                </time>
+              </div>
+              <p className="cv-doc__org">{item.organization}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-        <section className="cv-doc__section">
-          <h2>{L.education[locale]}</h2>
-          <ul className="cv-doc__list">
-            {cv.education.map((item) => (
-              <li key={`${item.institution}-${item.start}`}>
-                <div className="cv-doc__item-head">
-                  <h3>{item.title[locale]}</h3>
-                  <time>{formatCvPeriod(item.start, item.end, locale)}</time>
-                </div>
-                <p className="cv-doc__org">
-                  {item.institution}
-                  <span aria-hidden> · </span>
-                  {item.location[locale]}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+      <section className="cv-doc__section">
+        <h2>{L.education[locale]}</h2>
+        <ul className="cv-doc__list">
+          {cv.education.map((item) => (
+            <li key={`${item.institution}-${item.start}`}>
+              <div className="cv-doc__item-head">
+                <h3>{item.title[locale]}</h3>
+                <time>{formatCvPeriod(item.start, item.end, locale)}</time>
+              </div>
+              <p className="cv-doc__org">
+                {item.institution}
+                <span aria-hidden> · </span>
+                {item.location[locale]}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="cv-doc__section">
         <h2>{L.portfolio[locale]}</h2>

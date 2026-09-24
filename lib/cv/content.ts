@@ -37,7 +37,7 @@ export const CV_CONTENT: CvContent = {
   },
   profile: {
     hu: "IT üzemeltetés, web- és szoftverfejlesztés iránt elkötelezett, megbízható pályázó vagyok. Műszaki informatikus végzettséggel és Cisco IT Essentials alapismeretekkel rendelkezem. Célom junior vagy betanulható IT pozíció, ahol rendszerszemlélettel, gyors tanulással és felelősségteljes munkával fejlődhetek.",
-    en: "Reliable candidate focused on IT operations, web and software development. Technical IT qualification and Cisco IT Essentials foundations. Seeking a junior or trainable IT role to grow through systems thinking, fast learning, and responsible work.",
+    en: "I am a reliable candidate committed to IT operations, web and software development. I hold a technical IT qualification and foundational Cisco IT Essentials knowledge. I am seeking a junior or trainable IT role where I can grow through a systems-oriented mindset, fast learning, and responsible work.",
   },
   experience: [
     {
