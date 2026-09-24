@@ -15,7 +15,7 @@ describe("cv content integrity", () => {
     assert.equal(p.location, "Kenézlő");
     assert.equal(p.websiteLabel, "anticode.hu");
     assert.equal(p.birthYear, "1992");
-    assert.match(p.photoSrc, /Milei_Sandor_Antal_CV_foto\.png$/);
+    assert.match(p.photoSrc, /\/api\/admin\/cv\/photo$/);
   });
 
   it("has HU and EN profile / experience / education", () => {

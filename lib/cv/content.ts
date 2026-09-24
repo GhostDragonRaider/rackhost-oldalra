@@ -1,4 +1,7 @@
 import type { CvContent } from "./types";
+import { formatCvPeriod } from "./format";
+
+export { formatCvPeriod };
 
 /**
  * Structured CV source of truth.
@@ -14,7 +17,8 @@ export const CV_CONTENT: CvContent = {
     websiteLabel: "anticode.hu",
     websiteUrl: "https://anticode.hu",
     birthYear: "1992",
-    photoSrc: "/admin/cv/Milei_Sandor_Antal_CV_foto.png",
+    /** Authenticated admin API — not a public static asset */
+    photoSrc: "/api/admin/cv/photo",
     photoAlt: {
       hu: "Milei Sándor Antal fényképe",
       en: "Photo of Milei Sándor Antal",
@@ -130,11 +134,3 @@ export const CV_CONTENT: CvContent = {
   },
 };
 
-export function formatCvPeriod(
-  start: string,
-  end: string,
-  locale: "hu" | "en"
-): string {
-  const sep = locale === "hu" ? " – " : " – ";
-  return `${start}${sep}${end}`;
-}

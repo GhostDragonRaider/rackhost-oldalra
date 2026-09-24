@@ -2,14 +2,50 @@ import Head from "next/head";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AdminShell from "../../components/admin/AdminShell";
 import CvDocument from "../../components/admin/cv/CvDocument";
-import { CV_CONTENT } from "../../lib/cv/content";
-import type { CvLocale } from "../../lib/cv/types";
+import type { CvContent, CvLocale } from "../../lib/cv/types";
 
 function CvWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [locale, setLocale] = useState<CvLocale>("hu");
+  const [cv, setCv] = useState<CvContent | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [loadingCv, setLoadingCv] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const pdfName = CV_CONTENT.pdfFileName[locale];
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingCv(true);
+      setLoadError("");
+      try {
+        const res = await fetch("/api/admin/cv/content", {
+          credentials: "same-origin",
+        });
+        if (!res.ok) {
+          throw new Error(
+            res.status === 401
+              ? "Nincs jogosultság a CV betöltéséhez."
+              : "A CV tartalom betöltése sikertelen."
+          );
+        }
+        const data = (await res.json()) as { ok: boolean; cv: CvContent };
+        if (!cancelled) {
+          if (!data.ok || !data.cv) throw new Error("Érvénytelen CV válasz.");
+          setCv(data.cv);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : "Ismeretlen hiba.");
+        }
+      } finally {
+        if (!cancelled) setLoadingCv(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const pdfName = cv?.pdfFileName[locale] || "CV.pdf";
 
   const setLocaleSafe = useCallback(
     (next: CvLocale) => {
@@ -20,12 +56,13 @@ function CvWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   );
 
   useEffect(() => {
+    if (!cv) return;
     const prev = document.title;
     document.title = pdfName.replace(/\.pdf$/i, "");
     return () => {
       document.title = prev;
     };
-  }, [pdfName]);
+  }, [pdfName, cv]);
 
   function scrollToPreview() {
     bumpIdle();
@@ -75,10 +112,16 @@ function CvWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             type="button"
             className="admin-ghost"
             onClick={scrollToPreview}
+            disabled={!cv}
           >
             Előnézet
           </button>
-          <button type="button" className="cv-download" onClick={downloadPdf}>
+          <button
+            type="button"
+            className="cv-download"
+            onClick={downloadPdf}
+            disabled={!cv}
+          >
             PDF letöltése ({locale === "hu" ? "HU" : "EN"})
           </button>
         </div>
@@ -94,7 +137,13 @@ function CvWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
       </p>
 
       <div className="cv-preview-shell" ref={previewRef}>
-        <CvDocument locale={locale} />
+        {loadingCv ? (
+          <p className="admin-muted">Önéletrajz betöltése…</p>
+        ) : loadError ? (
+          <p className="admin-error">{loadError}</p>
+        ) : cv ? (
+          <CvDocument locale={locale} content={cv} />
+        ) : null}
       </div>
     </section>
   );

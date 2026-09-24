@@ -1,14 +1,19 @@
-import type { CvLocale } from "../../../lib/cv/types";
-import { CV_CONTENT, formatCvPeriod } from "../../../lib/cv/content";
+import type { CvContent, CvLocale } from "../../../lib/cv/types";
+import { formatCvPeriod } from "../../../lib/cv/format";
 
 type CvDocumentProps = {
   locale: CvLocale;
+  content: CvContent;
   /** Extra class for print/preview wrappers */
   className?: string;
 };
 
-export default function CvDocument({ locale, className }: CvDocumentProps) {
-  const cv = CV_CONTENT;
+export default function CvDocument({
+  locale,
+  content,
+  className,
+}: CvDocumentProps) {
+  const cv = content;
   const p = cv.personal;
   const L = cv.labels;
 
