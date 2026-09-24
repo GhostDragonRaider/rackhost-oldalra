@@ -32,8 +32,8 @@ export default function CvDocument({
             className="cv-doc__photo"
             src={p.photoSrc}
             alt={p.photoAlt[locale]}
-            width={100}
-            height={100}
+            width={94}
+            height={94}
           />
           <div className="cv-doc__name-block">
             <h1 className="cv-doc__name">{p.fullName}</h1>

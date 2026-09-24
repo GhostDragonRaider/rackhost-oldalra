@@ -47,13 +47,10 @@ function CvWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
   const pdfName = cv?.pdfFileName[locale] || "CV.pdf";
 
-  const setLocaleSafe = useCallback(
-    (next: CvLocale) => {
-      bumpIdle();
-      setLocale(next);
-    },
-    [bumpIdle]
-  );
+  const setLocaleSafe = useCallback((next: CvLocale) => {
+    setLocale(next);
+    bumpIdle();
+  }, [bumpIdle]);
 
   useEffect(() => {
     if (!cv) return;
