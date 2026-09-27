@@ -5,6 +5,7 @@ import "../styles/globals.scss";
 import "../styles/landing.scss";
 import "../styles/admin.scss";
 import "../styles/cv.scss";
+import "../styles/lab.scss";
 import AnalyticsBeacon from "../components/AnalyticsBeacon";
 import NavBar from "../components/Navbar";
 import { LangProvider } from "../components/lang_context";

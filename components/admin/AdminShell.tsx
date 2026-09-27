@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-export type AdminNavId = "monitor" | "audit" | "cv";
+export type AdminNavId = "monitor" | "audit" | "cv" | "lab";
 
 type AdminShellProps = {
   active: AdminNavId;
@@ -39,6 +39,12 @@ const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> 
       href: "/admin/cv",
       label: "Önéletrajzom elküldése",
       icon: "▤",
+    },
+    {
+      id: "lab",
+      href: "/admin/lab",
+      label: "AntiCode Lab",
+      icon: "⌬",
     },
   ];
 
