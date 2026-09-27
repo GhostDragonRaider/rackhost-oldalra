@@ -1,8 +1,19 @@
 import Link from "next/link";
 import AdminShell from "../../components/admin/AdminShell";
+import { DelayedHelpTip } from "../../components/admin/audit/DelayedHelpTip";
+import { getLabModule } from "../../lib/lab/registry";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-/* No public links to this page — open /admin directly. */
+const MENU_TIP_DELAY_MS = 700;
+
+const LAB_HUB_LINKS: Array<{ moduleId: string; label: string; href: string }> = [
+  { moduleId: "action-center", label: "Action Center", href: "/admin/lab/action-center" },
+  { moduleId: "seo-lab", label: "SEO Lab", href: "/admin/lab/seo-lab" },
+  { moduleId: "security-center", label: "Security", href: "/admin/lab/security-center" },
+  { moduleId: "vps-monitor", label: "VPS Monitor", href: "/admin/lab/vps-monitor" },
+  { moduleId: "design-system", label: "Design System", href: "/admin/lab/design-system" },
+  { moduleId: "website-audit", label: "Audit (Lab)", href: "/admin/lab/website-audit" },
+];
 type Stats = {
   today: { views: number; visitors: number };
   week: { views: number; visitors: number };
@@ -753,38 +764,71 @@ function MonitorWorkspace({
               Center, Design System. Nem publikus — csak admin.
             </p>
           </div>
-          <Link href="/admin/lab" className="admin-ghost admin-lab-hub__cta">
-            Lab megnyitása →
-          </Link>
+          <DelayedHelpTip
+            text={
+              getLabModule("overview")?.helpHu ||
+              "Belső műhely az új eszközök kipróbálásához."
+            }
+            delayMs={MENU_TIP_DELAY_MS}
+            placement="bottom"
+            strategy="fixed"
+            asChild
+          >
+            <Link href="/admin/lab" className="admin-ghost admin-lab-hub__cta">
+              Lab megnyitása →
+            </Link>
+          </DelayedHelpTip>
         </div>
         <ul className="admin-lab-hub__links">
-          <li>
-            <Link href="/admin/lab/action-center">Action Center</Link>
-          </li>
-          <li>
-            <Link href="/admin/lab/seo-lab">SEO Lab</Link>
-          </li>
-          <li>
-            <Link href="/admin/lab/security-center">Security</Link>
-          </li>
-          <li>
-            <Link href="/admin/lab/vps-monitor">VPS Monitor</Link>
-          </li>
-          <li>
-            <Link href="/admin/lab/design-system">Design System</Link>
-          </li>
-          <li>
-            <Link href="/admin/lab/website-audit">Audit (Lab)</Link>
-          </li>
+          {LAB_HUB_LINKS.map((item) => (
+            <li key={item.href}>
+              <DelayedHelpTip
+                text={getLabModule(item.moduleId)?.helpHu || item.label}
+                delayMs={MENU_TIP_DELAY_MS}
+                placement="bottom"
+                strategy="fixed"
+                asChild
+              >
+                <Link href={item.href}>{item.label}</Link>
+              </DelayedHelpTip>
+            </li>
+          ))}
         </ul>
       </section>
 
       <p className="admin-muted admin-tool-jump">
-        <Link href="/admin/website-audit">Weboldal-ellenőrző megnyitása →</Link>
+        <DelayedHelpTip
+          text="Beírsz egy webcímet, és megmondja, mi a baj az oldallal (sebesség, SEO, hibák)."
+          delayMs={MENU_TIP_DELAY_MS}
+          placement="top"
+          strategy="fixed"
+          asChild
+        >
+          <Link href="/admin/website-audit">Weboldal-ellenőrző megnyitása →</Link>
+        </DelayedHelpTip>
         {" · "}
-        <Link href="/admin/lab">AntiCode Lab →</Link>
+        <DelayedHelpTip
+          text={
+            getLabModule("overview")?.helpHu ||
+            "Belső műhely az új eszközök kipróbálásához."
+          }
+          delayMs={MENU_TIP_DELAY_MS}
+          placement="top"
+          strategy="fixed"
+          asChild
+        >
+          <Link href="/admin/lab">AntiCode Lab →</Link>
+        </DelayedHelpTip>
         {" · "}
-        <Link href="/admin/cv">Önéletrajz →</Link>
+        <DelayedHelpTip
+          text="Itt szerkesztheted az önéletrajzodat, és elküldheted PDF-ként e-mailben."
+          delayMs={MENU_TIP_DELAY_MS}
+          placement="top"
+          strategy="fixed"
+          asChild
+        >
+          <Link href="/admin/cv">Önéletrajz →</Link>
+        </DelayedHelpTip>
       </p>
     </>
   );

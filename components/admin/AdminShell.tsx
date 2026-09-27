@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { DelayedHelpTip } from "./audit/DelayedHelpTip";
 
 export type AdminNavId = "monitor" | "audit" | "cv" | "lab";
 
@@ -24,29 +25,48 @@ type AdminShellProps = {
 
 const IDLE_MS = 5 * 60 * 1000;
 const GLASS_SELECTOR = ".admin-nav-link";
+const MENU_TIP_DELAY_MS = 700;
 
-const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> =
-  [
-    { id: "monitor", href: "/admin", label: "Monitor", icon: "▣" },
-    {
-      id: "lab",
-      href: "/admin/lab",
-      label: "AntiCode Lab",
-      icon: "⌬",
-    },
-    {
-      id: "audit",
-      href: "/admin/website-audit",
-      label: "Weboldal-ellenőrző",
-      icon: "⌀",
-    },
-    {
-      id: "cv",
-      href: "/admin/cv",
-      label: "Önéletrajzom elküldése",
-      icon: "▤",
-    },
-  ];
+const NAV: Array<{
+  id: AdminNavId;
+  href: string;
+  label: string;
+  icon: string;
+  helpHu: string;
+}> = [
+  {
+    id: "monitor",
+    href: "/admin",
+    label: "Monitor",
+    icon: "▣",
+    helpHu:
+      "Itt látod, hányan nézik a weboldalt, és hogy a Google megtalálja-e az oldalakat.",
+  },
+  {
+    id: "lab",
+    href: "/admin/lab",
+    label: "AntiCode Lab",
+    icon: "⌬",
+    helpHu:
+      "Belső műhely: új eszközöket itt próbálhatsz ki, mielőtt az igazi oldalon megjelennek.",
+  },
+  {
+    id: "audit",
+    href: "/admin/website-audit",
+    label: "Weboldal-ellenőrző",
+    icon: "⌀",
+    helpHu:
+      "Beírsz egy webcímet, és megmondja, mi a baj az oldallal (sebesség, SEO, hibák).",
+  },
+  {
+    id: "cv",
+    href: "/admin/cv",
+    label: "Önéletrajzom elküldése",
+    icon: "▤",
+    helpHu:
+      "Itt szerkesztheted az önéletrajzodat, és elküldheted PDF-ként e-mailben.",
+  },
+];
 
 export default function AdminShell({
   active,
@@ -300,16 +320,32 @@ export default function AdminShell({
                 </p>
               </div>
               <div className="admin-top-actions">
-                <Link href="/" className="admin-ghost admin-site-btn">
-                  Weboldal
-                </Link>
-                <button
-                  type="button"
-                  className="admin-ghost"
-                  onClick={() => void onLogout()}
+                <DelayedHelpTip
+                  text="Vissza a nyilvános AntiCode weboldalra (amit a látogatók is látnak)."
+                  delayMs={MENU_TIP_DELAY_MS}
+                  placement="bottom"
+                  strategy="fixed"
+                  asChild
                 >
-                  Kijelentkezés
-                </button>
+                  <Link href="/" className="admin-ghost admin-site-btn">
+                    Weboldal
+                  </Link>
+                </DelayedHelpTip>
+                <DelayedHelpTip
+                  text="Kilépsz az adminból. Újra be kell jelentkezned, ha folytatni akarod."
+                  delayMs={MENU_TIP_DELAY_MS}
+                  placement="bottom"
+                  strategy="fixed"
+                  asChild
+                >
+                  <button
+                    type="button"
+                    className="admin-ghost"
+                    onClick={() => void onLogout()}
+                  >
+                    Kijelentkezés
+                  </button>
+                </DelayedHelpTip>
               </div>
             </header>
 
@@ -321,19 +357,27 @@ export default function AdminShell({
             >
               <span className="admin-nav-glass" aria-hidden="true" ref={glassRef} />
               {NAV.map((item) => (
-                <Link
+                <DelayedHelpTip
                   key={item.id}
-                  href={item.href}
-                  className={`admin-nav-link${
-                    active === item.id ? " is-active" : ""
-                  }`}
-                  aria-current={active === item.id ? "page" : undefined}
+                  text={item.helpHu}
+                  delayMs={MENU_TIP_DELAY_MS}
+                  placement="bottom"
+                  strategy="fixed"
+                  asChild
                 >
-                  <span className="admin-nav-icon" aria-hidden="true">
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </Link>
+                  <Link
+                    href={item.href}
+                    className={`admin-nav-link${
+                      active === item.id ? " is-active" : ""
+                    }`}
+                    aria-current={active === item.id ? "page" : undefined}
+                  >
+                    <span className="admin-nav-icon" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                    <span className="admin-nav-label">{item.label}</span>
+                  </Link>
+                </DelayedHelpTip>
               ))}
             </nav>
 
