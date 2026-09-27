@@ -261,22 +261,18 @@ export function QuoteRequestModal({
                 </dl>
               </div>
 
-              <div className="quote-ticket__perforation" aria-hidden />
-
-              <aside className="quote-ticket__stub">
-                <p className="quote-ticket__stub-label">Jegy</p>
-                <p className="quote-ticket__stub-id">
+              <footer className="quote-ticket__footer">
+                <p className="quote-ticket__promise">
+                  Hamarosan felvesszük Önnel a kapcsolatot.
+                </p>
+                <p className="quote-ticket__footer-meta">
                   {context.auditId.slice(0, 8).toUpperCase()}
-                </p>
-                <p className="quote-ticket__stub-meta">
                   {context.overallScore != null
-                    ? `${context.overallScore}/100`
-                    : "—"}
+                    ? ` · ${context.overallScore}/100`
+                    : ""}
+                  {context.overallLabel ? ` · ${context.overallLabel}` : ""}
                 </p>
-                {context.overallLabel ? (
-                  <p className="quote-ticket__stub-meta">{context.overallLabel}</p>
-                ) : null}
-              </aside>
+              </footer>
             </article>
             <button
               type="button"

@@ -1541,7 +1541,8 @@ body.admin-active {
 
 .quote-ticket {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 108px;
+  grid-template-rows: auto auto;
+  width: 100%;
   border-radius: 14px;
   box-shadow:
     0 22px 44px rgba(11, 27, 54, 0.26),
@@ -1553,7 +1554,9 @@ body.admin-active {
 
 .quote-ticket__main {
   position: relative;
-  padding: 16px 18px 14px 20px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 18px 14px;
   background:
     linear-gradient(180deg, #fffefb 0%, #fff7ec 100%);
 }
@@ -1606,6 +1609,7 @@ body.admin-active {
   grid-template-columns: 1fr 1fr;
   gap: 8px 14px;
   margin: 0;
+  width: 100%;
 }
 
 .quote-ticket__grid > div {
@@ -1639,52 +1643,32 @@ body.admin-active {
   overflow: hidden;
 }
 
-.quote-ticket__perforation {
-  position: relative;
-  width: 14px;
-  background-color: #0b1b36;
-  background-image: radial-gradient(
-    circle at 0 9px,
-    #fffaf3 5.5px,
-    transparent 6px
-  );
-  background-size: 14px 18px;
-  background-repeat: repeat-y;
-}
-
-.quote-ticket__stub {
+.quote-ticket__footer {
   display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 8px;
-  padding: 14px 10px;
-  background: #0b1b36;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #1a3358 0%, #0b1b36 55%, #16324f 100%);
   color: #f4e6c8;
-  text-align: center;
+  border-top: 1px dashed rgba(244, 230, 200, 0.35);
 }
 
-.quote-ticket__stub-label {
+.quote-ticket__promise {
   margin: 0;
-  font-size: 0.62rem;
+  color: #fff;
+  font-size: 0.98rem;
   font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  opacity: 0.7;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
 }
 
-.quote-ticket__stub-id {
+.quote-ticket__footer-meta {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-}
-
-.quote-ticket__stub-meta {
-  margin: 0;
-  font-size: 0.72rem;
+  color: rgba(244, 230, 200, 0.78);
+  font-size: 0.75rem;
   font-weight: 700;
-  opacity: 0.9;
-  line-height: 1.25;
+  letter-spacing: 0.04em;
 }
 
 .quote-ticket__done {
@@ -1791,30 +1775,6 @@ body.admin-active {
 
   .quote-modal__receipt {
     grid-template-columns: 1fr;
-  }
-
-  .quote-ticket {
-    grid-template-columns: 1fr;
-  }
-
-  .quote-ticket__perforation {
-    width: 100%;
-    height: 14px;
-    background-color: #fffaf3;
-    background-image: radial-gradient(
-      circle at 9px 100%,
-      #0b1b36 5.5px,
-      transparent 6px
-    );
-    background-size: 18px 14px;
-    background-repeat: repeat-x;
-  }
-
-  .quote-ticket__stub {
-    justify-items: center;
-    text-align: center;
-    padding: 12px 14px;
-    gap: 4px;
   }
 
   .quote-modal__panel {
