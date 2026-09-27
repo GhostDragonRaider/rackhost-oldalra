@@ -3,7 +3,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AdminShell from "../../components/admin/AdminShell";
 import {
   AuditSectionTitle,
-  CategoryBars,
+  CategoryBarsSection,
   ScoreRing,
   SeverityDistribution,
   severityIcon,
@@ -102,6 +102,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [history, setHistory] = useState<WebsiteAuditSummary[]>([]);
   const [filter, setFilter] = useState<FindingFilter>("problems");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [openPriority, setOpenPriority] = useState<Record<string, boolean>>({});
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({});
 
   const loadHistory = useCallback(async () => {
@@ -123,6 +124,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setRunning(false);
     setLiveAudit(null);
     setProgressCaughtUp(true);
+    setOpenPriority({});
     const res = await fetch(`/api/admin/website-audit/${id}`, {
       credentials: "same-origin",
     });
@@ -148,6 +150,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setLiveAudit(null);
     setProgressCaughtUp(false);
     setActiveCategory(null);
+    setOpenPriority({});
     try {
       const res = await fetch("/api/admin/website-audit", {
         method: "POST",
@@ -284,7 +287,11 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
   const categoriesSorted = useMemo(() => {
     if (!audit) return [];
-    return [...(audit.categories || [])].sort((a, b) => b.score - a.score);
+    return [...(audit.categories || [])].sort((a, b) => {
+      const as = a.score == null ? -1 : a.score;
+      const bs = b.score == null ? -1 : b.score;
+      return bs - as;
+    });
   }, [audit]);
 
   function matchesFilter(f: AuditFinding): boolean {
@@ -620,21 +627,21 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               <SeverityDistribution counts={severityCounts} />
             </section>
 
-            <section aria-label="Kategóriák">
-              <AuditSectionTitle help={SECTION_HELP.categories}>
-                Kategóriák
-              </AuditSectionTitle>
-              <CategoryBars
-                categories={categoriesSorted}
-                activeId={activeCategory}
-                onSelect={(id) => {
-                  setActiveCategory(id);
-                  setOpenCats((prev) => ({ ...prev, [id]: true }));
-                  const el = document.getElementById(`audit-cat-${id}`);
-                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              />
-            </section>
+            <CategoryBarsSection
+              title={
+                <AuditSectionTitle help={SECTION_HELP.categories}>
+                  Kategóriák
+                </AuditSectionTitle>
+              }
+              categories={categoriesSorted}
+              activeId={activeCategory}
+              onSelect={(id) => {
+                setActiveCategory(id);
+                setOpenCats((prev) => ({ ...prev, [id]: true }));
+                const el = document.getElementById(`audit-cat-${id}`);
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            />
 
             <section
               className="audit-priority"
@@ -651,27 +658,38 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 <ol className="audit-priority-list">
                   {priorityFixes.map((f, i) => {
                     const sev = normalizeSeverity(f.severity);
+                    const key = `${f.id}-${i}`;
+                    const open = openPriority[key] ?? false;
                     const help =
                       findingHelpText(f.id) ||
                       CATEGORY_HELP[f.category as AuditCategoryId] ||
                       f.detail;
                     return (
                       <li
-                        key={`${f.id}-${i}`}
+                        key={key}
                         className={`audit-priority-item audit-sev--${sev}${
                           sev === "critical" ? " is-critical" : ""
-                        }`}
+                        }${open ? " is-open" : ""}`}
                       >
-                        <DelayedHelpTip text={help} placement="top" display="block">
-                          <div className="audit-priority-item__inner">
-                            <div className="audit-priority-item__top">
-                              <span
-                                className="audit-priority-item__n"
-                                aria-hidden
-                              >
-                                {i + 1}
-                              </span>
-                              <strong tabIndex={0}>{f.title}</strong>
+                        <button
+                          type="button"
+                          className="audit-priority-item__summary"
+                          aria-expanded={open}
+                          onClick={() =>
+                            setOpenPriority((prev) => ({
+                              ...prev,
+                              [key]: !prev[key],
+                            }))
+                          }
+                        >
+                          <span className="audit-priority-item__n" aria-hidden>
+                            {i + 1}
+                          </span>
+                          <span className="audit-priority-item__main">
+                            <span className="audit-priority-item__title">
+                              {f.title}
+                            </span>
+                            <span className="audit-priority-item__meta">
                               <DelayedHelpTip
                                 text={SEVERITY_HELP[sev]}
                                 placement="top"
@@ -679,6 +697,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                                 <span
                                   className={`admin-finding-tag audit-sev--${sev}`}
                                   tabIndex={0}
+                                  onClick={(e) => e.stopPropagation()}
                                 >
                                   <span aria-hidden>{severityIcon(sev)} </span>
                                   {severityLabel(sev)}
@@ -691,26 +710,43 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                                 }
                                 placement="top"
                               >
-                                <span className="audit-cat-pill" tabIndex={0}>
+                                <span
+                                  className="audit-cat-pill"
+                                  tabIndex={0}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   {CATEGORY_LABELS[
                                     f.category as AuditCategoryId
                                   ] || f.category}
                                 </span>
                               </DelayedHelpTip>
+                            </span>
+                          </span>
+                          <span className="audit-priority-item__chev" aria-hidden>
+                            {open ? "▾" : "▸"}
+                          </span>
+                        </button>
+                        {open ? (
+                          <DelayedHelpTip
+                            text={help}
+                            placement="top"
+                            display="block"
+                          >
+                            <div className="audit-priority-item__body">
+                              <p>{f.detail}</p>
+                              {f.detectedValue ? (
+                                <p className="admin-muted admin-break">
+                                  Detektált: {f.detectedValue}
+                                </p>
+                              ) : null}
+                              {f.recommendation ? (
+                                <p className="audit-fix">
+                                  <strong>Javaslat:</strong> {f.recommendation}
+                                </p>
+                              ) : null}
                             </div>
-                            <p>{f.detail}</p>
-                            {f.detectedValue ? (
-                              <p className="admin-muted admin-break">
-                                Detektált: {f.detectedValue}
-                              </p>
-                            ) : null}
-                            {f.recommendation ? (
-                              <p className="audit-fix">
-                                <strong>Javaslat:</strong> {f.recommendation}
-                              </p>
-                            ) : null}
-                          </div>
-                        </DelayedHelpTip>
+                          </DelayedHelpTip>
+                        ) : null}
                       </li>
                     );
                   })}
