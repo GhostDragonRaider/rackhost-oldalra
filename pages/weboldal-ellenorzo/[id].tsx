@@ -13,7 +13,6 @@ import {
   scoreTone,
   type PublicWebsiteAudit,
 } from "../../components/website-audit/publicTypes";
-import "../../styles/website-audit-public.scss";
 
 const POLL_MS = 1200;
 

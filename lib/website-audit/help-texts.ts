@@ -22,9 +22,9 @@ export const SECTION_HELP = {
 
 export const CATEGORY_HELP: Record<AuditCategoryId, string> = {
   availability:
-    "Elérhetőség: az oldal egyáltalán megnyílik-e a böngészőben. HTTP hibák (pl. 404, 500), túl sok átirányítás vagy hálózati gond ide tartozik. Ha ez gyenge, a többi ellenőrzés is kevésbé releváns.",
+    "Technikai állapot: az oldal megnyílik-e, HTTP státusz, átirányítások, HTTPS/TLS alapok, válaszidő. Ha ez gyenge, a többi ellenőrzés is kevésbé releváns.",
   security:
-    "Biztonság: HTTPS, tanúsítvány, biztonsági válaszfejlécek és cookie beállítások. Célja, hogy a látogatók kapcsolata védettebb legyen — ez nem teljes biztonsági audit vagy „feltörhetetlen” minősítés.",
+    "Biztonsági kitettség: nem intruzív, külsőleg látható jelek (HTTPS, headerek, cookie attribútumok, mixed content). Nem penetrációs teszt — nem bizonyítja, hogy az oldal feltörhető vagy feltörhetetlen.",
   seo:
     "SEO (keresőoptimalizálás): title, leírás, canonical, indexelhetőség, közösségi megosztás jelek. Segít, hogy a keresők és a megosztások érthetően mutassák az oldalt.",
   content:
@@ -36,7 +36,7 @@ export const CATEGORY_HELP: Record<AuditCategoryId, string> = {
   best_practices:
     "Best practices: általános, jól bevált webtechnikai szokások (HTTPS, robots.txt, favicon, viewport stb.). Nem „hibák listája”, inkább ajánlott alapok.",
   responsive:
-    "Reszponzív: az oldal hogyan viselkedik különböző nézetméreteken. Ha a mérés nem elérhető, azt UNAVAILABLE-ként jelezzük — soha nem számít automatikus PASS-nak.",
+    "Responsive: reprezentatív viewport-sorozaton (320–2560 px) statikus HTML/CSS jelek. Screenshot/layout overflow böngésző nélkül UNAVAILABLE — soha nem hamis PASS.",
 };
 
 export const SEVERITY_HELP: Record<AuditSeverity | "warning", string> = {

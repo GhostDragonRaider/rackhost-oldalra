@@ -7,7 +7,6 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "../../lib/site";
-import "../../styles/website-audit-public.scss";
 
 const TITLE = "AntiCode Weboldal-ellenőrző";
 const DESCRIPTION =

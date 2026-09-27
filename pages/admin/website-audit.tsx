@@ -236,14 +236,30 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     ? `/kapcsolat?${new URLSearchParams({
         service: "Meglévő oldal megújítása",
         website_url: audit.normalizedUrl || audit.inputUrl || "",
+        audit_id: audit.id,
         message: [
           "Weboldal-ellenőrző alapján szeretnék ajánlatot kérni a hibák javítására.",
+          `Audit ID: ${audit.id}`,
           `Ellenőrzött URL: ${audit.normalizedUrl || audit.inputUrl}`,
-          `Összpontszám: ${audit.overallScore}/100 (${audit.overallLabel || ""})`,
+          `Összpontszám: ${audit.overallScore ?? "—"}/100 (${audit.overallLabel || ""})`,
           `Prioritás: ${priorityFixes
             .slice(0, 5)
             .map((f) => f.title)
             .join("; ")}`,
+        ].join("\n"),
+      }).toString()}`
+    : "/kapcsolat";
+
+  const securityOfferHref = audit
+    ? `/kapcsolat?${new URLSearchParams({
+        service: "Még egyeztetném",
+        website_url: audit.normalizedUrl || audit.inputUrl || "",
+        audit_id: audit.id,
+        message: [
+          "Biztonsági felmérést kérek (Authorized Security Assessment).",
+          "Tudom, hogy ez írásos engedélyhez és scope-hoz kötött, nem automatikus scan.",
+          `Audit ID (public exposure check): ${audit.id}`,
+          `URL: ${audit.normalizedUrl || audit.inputUrl}`,
         ].join("\n"),
       }).toString()}`
     : "/kapcsolat";
@@ -260,9 +276,10 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               </span>
             </div>
             <p className="admin-muted">
-              Admin tesztverzió — egyetlen publikus URL részletes technikai
-              auditja (SSRF-védelemmel). Nem publikus szolgáltatás, nem
-              website-crawl. Kapcsolódó Lab modulok:{" "}
+              Admin nézet — ugyanaz a motor, mint a publikus{" "}
+              <Link href="/weboldal-ellenorzo">Weboldal-ellenőrző</Link>{" "}
+              oldalon (SSRF-védelem, nem intruzív security exposure). Kapcsolódó
+              Lab:{" "}
               <Link href="/admin/lab/website-audit">Website Audit</Link>
               {" · "}
               <Link href="/admin/lab/seo-lab">SEO Lab</Link>
@@ -403,7 +420,10 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                     Újraellenőrzés
                   </button>
                   <Link href={offerHref} className="admin-report-offer-cta">
-                    Kérj ajánlatot
+                    Segítséget kérek a javításhoz
+                  </Link>
+                  <Link href={securityOfferHref} className="admin-ghost">
+                    Biztonsági felmérést kérek
                   </Link>
                 </div>
               </div>

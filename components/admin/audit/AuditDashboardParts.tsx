@@ -106,22 +106,27 @@ type CategoryBarsProps = {
   categories: Array<{
     id: string;
     label: string;
-    score: number;
+    score: number | null;
     status?: string;
+    measurable?: boolean;
   }>;
   onSelect?: (id: string) => void;
   activeId?: string | null;
+  animate?: boolean;
 };
 
 export function CategoryBars({
   categories,
   onSelect,
   activeId,
+  animate = true,
 }: CategoryBarsProps) {
   return (
     <ul className="audit-cat-bars" aria-label="Kategória pontszámok">
       {categories.map((cat) => {
-        const tone = scoreTone(cat.score);
+        const measurable = cat.measurable !== false && cat.score != null;
+        const score = measurable ? Math.max(0, Math.min(100, cat.score!)) : 0;
+        const tone = measurable ? scoreTone(score) : "neutral";
         const active = activeId === cat.id;
         const help =
           CATEGORY_HELP[cat.id as AuditCategoryId] ||
@@ -134,20 +139,27 @@ export function CategoryBars({
                 type={onSelect ? "button" : undefined}
                 className={`audit-cat-bar audit-cat-bar--${tone}${
                   active ? " is-active" : ""
-                }`}
+                }${animate && measurable ? " audit-cat-bar--animate" : ""}`}
                 onClick={onSelect ? () => onSelect(cat.id) : undefined}
                 aria-current={active ? "true" : undefined}
+                style={
+                  animate && measurable
+                    ? ({ ["--audit-score" as string]: String(score) } as never)
+                    : undefined
+                }
               >
                 <span className="audit-cat-bar__label">{cat.label}</span>
                 <span className="audit-cat-bar__track" aria-hidden>
                   <span
                     className="audit-cat-bar__fill"
                     style={{
-                      width: `${Math.max(0, Math.min(100, cat.score))}%`,
+                      width: measurable ? `${score}%` : "0%",
                     }}
                   />
                 </span>
-                <span className="audit-cat-bar__score">{cat.score}</span>
+                <span className="audit-cat-bar__score">
+                  {measurable ? score : "—"}
+                </span>
               </Tag>
             </DelayedHelpTip>
           </li>

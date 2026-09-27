@@ -1658,6 +1658,25 @@ button.audit-cat-bar:focus-visible,
   height: 100%;
   border-radius: inherit;
   background: #3f5f86;
+  transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.audit-cat-bar--animate .audit-cat-bar__fill {
+  animation: audit-bar-grow 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes audit-bar-grow {
+  from {
+    width: 0% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audit-cat-bar__fill,
+  .audit-cat-bar--animate .audit-cat-bar__fill {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .audit-cat-bar--good .audit-cat-bar__fill {
@@ -1670,6 +1689,10 @@ button.audit-cat-bar:focus-visible,
 
 .audit-cat-bar--bad .audit-cat-bar__fill {
   background: #b42318;
+}
+
+.audit-cat-bar--neutral .audit-cat-bar__fill {
+  background: #94a3b8;
 }
 
 .audit-cat-bar__score {

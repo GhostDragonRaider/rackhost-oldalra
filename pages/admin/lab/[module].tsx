@@ -264,19 +264,34 @@ export default function LabModulePage() {
             <div className="lab-card lab-card--wide">
               <h2>Website Audit Engine</h2>
               <p className="lab-muted">
-                A meglévő SSRF-védett audit motor a Labból érhető el. Új publikus
-                UI nincs — a futó eszköz: Admin → Weboldal-ellenőrző.
+                Publikus Weboldal-ellenőrző + admin motor. SSRF-védett, nem
+                intruzív security exposure check.
               </p>
-              <Link
-                href="/admin/website-audit"
-                className="lab-btn lab-btn--primary"
-                onClick={() => bumpIdle()}
-              >
-                Audit megnyitása
-              </Link>
-              <p className="lab-muted" style={{ marginTop: 16 }}>
-                Pluginok (meglévő checks): availability, SEO, security,
-                accessibility, performance, content, best-practices.
+              <div className="lab-main__actions">
+                <Link
+                  href="/weboldal-ellenorzo"
+                  className="lab-btn lab-btn--primary"
+                  onClick={() => bumpIdle()}
+                >
+                  Publikus ellenőrző
+                </Link>
+                <Link
+                  href="/admin/website-audit"
+                  className="lab-btn"
+                  onClick={() => bumpIdle()}
+                >
+                  Admin audit
+                </Link>
+              </div>
+              <h3 style={{ marginTop: 24 }}>Authorized Security Assessment</h3>
+              <p className="lab-muted">
+                Architektúra stub (nem publikus, nem auto-start). Workflow:
+                Árajánlat → scope → írásos engedély → ellenőrzés → assessment →
+                findings → report. Out-of-scope target = SKIPPED. Aktív exploit
+                NINCS.
+              </p>
+              <p className="lab-muted">
+                Modul: <code>lib/lab/authorized-assessment.ts</code>
               </p>
             </div>
           );
