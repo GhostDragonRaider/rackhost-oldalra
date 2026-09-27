@@ -1243,17 +1243,342 @@ body.admin-active {
   justify-content: center;
   min-height: 44px;
   padding: 12px 18px;
+  border: 0;
   border-radius: 12px;
   background: #3f5f86;
   color: #fff;
+  font: inherit;
   font-weight: 800;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .admin-report-offer-cta:hover,
 .admin-report-offer-cta:focus-visible {
   background: #2a4a6e;
   outline: none;
+}
+
+/* —— Premium quote request modal —— */
+.quote-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px 14px;
+}
+
+.quote-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(8, 18, 36, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: quote-modal-fade 0.32s ease both;
+}
+
+.quote-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  max-height: min(92vh, 820px);
+  overflow: auto;
+  padding: 22px 22px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(220, 229, 240, 0.9);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.97) 0%, #f4f8fc 55%, #eef5f1 100%);
+  box-shadow:
+    0 28px 64px rgba(11, 27, 54, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.55) inset;
+  animation: quote-modal-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.quote-modal__glow {
+  pointer-events: none;
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(63, 95, 134, 0.18) 0%,
+    transparent 70%
+  );
+}
+
+.quote-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+}
+
+.quote-modal__kicker {
+  margin: 0 0 4px;
+  color: #3f5f86;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.quote-modal__head h2 {
+  margin: 0;
+  color: #0b1b36;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.quote-modal__blurb {
+  margin: 8px 0 0;
+  color: #52637a;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.quote-modal__close {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(11, 27, 54, 0.06);
+  color: #0b1b36;
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.quote-modal__close:hover,
+.quote-modal__close:focus-visible {
+  background: rgba(11, 27, 54, 0.12);
+  outline: none;
+  transform: scale(1.04);
+}
+
+.quote-modal__meta {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #e4ebf4;
+  color: #3f5f86;
+  font-size: 0.82rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.quote-modal__form {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.quote-modal__form label {
+  display: grid;
+  gap: 6px;
+  color: #0b1b36;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.quote-modal__full {
+  grid-column: 1 / -1;
+}
+
+.quote-modal__optional {
+  color: #7a8ba3;
+  font-weight: 600;
+}
+
+.quote-modal__form input,
+.quote-modal__form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid #d5e0ec;
+  border-radius: 12px;
+  background: #fff;
+  color: #0b1b36;
+  font: inherit;
+  font-weight: 500;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.quote-modal__form input:focus-visible,
+.quote-modal__form textarea:focus-visible {
+  outline: none;
+  border-color: #3f5f86;
+  box-shadow: 0 0 0 3px rgba(63, 95, 134, 0.18);
+}
+
+.quote-modal__form textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.45;
+}
+
+.quote-modal__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.quote-modal__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b42318;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.quote-modal__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.quote-modal__ghost,
+.quote-modal__submit {
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease;
+}
+
+.quote-modal__ghost {
+  border: 1px solid #d5e0ec;
+  background: transparent;
+  color: #3f5f86;
+}
+
+.quote-modal__ghost:hover,
+.quote-modal__ghost:focus-visible {
+  background: rgba(63, 95, 134, 0.08);
+  outline: none;
+}
+
+.quote-modal__submit {
+  border: 0;
+  background: linear-gradient(135deg, #3f5f86 0%, #2a4a6e 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(42, 74, 110, 0.28);
+}
+
+.quote-modal__submit:hover,
+.quote-modal__submit:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.quote-modal__submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.quote-modal__fine {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #7a8ba3;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.quote-modal__success {
+  position: relative;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(227, 248, 233, 0.7);
+  border: 1px solid #b7e4c7;
+  animation: quote-modal-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.quote-modal__success strong {
+  display: block;
+  color: #067647;
+  font-size: 1.05rem;
+}
+
+.quote-modal__success p {
+  margin: 6px 0 14px;
+  color: #334155;
+}
+
+@keyframes quote-modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes quote-modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .quote-modal__form {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-modal__panel {
+    padding: 18px 14px 14px;
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quote-modal__backdrop,
+  .quote-modal__panel,
+  .quote-modal__success,
+  .quote-modal__submit,
+  .quote-modal__close {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .admin-report-problems h4 {

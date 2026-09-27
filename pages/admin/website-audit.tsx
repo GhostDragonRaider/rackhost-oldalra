@@ -12,6 +12,10 @@ import {
 import { DelayedHelpTip } from "../../components/admin/audit/DelayedHelpTip";
 import AuditProgressList from "../../components/website-audit/AuditProgressList";
 import { ExpandableFindingGrid } from "../../components/admin/audit/ExpandableFindingGrid";
+import {
+  QuoteRequestModal,
+  type QuoteRequestKind,
+} from "../../components/admin/audit/QuoteRequestModal";
 import type {
   AuditCategoryId,
   AuditFinding,
@@ -101,6 +105,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [openPriority, setOpenPriority] = useState<Record<string, boolean>>({});
   const [openTiles, setOpenTiles] = useState<Record<string, boolean>>({});
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({});
+  const [quoteKind, setQuoteKind] = useState<QuoteRequestKind | null>(null);
 
   const loadHistory = useCallback(async () => {
     const res = await fetch("/api/admin/website-audit", {
@@ -391,40 +396,25 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setOpenCats(next);
   }, [audit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const offerHref = audit
-    ? `/kapcsolat?${new URLSearchParams({
-        service: "Meglévő oldal megújítása",
-        website_url: audit.normalizedUrl || audit.inputUrl || "",
-        audit_id: audit.id,
-        message: [
-          "Weboldal-ellenőrző alapján szeretnék ajánlatot kérni a hibák javítására.",
-          `Audit ID: ${audit.id}`,
-          `Ellenőrzött URL: ${audit.normalizedUrl || audit.inputUrl}`,
-          `Összpontszám: ${audit.overallScore ?? "—"}/100 (${audit.overallLabel || ""})`,
-          `Prioritás: ${priorityFixes
-            .slice(0, 5)
-            .map((f) => f.title)
-            .join("; ")}`,
-        ].join("\n"),
-      }).toString()}`
-    : "/kapcsolat";
-
-  const securityOfferHref = audit
-    ? `/kapcsolat?${new URLSearchParams({
-        service: "Még egyeztetném",
-        website_url: audit.normalizedUrl || audit.inputUrl || "",
-        audit_id: audit.id,
-        message: [
-          "Biztonsági felmérést kérek (Authorized Security Assessment).",
-          "Tudom, hogy ez írásos engedélyhez és scope-hoz kötött, nem automatikus scan.",
-          `Audit ID (public exposure check): ${audit.id}`,
-          `URL: ${audit.normalizedUrl || audit.inputUrl}`,
-        ].join("\n"),
-      }).toString()}`
-    : "/kapcsolat";
+  const quoteContext = audit
+    ? {
+        auditId: audit.id,
+        url: audit.normalizedUrl || audit.inputUrl || "",
+        overallScore: audit.overallScore,
+        overallLabel: audit.overallLabel || "",
+        priorityTitles: priorityFixes.map((f) => f.title),
+      }
+    : null;
 
   return (
     <>
+      <QuoteRequestModal
+        open={quoteKind != null && quoteContext != null}
+        kind={quoteKind || "fix"}
+        context={quoteContext}
+        onClose={() => setQuoteKind(null)}
+        onActivity={bumpIdle}
+      />
       <section className="admin-card admin-audit" aria-label="Weboldal-ellenőrző">
         <div className="admin-seo-head admin-audit-head">
           <div>
@@ -568,12 +558,26 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   >
                     Újraellenőrzés
                   </button>
-                  <Link href={offerHref} className="admin-report-offer-cta">
-                    Segítséget kérek a javításhoz
-                  </Link>
-                  <Link href={securityOfferHref} className="admin-ghost">
-                    Biztonsági felmérést kérek
-                  </Link>
+                  <button
+                    type="button"
+                    className="admin-report-offer-cta"
+                    onClick={() => {
+                      bumpIdle();
+                      setQuoteKind("fix");
+                    }}
+                  >
+                    Árajánlatot kérek
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-ghost"
+                    onClick={() => {
+                      bumpIdle();
+                      setQuoteKind("security");
+                    }}
+                  >
+                    Biztonsági felmérés árajánlata
+                  </button>
                 </div>
               </div>
             </AuditReveal>

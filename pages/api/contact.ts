@@ -5,6 +5,7 @@ import { SITE_EMAIL } from "../../lib/site";
 type Body = {
   name?: string;
   email?: string;
+  phone?: string;
   service?: string;
   message?: string;
   website?: string; // honeypot
@@ -41,6 +42,7 @@ export default async function handler(
 
   const name = String(body.name || "").trim();
   const email = String(body.email || "").trim();
+  const phone = String(body.phone || "").trim();
   const service = String(body.service || "").trim();
   const message = String(body.message || "").trim();
 
@@ -49,6 +51,9 @@ export default async function handler(
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     return bad(res, 400, "Érvényes e-mail címet adj meg.");
+  }
+  if (phone && (phone.length < 6 || phone.length > 40)) {
+    return bad(res, 400, "A telefonszám túl rövid vagy túl hosszú.");
   }
   if (!SERVICES.has(service)) {
     return bad(res, 400, "Válassz egy szolgáltatási irányt.");
@@ -70,11 +75,14 @@ export default async function handler(
   const text = [
     `Név: ${name}`,
     `E-mail: ${email}`,
+    phone ? `Telefon: ${phone}` : null,
     `Szolgáltatás: ${service}`,
     "",
     "Projekt:",
     message,
-  ].join("\n");
+  ]
+    .filter((line) => line != null)
+    .join("\n");
 
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.rackhost.hu",
