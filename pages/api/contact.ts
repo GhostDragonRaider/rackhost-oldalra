@@ -107,19 +107,12 @@ export default async function handler(
   const smtpPass = process.env.SMTP_PASS;
   if (!smtpPass) {
     persistQuote(body, fields);
-    if (testQuote) {
-      return res.status(200).json({
-        ok: true,
-        testMode: true,
-        message:
-          "Teszt mód: az űrlap megérkezett (SMTP nincs beállítva — nem ment ki e-mail).",
-      });
-    }
-    return bad(
-      res,
-      503,
-      "Az űrlap küldése átmenetileg nem elérhető. Írj közvetlenül a info@anticode.hu címre."
-    );
+    return res.status(200).json({
+      ok: true,
+      testMode: true,
+      message:
+        "Megkaptam az üzeneted – az Árajánlatok listában is rögzítve (SMTP nincs beállítva).",
+    });
   }
 
   const text = [
