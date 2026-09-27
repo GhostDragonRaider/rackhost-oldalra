@@ -222,33 +222,16 @@ export function QuoteRequestModal({
             <article className="quote-ticket" aria-labelledby={titleId}>
               <div className="quote-ticket__main">
                 <header className="quote-ticket__brand">
-                  <span className="quote-ticket__brand-mark" aria-hidden>
-                    ⌬
-                  </span>
                   <div>
-                    <p className="quote-ticket__airline">AntiCode</p>
+                    <p className="quote-ticket__airline">AntiCode · árajánlat</p>
                     <h2 id={titleId} className="quote-ticket__title">
-                      Árajánlat jegy
+                      {kind === "security"
+                        ? "Biztonsági felmérés"
+                        : "Javítási ajánlatkérés"}
                     </h2>
                   </div>
-                  <span className="quote-ticket__status">ELKÜLDVE</span>
+                  <span className="quote-ticket__status">Elküldve</span>
                 </header>
-
-                <div className="quote-ticket__route">
-                  <div>
-                    <span className="quote-ticket__code">WEB</span>
-                    <span className="quote-ticket__city">Ellenőrzés</span>
-                  </div>
-                  <div className="quote-ticket__flight" aria-hidden>
-                    <span className="quote-ticket__dash" />
-                    <span className="quote-ticket__plane">✈</span>
-                    <span className="quote-ticket__dash" />
-                  </div>
-                  <div>
-                    <span className="quote-ticket__code">AJÁ</span>
-                    <span className="quote-ticket__city">Árajánlat</span>
-                  </div>
-                </div>
 
                 <p id={descId} className="quote-ticket__note">
                   {status}
@@ -256,7 +239,7 @@ export function QuoteRequestModal({
 
                 <dl className="quote-ticket__grid">
                   <div>
-                    <dt>Utas / Név</dt>
+                    <dt>Név</dt>
                     <dd>{submitted.name || "—"}</dd>
                   </div>
                   <div>
@@ -268,7 +251,7 @@ export function QuoteRequestModal({
                     <dd>{submitted.phone || "—"}</dd>
                   </div>
                   <div>
-                    <dt>Cél URL</dt>
+                    <dt>Weboldal</dt>
                     <dd>{context.url || "—"}</dd>
                   </div>
                   <div className="quote-ticket__grid-wide">
@@ -289,22 +272,10 @@ export function QuoteRequestModal({
                   {context.overallScore != null
                     ? `${context.overallScore}/100`
                     : "—"}
-                  {context.overallLabel ? ` · ${context.overallLabel}` : ""}
                 </p>
-                <div className="quote-ticket__barcode" aria-hidden>
-                  {Array.from({ length: 28 }).map((_, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        width: `${2 + ((i * 7) % 4)}px`,
-                        opacity: 0.55 + ((i * 13) % 45) / 100,
-                      }}
-                    />
-                  ))}
-                </div>
-                <p className="quote-ticket__stub-kind">
-                  {kind === "security" ? "SECURITY" : "FIX QUOTE"}
-                </p>
+                {context.overallLabel ? (
+                  <p className="quote-ticket__stub-meta">{context.overallLabel}</p>
+                ) : null}
               </aside>
             </article>
             <button
