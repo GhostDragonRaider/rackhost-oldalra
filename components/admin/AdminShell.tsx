@@ -29,6 +29,12 @@ const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> 
   [
     { id: "monitor", href: "/admin", label: "Monitor", icon: "▣" },
     {
+      id: "lab",
+      href: "/admin/lab",
+      label: "AntiCode Lab",
+      icon: "⌬",
+    },
+    {
       id: "audit",
       href: "/admin/website-audit",
       label: "Weboldal-ellenőrző",
@@ -39,12 +45,6 @@ const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> 
       href: "/admin/cv",
       label: "Önéletrajzom elküldése",
       icon: "▤",
-    },
-    {
-      id: "lab",
-      href: "/admin/lab",
-      label: "AntiCode Lab",
-      icon: "⌬",
     },
   ];
 
@@ -291,7 +291,7 @@ export default function AdminShell({
             </Link>
           </form>
         ) : (
-          <div className="admin-dash">
+          <div className={`admin-dash${active === "lab" ? " admin-dash--lab" : ""}`}>
             <header className="admin-top">
               <div>
                 <h1>AntiCode Admin</h1>

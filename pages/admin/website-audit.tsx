@@ -262,7 +262,12 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             <p className="admin-muted">
               Admin tesztverzió — egyetlen publikus URL részletes technikai
               auditja (SSRF-védelemmel). Nem publikus szolgáltatás, nem
-              website-crawl.
+              website-crawl. Kapcsolódó Lab modulok:{" "}
+              <Link href="/admin/lab/website-audit">Website Audit</Link>
+              {" · "}
+              <Link href="/admin/lab/seo-lab">SEO Lab</Link>
+              {" · "}
+              <Link href="/admin/lab/security-center">Security Center</Link>.
             </p>
           </div>
         </div>

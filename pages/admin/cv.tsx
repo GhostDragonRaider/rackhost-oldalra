@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AdminShell from "../../components/admin/AdminShell";
 import CvDocument from "../../components/admin/cv/CvDocument";
@@ -160,7 +161,8 @@ ${styleNodes}
       <div className="cv-workspace-head">
         <h2>Önéletrajzom elküldése</h2>
         <p className="admin-muted">
-          Önéletrajz kezelése, letöltése és álláspályázatok előkészítése.
+          Önéletrajz kezelése, letöltése és álláspályázatok előkészítése.{" "}
+          <Link href="/admin/lab">AntiCode Lab →</Link>
         </p>
       </div>
 

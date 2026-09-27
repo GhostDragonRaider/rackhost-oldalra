@@ -245,7 +245,7 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                         {focusMode ? "Focus ki" : "Focus mód"}
                       </button>
                       <Link href="/admin" className="lab-ghost" onClick={() => bumpIdle()}>
-                        ← Admin
+                        ← Monitor
                       </Link>
                     </div>
                   </header>

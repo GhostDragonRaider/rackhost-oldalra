@@ -744,8 +744,47 @@ function MonitorWorkspace({
         <p className="admin-muted">Nincs még látogatottsági adat.</p>
       )}
 
+      <section className="admin-card admin-lab-hub" aria-label="AntiCode Lab">
+        <div className="admin-seo-head">
+          <div>
+            <h2>AntiCode Lab</h2>
+            <p className="admin-muted">
+              Belső fejlesztői sandbox: SEO Lab, Security, VPS Monitor, Action
+              Center, Design System. Nem publikus — csak admin.
+            </p>
+          </div>
+          <Link href="/admin/lab" className="admin-ghost admin-lab-hub__cta">
+            Lab megnyitása →
+          </Link>
+        </div>
+        <ul className="admin-lab-hub__links">
+          <li>
+            <Link href="/admin/lab/action-center">Action Center</Link>
+          </li>
+          <li>
+            <Link href="/admin/lab/seo-lab">SEO Lab</Link>
+          </li>
+          <li>
+            <Link href="/admin/lab/security-center">Security</Link>
+          </li>
+          <li>
+            <Link href="/admin/lab/vps-monitor">VPS Monitor</Link>
+          </li>
+          <li>
+            <Link href="/admin/lab/design-system">Design System</Link>
+          </li>
+          <li>
+            <Link href="/admin/lab/website-audit">Audit (Lab)</Link>
+          </li>
+        </ul>
+      </section>
+
       <p className="admin-muted admin-tool-jump">
         <Link href="/admin/website-audit">Weboldal-ellenőrző megnyitása →</Link>
+        {" · "}
+        <Link href="/admin/lab">AntiCode Lab →</Link>
+        {" · "}
+        <Link href="/admin/cv">Önéletrajz →</Link>
       </p>
     </>
   );
