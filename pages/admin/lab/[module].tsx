@@ -219,6 +219,7 @@ export default function LabModulePage() {
               {!actions.length ? (
                 <div className="lab-empty">Nincs nyitott Action Center tétel.</div>
               ) : (
+                <div className="lab-table-wrap">
                 <table className="lab-table">
                   <thead>
                     <tr>
@@ -254,6 +255,7 @@ export default function LabModulePage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           );
@@ -341,6 +343,7 @@ export default function LabModulePage() {
               {report?.gscIndexing?.urls?.length ? (
                 <section className="lab-card lab-card--wide">
                   <h2>URL lista</h2>
+                  <div className="lab-table-wrap">
                   <table className="lab-table">
                     <thead>
                       <tr>
@@ -365,6 +368,7 @@ export default function LabModulePage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </section>
               ) : null}
             </div>
@@ -391,6 +395,7 @@ export default function LabModulePage() {
                       <ProvenanceBadge provenance="unavailable" />
                     </p>
                   )}
+                  <div className="lab-table-wrap">
                   <table className="lab-table">
                     <thead>
                       <tr>
@@ -414,6 +419,7 @@ export default function LabModulePage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </>
               )}
             </div>
@@ -485,6 +491,7 @@ export default function LabModulePage() {
                       measured={vps.uptimeSec}
                     />
                     {vps.disk.mounts.value ? (
+                      <div className="lab-table-wrap">
                       <table className="lab-table">
                         <thead>
                           <tr>
@@ -505,6 +512,7 @@ export default function LabModulePage() {
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     ) : (
                       <p className="lab-muted">
                         Disk: {vps.disk.mounts.error}{" "}
@@ -515,6 +523,7 @@ export default function LabModulePage() {
                       <>
                         <h3>Top processzek (ESTIMATED rank)</h3>
                         <ProvenanceBadge provenance="estimated" />
+                        <div className="lab-table-wrap">
                         <table className="lab-table">
                           <thead>
                             <tr>
@@ -535,6 +544,7 @@ export default function LabModulePage() {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       </>
                     ) : null}
                   </>
@@ -724,6 +734,7 @@ export default function LabModulePage() {
               {!logs.length ? (
                 <div className="lab-empty">Még nincs naplóbejegyzés.</div>
               ) : (
+                <div className="lab-table-wrap">
                 <table className="lab-table">
                   <thead>
                     <tr>
@@ -746,6 +757,7 @@ export default function LabModulePage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
               <ProvenanceBadge provenance="real" />
             </div>
@@ -760,6 +772,7 @@ export default function LabModulePage() {
                 Credential értékek sosem jelennek meg. Hiányzó env = UNAVAILABLE,
                 nem „működik”.
               </p>
+              <div className="lab-table-wrap">
               <table className="lab-table">
                 <thead>
                   <tr>
@@ -781,6 +794,7 @@ export default function LabModulePage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           );
         }

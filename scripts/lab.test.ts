@@ -52,6 +52,12 @@ describe("lab registry", () => {
     }
   });
 
+  it("has layperson Hungarian help text for every module", () => {
+    for (const m of LAB_MODULES) {
+      assert.ok(typeof m.helpHu === "string" && m.helpHu.length >= 24, m.id);
+    }
+  });
+
   it("groups categories without dumping all into admin root nav", () => {
     const groups = listLabModulesByCategory();
     assert.ok(groups.some((g) => g.category === "seo-lab"));

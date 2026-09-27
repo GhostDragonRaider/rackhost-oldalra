@@ -10,9 +10,12 @@ import {
   KeyboardEvent,
 } from "react";
 import AdminShell from "../AdminShell";
+import { DelayedHelpTip } from "../audit/DelayedHelpTip";
 import { LAB_CATEGORY_LABELS, listLabModulesByCategory } from "../../../lib/lab/registry";
 import type { LabFlagsState, LabModuleMeta } from "../../../lib/lab/types";
 import { PROVENANCE_LABELS, type DataProvenance } from "../../../lib/lab/integrity";
+
+const MENU_TIP_DELAY_MS = 700;
 
 type ResolvedModule = LabModuleMeta & {
   resolvedFlags: LabModuleMeta["flags"];
@@ -184,14 +187,25 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className="lab-cmd-trigger"
-                    onClick={() => setPaletteOpen(true)}
+                  <DelayedHelpTip
+                    text="Gyorskereső: írd be a modul nevét, és Enterrel ugrasz rá. Billentyű: Ctrl+K."
+                    delayMs={MENU_TIP_DELAY_MS}
+                    placement="right"
+                    strategy="fixed"
+                    asChild
                   >
-                    Keresés <kbd>Ctrl</kbd>
-                    <kbd>K</kbd>
-                  </button>
+                    <button
+                      type="button"
+                      className="lab-cmd-trigger"
+                      onClick={() => setPaletteOpen(true)}
+                    >
+                      <span className="lab-cmd-trigger__label">Keresés</span>
+                      <span className="lab-cmd-trigger__keys">
+                        <kbd>Ctrl</kbd>
+                        <kbd>K</kbd>
+                      </span>
+                    </button>
+                  </DelayedHelpTip>
 
                   <nav className="lab-nav">
                     {categories.map((g) => (
@@ -205,19 +219,29 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                               resolved && !resolved.effectivelyAvailable;
                             return (
                               <li key={m.id}>
-                                <Link
-                                  href={m.href}
-                                  className={`lab-nav__link${
-                                    active ? " is-active" : ""
-                                  }${disabled ? " is-disabled" : ""}`}
-                                  aria-current={active ? "page" : undefined}
-                                  onClick={() => bumpIdle()}
+                                <DelayedHelpTip
+                                  text={m.helpHu}
+                                  delayMs={MENU_TIP_DELAY_MS}
+                                  placement="right"
+                                  strategy="fixed"
+                                  asChild
                                 >
-                                  <span>{m.nameHu}</span>
-                                  {m.flags.beta ? (
-                                    <span className="lab-pill">beta</span>
-                                  ) : null}
-                                </Link>
+                                  <Link
+                                    href={m.href}
+                                    className={`lab-nav__link${
+                                      active ? " is-active" : ""
+                                    }${disabled ? " is-disabled" : ""}`}
+                                    aria-current={active ? "page" : undefined}
+                                    onClick={() => bumpIdle()}
+                                  >
+                                    <span className="lab-nav__link-text">
+                                      {m.nameHu}
+                                    </span>
+                                    {m.flags.beta ? (
+                                      <span className="lab-pill">beta</span>
+                                    ) : null}
+                                  </Link>
+                                </DelayedHelpTip>
                               </li>
                             );
                           })}
@@ -229,24 +253,48 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
 
                 <div className="lab-main">
                   <header className="lab-main__head">
-                    <div>
+                    <div className="lab-main__title">
                       <p className="lab-kicker">AntiCode Lab</p>
                       <h1>{title}</h1>
                     </div>
                     <div className="lab-main__actions">
-                      <button
-                        type="button"
-                        className="lab-ghost"
-                        onClick={() => {
-                          bumpIdle();
-                          setFocusMode((v) => !v);
-                        }}
+                      <DelayedHelpTip
+                        text={
+                          focusMode
+                            ? "Visszahozza a bal oldali menüt."
+                            : "Elrejti a bal oldali menüt, hogy több hely legyen a tartalomnak."
+                        }
+                        delayMs={MENU_TIP_DELAY_MS}
+                        placement="bottom"
+                        strategy="fixed"
+                        asChild
                       >
-                        {focusMode ? "Focus ki" : "Focus mód"}
-                      </button>
-                      <Link href="/admin" className="lab-ghost" onClick={() => bumpIdle()}>
-                        ← Monitor
-                      </Link>
+                        <button
+                          type="button"
+                          className="lab-ghost"
+                          onClick={() => {
+                            bumpIdle();
+                            setFocusMode((v) => !v);
+                          }}
+                        >
+                          {focusMode ? "Focus ki" : "Focus mód"}
+                        </button>
+                      </DelayedHelpTip>
+                      <DelayedHelpTip
+                        text="Vissza a Monitorhoz: látogatók és SEO összkép."
+                        delayMs={MENU_TIP_DELAY_MS}
+                        placement="bottom"
+                        strategy="fixed"
+                        asChild
+                      >
+                        <Link
+                          href="/admin"
+                          className="lab-ghost"
+                          onClick={() => bumpIdle()}
+                        >
+                          ← Monitor
+                        </Link>
+                      </DelayedHelpTip>
                     </div>
                   </header>
 
