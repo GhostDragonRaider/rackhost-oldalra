@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { SITE_EMAIL } from "../../lib/site";
+import { saveQuoteRequest } from "../../lib/quotes-store";
 
 type Body = {
   name?: string;
@@ -9,8 +10,11 @@ type Body = {
   service?: string;
   message?: string;
   website?: string; // honeypot
-  /** Audit quote modal — relax contact-field validation for UI testing */
   source?: string;
+  auditId?: string;
+  websiteUrl?: string;
+  overallScore?: number | null;
+  overallLabel?: string;
 };
 
 const SERVICES = new Set([
@@ -24,6 +28,28 @@ const SERVICES = new Set([
 
 function bad(res: NextApiResponse, status: number, error: string) {
   return res.status(status).json({ ok: false, error });
+}
+
+function persistQuote(body: Body, fields: {
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  message: string;
+}) {
+  try {
+    saveQuoteRequest({
+      ...fields,
+      source: body.source,
+      auditId: body.auditId || null,
+      websiteUrl: body.websiteUrl || null,
+      overallScore:
+        typeof body.overallScore === "number" ? body.overallScore : null,
+      overallLabel: body.overallLabel || null,
+    });
+  } catch (err) {
+    console.error("Quote store error:", err);
+  }
 }
 
 export default async function handler(
@@ -75,9 +101,12 @@ export default async function handler(
     return bad(res, 400, "Válassz egy szolgáltatási irányt.");
   }
 
+  const fields = { name, email, phone, service, message };
+
   const smtpUser = process.env.SMTP_USER || SITE_EMAIL;
   const smtpPass = process.env.SMTP_PASS;
   if (!smtpPass) {
+    persistQuote(body, fields);
     if (testQuote) {
       return res.status(200).json({
         ok: true,
@@ -94,7 +123,10 @@ export default async function handler(
   }
 
   const text = [
-    testQuote ? "Forrás: audit-quote (teszt / admin)" : null,
+    body.source ? `Forrás: ${body.source}` : null,
+    body.auditId ? `Audit ID: ${body.auditId}` : null,
+    body.websiteUrl ? `Weboldal: ${body.websiteUrl}` : null,
+    body.overallScore != null ? `Pontszám: ${body.overallScore}/100` : null,
     `Név: ${name || "—"}`,
     `E-mail: ${email || "—"}`,
     `Telefon: ${phone || "—"}`,
@@ -124,9 +156,11 @@ export default async function handler(
       from: process.env.SMTP_FROM || `AntiCode <${SITE_EMAIL}>`,
       to: process.env.CONTACT_TO || SITE_EMAIL,
       replyTo,
-      subject: `AntiCode — Projektindítás — ${service}`,
+      subject: `AntiCode — Árajánlat — ${service}`,
       text,
     });
+
+    persistQuote(body, fields);
 
     return res.status(200).json({
       ok: true,
@@ -134,6 +168,7 @@ export default async function handler(
     });
   } catch (err) {
     console.error("Contact SMTP error:", err);
+    persistQuote(body, fields);
     if (testQuote) {
       return res.status(200).json({
         ok: true,

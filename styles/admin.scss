@@ -3401,3 +3401,131 @@ body.admin-active[data-theme="dark"] .audit-loading {
   }
 }
 
+
+/* —— Árajánlatok inbox —— */
+.admin-quotes__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.admin-quotes__head h2 {
+  margin: 4px 0 6px;
+}
+
+.admin-quotes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-quotes__item {
+  padding: 14px 16px;
+  border: 1px solid #dce5f0;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.admin-quotes__item.is-new {
+  border-color: color-mix(in srgb, #3f5f86 35%, #dce5f0);
+  background: linear-gradient(180deg, #eef4fb 0%, #f8fbff 100%);
+  box-shadow: inset 3px 0 0 #3f5f86;
+}
+
+.admin-quotes__item-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.admin-quotes__meta {
+  display: block;
+  margin-top: 2px;
+  color: #7a8ba3;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.admin-quotes__status {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #e8eef6;
+  color: #3f5f86;
+}
+
+.admin-quotes__status--new {
+  background: #e3f8e9;
+  color: #067647;
+}
+
+.admin-quotes__status--replied {
+  background: #e8f0fe;
+  color: #1d4ed8;
+}
+
+.admin-quotes__status--archived {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.admin-quotes__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+  margin: 0;
+}
+
+.admin-quotes__grid dt {
+  margin: 0;
+  color: #8a6a3d;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-quotes__grid dd {
+  margin: 2px 0 0;
+  color: #0b1b36;
+  font-size: 0.9rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-quotes__wide {
+  grid-column: 1 / -1;
+}
+
+.admin-quotes__message {
+  white-space: pre-wrap;
+  font-weight: 600;
+  line-height: 1.4;
+  max-height: 8.5em;
+  overflow: auto;
+}
+
+.admin-quotes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .admin-quotes__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-quotes__head {
+    flex-direction: column;
+  }
+}

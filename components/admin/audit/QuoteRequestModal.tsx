@@ -2,8 +2,6 @@ import { FormEvent, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SITE_EMAIL } from "../../../lib/site";
 
-export type QuoteRequestKind = "fix" | "security";
-
 export type QuoteRequestContext = {
   auditId: string;
   url: string;
@@ -14,38 +12,14 @@ export type QuoteRequestContext = {
 
 type QuoteRequestModalProps = {
   open: boolean;
-  kind: QuoteRequestKind;
   context: QuoteRequestContext | null;
   onClose: () => void;
   onActivity?: () => void;
 };
 
-const KIND_META: Record<
-  QuoteRequestKind,
-  { title: string; kicker: string; service: string; blurb: string }
-> = {
-  fix: {
-    title: "Árajánlat a javításokra",
-    kicker: "Ajánlatkérés",
-    service: "Meglévő oldal megújítása",
-    blurb: "Add meg az elérhetőséged — kötelezettség nélkül visszajelzek.",
-  },
-  security: {
-    title: "Árajánlat biztonsági felmérésre",
-    kicker: "Authorized Assessment",
-    service: "Még egyeztetném",
-    blurb:
-      "Írásos engedélyhez kötött felmérés. Add meg az elérhetőséged az egyeztetéshez.",
-  },
-};
+const SERVICE = "Meglévő oldal megújítása";
 
-function buildDefaultMessage(
-  kind: QuoteRequestKind,
-  ctx: QuoteRequestContext
-): string {
-  if (kind === "security") {
-    return `Biztonsági felmérés árajánlatát kérem az alábbi oldalra: ${ctx.url} (audit: ${ctx.auditId}).`;
-  }
+function buildDefaultMessage(ctx: QuoteRequestContext): string {
   const score =
     ctx.overallScore != null
       ? `${ctx.overallScore}/100${ctx.overallLabel ? ` · ${ctx.overallLabel}` : ""}`
@@ -55,7 +29,6 @@ function buildDefaultMessage(
 
 export function QuoteRequestModal({
   open,
-  kind,
   context,
   onClose,
   onActivity,
@@ -64,7 +37,6 @@ export function QuoteRequestModal({
   const descId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
-  const meta = KIND_META[kind];
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -93,13 +65,13 @@ export function QuoteRequestModal({
     setEmail("");
     setPhone("");
     setHoneypot("");
-    setMessage(buildDefaultMessage(kind, context));
+    setMessage(buildDefaultMessage(context));
     setStatus("");
     setError("");
     setSubmitted(null);
     const t = window.setTimeout(() => firstFieldRef.current?.focus(), 40);
     return () => window.clearTimeout(t);
-  }, [open, kind, context]);
+  }, [open, context]);
 
   useEffect(() => {
     if (!open) return;
@@ -116,6 +88,7 @@ export function QuoteRequestModal({
   }, [open, onClose]);
 
   if (!mounted || !open || !context) return null;
+  const ctx = context;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -137,14 +110,17 @@ export function QuoteRequestModal({
           name: snapshot.name,
           email: snapshot.email,
           phone: snapshot.phone || undefined,
-          service: meta.service,
+          service: SERVICE,
           message: snapshot.message || "—",
           website: honeypot,
           source: "audit-quote",
+          auditId: ctx.auditId,
+          websiteUrl: ctx.url,
+          overallScore: ctx.overallScore,
+          overallLabel: ctx.overallLabel || undefined,
         }),
       });
       const json = await res.json().catch(() => ({}));
-      // Teszt: mindig továbbengedjük a visszaigazolásra a beírt adatokkal.
       setSubmitted(snapshot);
       setStatus(
         json?.message ||
@@ -181,10 +157,10 @@ export function QuoteRequestModal({
           <>
             <header className="quote-modal__head">
               <div>
-                <p className="quote-modal__kicker">{meta.kicker}</p>
-                <h2 id={titleId}>{meta.title}</h2>
+                <p className="quote-modal__kicker">Ajánlatkérés</p>
+                <h2 id={titleId}>Árajánlat a javításokra</h2>
                 <p id={descId} className="quote-modal__blurb">
-                  {meta.blurb}
+                  Add meg az elérhetőséged — kötelezettség nélkül visszajelzek.
                 </p>
               </div>
               <button
@@ -225,9 +201,7 @@ export function QuoteRequestModal({
                   <div>
                     <p className="quote-ticket__airline">AntiCode · árajánlat</p>
                     <h2 id={titleId} className="quote-ticket__title">
-                      {kind === "security"
-                        ? "Biztonsági felmérés"
-                        : "Javítási ajánlatkérés"}
+                      Javítási ajánlatkérés
                     </h2>
                   </div>
                   <span className="quote-ticket__status">Elküldve</span>
@@ -372,7 +346,7 @@ export function QuoteRequestModal({
               </button>
             </div>
             <p className="quote-modal__fine">
-              Teszt: a név / e-mail / telefon nincs ellenőrizve. · {SITE_EMAIL}
+              Az űrlap az Árajánlatok menübe is beérkezik. · {SITE_EMAIL}
             </p>
           </form>
         )}

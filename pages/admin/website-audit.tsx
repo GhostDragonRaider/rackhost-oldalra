@@ -12,10 +12,7 @@ import {
 import { DelayedHelpTip } from "../../components/admin/audit/DelayedHelpTip";
 import AuditProgressList from "../../components/website-audit/AuditProgressList";
 import { ExpandableFindingGrid } from "../../components/admin/audit/ExpandableFindingGrid";
-import {
-  QuoteRequestModal,
-  type QuoteRequestKind,
-} from "../../components/admin/audit/QuoteRequestModal";
+import { QuoteRequestModal } from "../../components/admin/audit/QuoteRequestModal";
 import type {
   AuditCategoryId,
   AuditFinding,
@@ -105,7 +102,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [openPriority, setOpenPriority] = useState<Record<string, boolean>>({});
   const [openTiles, setOpenTiles] = useState<Record<string, boolean>>({});
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({});
-  const [quoteKind, setQuoteKind] = useState<QuoteRequestKind | null>(null);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   const loadHistory = useCallback(async () => {
     const res = await fetch("/api/admin/website-audit", {
@@ -409,10 +406,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   return (
     <>
       <QuoteRequestModal
-        open={quoteKind != null && quoteContext != null}
-        kind={quoteKind || "fix"}
+        open={quoteOpen && quoteContext != null}
         context={quoteContext}
-        onClose={() => setQuoteKind(null)}
+        onClose={() => setQuoteOpen(false)}
         onActivity={bumpIdle}
       />
       <section className="admin-card admin-audit" aria-label="Weboldal-ellenőrző">
@@ -563,20 +559,10 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                     className="admin-report-offer-cta"
                     onClick={() => {
                       bumpIdle();
-                      setQuoteKind("fix");
+                      setQuoteOpen(true);
                     }}
                   >
                     Árajánlatot kérek
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-ghost"
-                    onClick={() => {
-                      bumpIdle();
-                      setQuoteKind("security");
-                    }}
-                  >
-                    Biztonsági felmérés árajánlata
                   </button>
                 </div>
               </div>

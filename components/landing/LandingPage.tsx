@@ -384,6 +384,7 @@ export default function LandingPage() {
       service: String(formData.get("service") || "").trim(),
       message: String(formData.get("message") || "").trim(),
       website: String(formData.get("website") || ""),
+      source: "landing",
     };
 
     setFormSending(true);

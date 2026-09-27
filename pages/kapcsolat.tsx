@@ -99,6 +99,15 @@ export default function KapcsolatPage() {
           service: data.get("service"),
           message: data.get("message"),
           website: data.get("website"),
+          source: "kapcsolat",
+          auditId:
+            typeof router.query.audit_id === "string"
+              ? router.query.audit_id
+              : undefined,
+          websiteUrl:
+            typeof router.query.website_url === "string"
+              ? router.query.website_url
+              : undefined,
         }),
       });
       const json = await res.json();
