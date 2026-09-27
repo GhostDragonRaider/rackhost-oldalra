@@ -122,6 +122,17 @@ export default function LabModulePage() {
 
   useEffect(() => {
     if (!moduleParam) return;
+    if (moduleParam === "website-audit") {
+      void router.replace("/admin/website-audit");
+      return;
+    }
+    if (moduleParam === "monitor") {
+      void router.replace("/admin");
+    }
+  }, [moduleParam, router]);
+
+  useEffect(() => {
+    if (!moduleParam) return;
     if (moduleParam === "action-center") {
       void loadSection("actions").then((j) => setActions(j.items || []));
     }
@@ -259,37 +270,10 @@ export default function LabModulePage() {
           );
         }
 
-        if (meta.id === "website-audit") {
+        if (meta.id === "website-audit" || meta.id === "monitor") {
           return (
             <div className="lab-card lab-card--wide">
-              <h2>Website Audit Engine</h2>
-              <p className="lab-muted">
-                Publikus Weboldal-ellenőrző + admin motor. SSRF-védett, nem
-                intruzív security exposure check.
-              </p>
-              <div className="lab-main__actions">
-                <Link
-                  href="/admin/website-audit"
-                  className="lab-btn lab-btn--primary"
-                  onClick={() => bumpIdle()}
-                >
-                  Admin audit
-                </Link>
-              </div>
-              <p className="lab-muted">
-                A publikus Weboldal-ellenőrző jelenleg ki van kapcsolva — csak
-                adminból érhető el.
-              </p>
-              <h3 style={{ marginTop: 24 }}>Authorized Security Assessment</h3>
-              <p className="lab-muted">
-                Architektúra stub (nem publikus, nem auto-start). Workflow:
-                Árajánlat → scope → írásos engedély → ellenőrzés → assessment →
-                findings → report. Out-of-scope target = SKIPPED. Aktív exploit
-                NINCS.
-              </p>
-              <p className="lab-muted">
-                Modul: <code>lib/lab/authorized-assessment.ts</code>
-              </p>
+              <p className="lab-muted">Átirányítás…</p>
             </div>
           );
         }

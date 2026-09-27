@@ -151,9 +151,9 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
     <>
       <Head>
         <meta name="robots" content="noindex, nofollow" />
-        <title>{title} · AntiCode Lab</title>
+        <title>{title} · Irányítópult</title>
       </Head>
-      <AdminShell active="lab" title="AntiCode Lab">
+      <AdminShell active="lab" title="Irányítópult">
         {({ authed, bumpIdle }) =>
           authed ? (
             <div
@@ -171,7 +171,7 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
               <div className="lab-layout">
                 <aside
                   className="lab-sidebar"
-                  aria-label="AntiCode Lab navigáció"
+                  aria-label="Irányítópult navigáció"
                   hidden={focusMode}
                 >
                   <div className="lab-sidebar__brand">
@@ -179,8 +179,8 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                       ⌬
                     </span>
                     <div>
-                      <strong>AntiCode Lab</strong>
-                      <p>Belső sandbox · admin only</p>
+                      <strong>Irányítópult</strong>
+                      <p>Belső eszközök · admin only</p>
                     </div>
                   </div>
 
@@ -230,7 +230,7 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                 <div className="lab-main">
                   <header className="lab-main__head">
                     <div>
-                      <p className="lab-kicker">AntiCode Lab</p>
+                      <p className="lab-kicker">Irányítópult</p>
                       <h1>{title}</h1>
                     </div>
                     <div className="lab-main__actions">
@@ -244,8 +244,12 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                       >
                         {focusMode ? "Focus ki" : "Focus mód"}
                       </button>
-                      <Link href="/admin" className="lab-ghost" onClick={() => bumpIdle()}>
-                        ← Monitor
+                      <Link
+                        href="/admin/cv"
+                        className="lab-ghost"
+                        onClick={() => bumpIdle()}
+                      >
+                        Önéletrajz →
                       </Link>
                     </div>
                   </header>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import AdminShell from "../../components/admin/AdminShell";
+import LabShell from "../../components/admin/lab/LabShell";
 import {
   AuditReveal,
   AuditSectionTitle,
@@ -436,8 +436,8 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             </div>
             <p className="admin-muted">
               Admin tesztverzió — nem publikus szolgáltatás. SSRF-védelem, nem
-              intruzív security exposure. Kapcsolódó Lab:{" "}
-              <Link href="/admin/lab/website-audit">Website Audit</Link>
+              intruzív security exposure. Kapcsolódó modulok:{" "}
+              <Link href="/admin">Monitor</Link>
               {" · "}
               <Link href="/admin/lab/seo-lab">SEO Lab</Link>
               {" · "}
@@ -940,6 +940,8 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
         )}
         <p className="admin-muted" style={{ marginTop: 12 }}>
           <Link href="/admin">← Vissza a Monitorhoz</Link>
+          {" · "}
+          <Link href="/admin/lab">Áttekintés</Link>
         </p>
       </section>
     </>
@@ -948,10 +950,8 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
 export default function WebsiteAuditAdminPage() {
   return (
-    <AdminShell active="audit" title="Weboldal-ellenőrző (BETA)">
-      {({ authed, bumpIdle }) =>
-        authed ? <WebsiteAuditWorkspace bumpIdle={bumpIdle} /> : null
-      }
-    </AdminShell>
+    <LabShell moduleId="website-audit" title="Weboldal-ellenőrző">
+      {({ bumpIdle }) => <WebsiteAuditWorkspace bumpIdle={bumpIdle} />}
+    </LabShell>
   );
 }

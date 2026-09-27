@@ -11,6 +11,7 @@ export type LabModuleStatus =
 
 export type LabCategoryId =
   | "overview"
+  | "monitor"
   | "favorites"
   | "recent"
   | "action-center"

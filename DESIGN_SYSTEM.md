@@ -1,7 +1,7 @@
 # AntiCode Design System v1.0
 
 Internal Lab design system. Tokens live in `styles/lab.scss`.
-Preview: **Admin → AntiCode Lab → Design System**.
+Preview: **Admin → Irányítópult → Design System**.
 
 ## Principles
 

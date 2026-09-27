@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-export type AdminNavId = "monitor" | "audit" | "cv" | "lab";
+export type AdminNavId = "lab" | "cv";
 
 type AdminShellProps = {
   active: AdminNavId;
@@ -27,18 +27,11 @@ const GLASS_SELECTOR = ".admin-nav-link";
 
 const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> =
   [
-    { id: "monitor", href: "/admin", label: "Monitor", icon: "▣" },
     {
       id: "lab",
       href: "/admin/lab",
-      label: "AntiCode Lab",
+      label: "Irányítópult",
       icon: "⌬",
-    },
-    {
-      id: "audit",
-      href: "/admin/website-audit",
-      label: "Weboldal-ellenőrző",
-      icon: "⌀",
     },
     {
       id: "cv",
