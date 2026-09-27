@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-export type AdminNavId = "lab" | "quotes" | "cv";
+export type AdminNavId = "lab" | "quotes" | "cv" | "outreach";
 
 type AdminShellProps = {
   active: AdminNavId;
@@ -44,6 +44,12 @@ const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> 
       href: "/admin/cv",
       label: "Önéletrajzom elküldése",
       icon: "▤",
+    },
+    {
+      id: "outreach",
+      href: "/admin/outreach",
+      label: "Ügyfélszerzés",
+      icon: "◈",
     },
   ];
 
@@ -292,7 +298,11 @@ export default function AdminShell({
         ) : (
           <div
             className={`admin-dash${
-              active === "lab" || active === "quotes" ? " admin-dash--lab" : ""
+              active === "lab" ||
+              active === "quotes" ||
+              active === "outreach"
+                ? " admin-dash--lab"
+                : ""
             }`}
           >
             <header className="admin-top">

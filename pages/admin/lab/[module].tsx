@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LabShell, { ProvenanceBadge } from "../../../components/admin/lab/LabShell";
+import FormsFlowsPanel from "../../../components/admin/lab/FormsFlowsPanel";
 import { getLabModule } from "../../../lib/lab/registry";
 import type { LabActionItem } from "../../../lib/lab/types";
 import type { DataProvenance } from "../../../lib/lab/integrity";
@@ -217,6 +218,10 @@ export default function LabModulePage() {
       {({ bumpIdle, refreshFlags, state, killSwitch }) => {
         if (!meta.implemented) {
           return <Unimplemented name={meta.nameHu} />;
+        }
+
+        if (meta.id === "forms-flows") {
+          return <FormsFlowsPanel bumpIdle={bumpIdle} />;
         }
 
         if (meta.id === "action-center") {

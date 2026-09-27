@@ -14,6 +14,25 @@ import { LAB_CATEGORY_LABELS, listLabModulesByCategory } from "../../../lib/lab/
 import type { LabFlagsState, LabModuleMeta } from "../../../lib/lab/types";
 import { PROVENANCE_LABELS, type DataProvenance } from "../../../lib/lab/integrity";
 
+function SearchIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
 type ResolvedModule = LabModuleMeta & {
   resolvedFlags: LabModuleMeta["flags"];
   effectivelyAvailable: boolean;
@@ -49,7 +68,6 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
   const [state, setState] = useState<LabFlagsState | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
-  const [focusMode, setFocusMode] = useState(false);
 
   const refreshFlags = useCallback(async () => {
     const res = await fetch("/api/admin/lab/flags", { credentials: "same-origin" });
@@ -157,9 +175,7 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
         {({ authed, bumpIdle }) =>
           authed ? (
             <div
-              className={`lab-root${focusMode ? " is-focus" : ""}${
-                killSwitch ? " is-killed" : ""
-              }`}
+              className={`lab-root${killSwitch ? " is-killed" : ""}`}
             >
               {killSwitch ? (
                 <div className="lab-killbanner" role="alert">
@@ -172,7 +188,6 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                 <aside
                   className="lab-sidebar"
                   aria-label="Irányítópult navigáció"
-                  hidden={focusMode}
                 >
                   <div className="lab-sidebar__brand">
                     <span className="lab-sidebar__mark" aria-hidden>
@@ -186,11 +201,12 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
 
                   <button
                     type="button"
-                    className="lab-cmd-trigger"
+                    className="lab-cmd-trigger lab-cmd-trigger--icon"
                     onClick={() => setPaletteOpen(true)}
+                    aria-label="Keresés"
+                    title="Keresés"
                   >
-                    Keresés <kbd>Ctrl</kbd>
-                    <kbd>K</kbd>
+                    <SearchIcon />
                   </button>
 
                   <nav className="lab-nav">
@@ -232,25 +248,6 @@ export default function LabShell({ moduleId, title, children }: LabShellProps) {
                     <div>
                       <p className="lab-kicker">Irányítópult</p>
                       <h1>{title}</h1>
-                    </div>
-                    <div className="lab-main__actions">
-                      <button
-                        type="button"
-                        className="lab-ghost"
-                        onClick={() => {
-                          bumpIdle();
-                          setFocusMode((v) => !v);
-                        }}
-                      >
-                        {focusMode ? "Focus ki" : "Focus mód"}
-                      </button>
-                      <Link
-                        href="/admin/cv"
-                        className="lab-ghost"
-                        onClick={() => bumpIdle()}
-                      >
-                        Önéletrajz →
-                      </Link>
                     </div>
                   </header>
 
