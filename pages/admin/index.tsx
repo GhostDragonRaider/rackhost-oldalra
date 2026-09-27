@@ -166,9 +166,16 @@ function MonitorWorkspace({
   const [openIndexRows, setOpenIndexRows] = useState<Record<string, boolean>>(
     {}
   );
+  const [openIssueRows, setOpenIssueRows] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const toggleIndexRow = useCallback((url: string) => {
     setOpenIndexRows((prev) => ({ ...prev, [url]: !prev[url] }));
+  }, []);
+
+  const toggleIssueRow = useCallback((id: string) => {
+    setOpenIssueRows((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const loadStats = useCallback(async () => {
@@ -665,39 +672,92 @@ function MonitorWorkspace({
             {seo.issues.length > 0 ? (
               <div className="admin-seo-issues">
                 <h3>Találatok</h3>
-                <ul>
+                <ul className="admin-seo-issue-list" aria-label="SEO találatok">
                   {seo.issues
                     .filter((i) => i.severity !== "info")
                     .concat(seo.issues.filter((i) => i.severity === "info"))
                     .slice(0, 40)
-                    .map((issue) => (
-                      <li
-                        key={issue.id}
-                        className={`admin-seo-issue admin-seo-issue--${issue.severity}`}
-                      >
-                        <span className="admin-seo-issue-tag">
-                          {issue.severity === "critical"
-                            ? "kritikus"
-                            : issue.severity === "warning"
-                              ? "figyelmeztetés"
-                              : "infó"}
-                        </span>
-                        <div>
-                          <strong>{issue.title}</strong>
-                          <p>{issue.detail}</p>
-                          {issue.url ? (
-                            <a
-                              href={issue.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="admin-break"
+                    .map((issue, issueIndex) => {
+                      const open = Boolean(openIssueRows[issue.id]);
+                      const panelId = `seo-issue-panel-${issueIndex}`;
+                      const severityLabel =
+                        issue.severity === "critical"
+                          ? "kritikus"
+                          : issue.severity === "warning"
+                            ? "figyelmeztetés"
+                            : "infó";
+                      return (
+                        <li
+                          key={issue.id}
+                          className={`admin-seo-issue admin-seo-issue--${issue.severity}${
+                            open ? " is-open" : ""
+                          }`}
+                        >
+                          <div className="admin-seo-issue-head">
+                            <button
+                              type="button"
+                              className="admin-seo-issue-toggle"
+                              aria-expanded={open}
+                              aria-controls={panelId}
+                              onClick={() => {
+                                bumpIdle();
+                                toggleIssueRow(issue.id);
+                              }}
                             >
-                              {issue.url}
-                            </a>
-                          ) : null}
-                        </div>
-                      </li>
-                    ))}
+                              <span className="admin-seo-issue-tag">
+                                {severityLabel}
+                              </span>
+                              <span className="admin-seo-issue-title">
+                                {issue.title}
+                              </span>
+                              <span
+                                className={`admin-seo-issue-chev${
+                                  open ? " is-open" : ""
+                                }`}
+                                aria-hidden
+                              >
+                                ▾
+                              </span>
+                            </button>
+                            {issue.url ? (
+                              <a
+                                href={issue.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="admin-seo-issue-ext"
+                                title="URL megnyitása"
+                                onClick={() => bumpIdle()}
+                              >
+                                ↗
+                              </a>
+                            ) : null}
+                          </div>
+                          <div
+                            id={panelId}
+                            className="admin-seo-issue-panel"
+                            role="region"
+                            aria-hidden={!open}
+                          >
+                            <div className="admin-seo-issue-panel-inner">
+                              <div className="admin-seo-issue-body">
+                                <p>{issue.detail}</p>
+                                {issue.url ? (
+                                  <a
+                                    href={issue.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="admin-break"
+                                    onClick={() => bumpIdle()}
+                                  >
+                                    {issue.url}
+                                  </a>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
                 </ul>
               </div>
             ) : (
