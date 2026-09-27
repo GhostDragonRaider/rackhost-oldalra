@@ -211,7 +211,7 @@ export function CategoryBarsSection({
       ([entry]) => {
         if (entry?.isIntersecting) setRevealed(true);
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
     );
     revealObs.observe(section);
 
@@ -219,9 +219,16 @@ export function CategoryBarsSection({
       ([entry]) => {
         if (entry?.isIntersecting) setPlay(true);
       },
-      { threshold: 0.01, rootMargin: "0px 0px -4% 0px" }
+      { threshold: 0, rootMargin: "0px 0px 0px 0px" }
     );
     playObs.observe(bottom);
+
+    // If the section already fits in the viewport (bottom above fold), play now.
+    const rect = section.getBoundingClientRect();
+    if (rect.bottom <= window.innerHeight && rect.top < window.innerHeight) {
+      setRevealed(true);
+      if (rect.bottom <= window.innerHeight - 4) setPlay(true);
+    }
 
     return () => {
       revealObs.disconnect();
