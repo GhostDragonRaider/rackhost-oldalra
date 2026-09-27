@@ -10,7 +10,7 @@
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
     "test:website-audit": "tsx --test scripts/website-audit-ssrf.test.ts scripts/website-audit-score.test.ts scripts/website-audit-url-edge.test.ts scripts/website-audit-html.test.ts scripts/website-audit-checks.test.ts scripts/website-audit-help.test.ts",
     "test:cv": "tsx --test scripts/cv-content.test.ts",
-    "test:lab": "tsx --test scripts/lab.test.ts",
+    "test:lab": "tsx --test scripts/lab.test.ts scripts/lab-modules.test.ts",
     "test": "npm run test:website-audit && npm run test:cv && npm run test:lab",
     "forward-mail": "node scripts/forward-inbox-to-gmail.mjs"
   },

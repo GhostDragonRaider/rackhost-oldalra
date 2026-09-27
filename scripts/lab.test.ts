@@ -52,9 +52,10 @@ describe("lab registry", () => {
     }
   });
 
-  it("has layperson Hungarian help text for every module", () => {
+  it("marks every registered module as implemented with UI", () => {
     for (const m of LAB_MODULES) {
-      assert.ok(typeof m.helpHu === "string" && m.helpHu.length >= 24, m.id);
+      assert.equal(m.implemented, true, m.id);
+      assert.ok(m.helpHu.length >= 24, m.id);
     }
   });
 
