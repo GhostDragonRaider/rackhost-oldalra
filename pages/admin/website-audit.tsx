@@ -11,6 +11,7 @@ import {
   scoreTone,
 } from "../../components/admin/audit/AuditDashboardParts";
 import { DelayedHelpTip } from "../../components/admin/audit/DelayedHelpTip";
+import AuditProgressList from "../../components/website-audit/AuditProgressList";
 import type {
   AuditCategoryId,
   AuditFinding,
@@ -91,6 +92,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [error, setError] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
   const [audit, setAudit] = useState<WebsiteAuditRecord | null>(null);
+  /** Live poll record while an audit job is in flight (progress staging). */
+  const [liveAudit, setLiveAudit] = useState<WebsiteAuditRecord | null>(null);
+  const [progressCaughtUp, setProgressCaughtUp] = useState(true);
   const [history, setHistory] = useState<WebsiteAuditSummary[]>([]);
   const [filter, setFilter] = useState<FindingFilter>("problems");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -112,6 +116,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   async function loadAudit(id: string) {
     setError("");
     setStatusMsg("Korábbi audit betöltése…");
+    setRunning(false);
+    setLiveAudit(null);
+    setProgressCaughtUp(true);
     const res = await fetch(`/api/admin/website-audit/${id}`, {
       credentials: "same-origin",
     });
@@ -132,8 +139,10 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     e?.preventDefault();
     setRunning(true);
     setError("");
-    setStatusMsg("Ellenőrzés fut…");
+    setStatusMsg("Audit folyamatban…");
     setAudit(null);
+    setLiveAudit(null);
+    setProgressCaughtUp(false);
     setActiveCategory(null);
     try {
       const res = await fetch("/api/admin/website-audit", {
@@ -149,22 +158,84 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
       if (!res.ok || !data.ok) {
         setError(data.error || "Az ellenőrzés sikertelen.");
         setStatusMsg("");
+        setRunning(false);
+        setProgressCaughtUp(true);
         return;
       }
-      setAudit(data.audit as WebsiteAuditRecord);
-      setStatusMsg(
-        data.audit.status === "failed"
-          ? "Az ellenőrzés hibával zárult."
-          : "Kész."
-      );
+
+      const jobId = String(data.id || data.audit?.id || "");
+      if (!jobId) {
+        setError("Hiányzó audit azonosító.");
+        setRunning(false);
+        setProgressCaughtUp(true);
+        return;
+      }
+
+      if (data.audit) {
+        setLiveAudit(data.audit as WebsiteAuditRecord);
+      }
+
+      // Async job (202) or legacy sync (200 with completed audit)
+      if (res.status === 200 && data.audit?.status === "completed") {
+        setLiveAudit(data.audit as WebsiteAuditRecord);
+        setStatusMsg("Kész — lépések kipipálása…");
+        return;
+      }
+
+      const POLL_MS = 900;
+      for (;;) {
+        await new Promise((r) => setTimeout(r, POLL_MS));
+        const poll = await fetch(`/api/admin/website-audit/${encodeURIComponent(jobId)}`, {
+          credentials: "same-origin",
+        });
+        const body = await poll.json();
+        if (!poll.ok || !body.ok || !body.audit) {
+          setError(body.error || "Az audit állapot nem olvasható.");
+          setRunning(false);
+          setProgressCaughtUp(true);
+          return;
+        }
+        const next = body.audit as WebsiteAuditRecord;
+        setLiveAudit(next);
+        const st = String(next.status || "").toLowerCase();
+        if (st === "completed" || st === "complete") {
+          setStatusMsg(
+            next.fromCache
+              ? "Kész (cache) — lépések kipipálása…"
+              : "Kész — lépések kipipálása…"
+          );
+          break;
+        }
+        if (st === "failed") {
+          setStatusMsg("Az ellenőrzés hibával zárult — lépések kipipálása…");
+          break;
+        }
+        setStatusMsg(
+          st === "queued" ? "Sorban vár…" : "Weboldal vizsgálata…"
+        );
+      }
       await loadHistory();
     } catch {
       setError("Hálózati hiba az ellenőrzésnél.");
       setStatusMsg("");
-    } finally {
       setRunning(false);
+      setProgressCaughtUp(true);
     }
   }
+
+  // When staged checklist catches up to a finished live audit, reveal the report.
+  useEffect(() => {
+    if (!liveAudit) return;
+    const st = String(liveAudit.status || "").toLowerCase();
+    const finished = st === "completed" || st === "complete" || st === "failed";
+    if (!finished || !progressCaughtUp) return;
+    setAudit(liveAudit);
+    setLiveAudit(null);
+    setRunning(false);
+    setStatusMsg(
+      st === "failed" ? "Az ellenőrzés hibával zárult." : "Kész."
+    );
+  }, [liveAudit, progressCaughtUp]);
 
   const tone = audit ? scoreTone(audit.overallScore) : "neutral";
 
@@ -339,36 +410,22 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           {error ? <p className="admin-error">{error}</p> : null}
         </div>
 
-        {running ? (
-          <div className="audit-loading" aria-busy="true" aria-live="polite">
+        {running || liveAudit ? (
+          <div className="audit-loading" aria-busy={running} aria-live="polite">
             <p className="audit-loading__title">Audit folyamatban…</p>
             <p className="admin-muted">
-              URL → lekérés → biztonság → SEO / tartalom → akadálymentesség →
-              robots/sitemap → PageSpeed → pontszámítás
+              Valós szerveroldali lépések — a lista sorban pipálódik ki, lépésenként
+              legalább 1 másodperccel.
             </p>
-            <ol className="audit-loading__steps">
-              {[
-                "URL ellenőrzése",
-                "Weboldal lekérése",
-                "Biztonság ellenőrzése",
-                "SEO elemzés",
-                "Tartalom elemzése",
-                "Akadálymentesség",
-                "robots.txt / sitemap",
-                "PageSpeed",
-                "Pontszámítás",
-              ].map((label, i) => (
-                <li key={label} className="audit-loading__step is-pulse">
-                  <span className="audit-loading__dot" aria-hidden />
-                  {label}
-                  <span className="admin-sr-only"> — fázis {i + 1}</span>
-                </li>
-              ))}
-            </ol>
+            <AuditProgressList
+              steps={liveAudit?.progress || []}
+              stepDelayMs={1000}
+              onVisualCaughtUp={setProgressCaughtUp}
+            />
           </div>
         ) : null}
 
-        {audit ? (
+        {audit && !liveAudit ? (
           <article
             className={`admin-audit-report admin-seo--${tone} audit-dashboard`}
             aria-label="Audit dashboard"

@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import type { WebsiteAuditRecord, WebsiteAuditSummary } from "./types";
+import type {
+  AuditProgressStep,
+  WebsiteAuditRecord,
+  WebsiteAuditSummary,
+} from "./types";
+import { scoreBandLabel } from "./scoring-config";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "website-audits.json");
@@ -111,5 +116,58 @@ export function emptyTechnical(): WebsiteAuditRecord["technical"] {
       source: null,
       metrics: null,
     },
+  };
+}
+
+export function initialAuditProgress(): AuditProgressStep[] {
+  return [
+    { id: "validate", label: "URL ellenőrzése", status: "pending" },
+    { id: "fetch", label: "Elérhetőség / HTTP", status: "pending" },
+    { id: "tls", label: "HTTPS / TLS", status: "pending" },
+    { id: "headers", label: "Biztonsági kitettség (headerek)", status: "pending" },
+    { id: "html", label: "SEO", status: "pending" },
+    { id: "content", label: "Tartalom", status: "pending" },
+    { id: "responsive", label: "Responsive", status: "pending" },
+    { id: "a11y", label: "Akadálymentesség", status: "pending" },
+    { id: "robots", label: "robots.txt / sitemap", status: "pending" },
+    { id: "pagespeed", label: "Teljesítmény", status: "pending" },
+    { id: "score", label: "Pontszámítás", status: "pending" },
+  ];
+}
+
+/** Shell record for async queue + progress polling. */
+export function createQueuedAuditRecord(inputUrl: string): WebsiteAuditRecord {
+  const now = new Date().toISOString();
+  return {
+    id: newAuditId(),
+    createdAt: now,
+    updatedAt: now,
+    inputUrl,
+    normalizedUrl: inputUrl,
+    status: "queued",
+    overallScore: null,
+    overallLabel: scoreBandLabel(null),
+    summary: "Sorban vár…",
+    error: null,
+    categories: [],
+    findings: [],
+    priorityFixes: [],
+    severityCounts: {
+      pass: 0,
+      info: 0,
+      low: 0,
+      medium: 0,
+      high: 0,
+      critical: 0,
+    },
+    technical: emptyTechnical(),
+    progress: initialAuditProgress(),
+    beta: true,
+    fromCache: false,
+    cachedFromId: null,
+    checkedAt: null,
+    scoringExplanation: null,
+    responsiveMatrix: null,
+    securityExposureNote: null,
   };
 }

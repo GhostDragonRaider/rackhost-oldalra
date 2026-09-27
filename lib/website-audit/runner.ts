@@ -9,6 +9,7 @@ import {
   getAuditById,
   newAuditId,
   saveAudit,
+  initialAuditProgress,
 } from "./store";
 import {
   computeCategoryScores,
@@ -325,22 +326,6 @@ function classifySitemap(
   };
 }
 
-function initialProgress(): AuditProgressStep[] {
-  return [
-    { id: "validate", label: "URL ellenőrzése", status: "pending" },
-    { id: "fetch", label: "Elérhetőség / HTTP", status: "pending" },
-    { id: "tls", label: "HTTPS / TLS", status: "pending" },
-    { id: "headers", label: "Biztonsági kitettség (headerek)", status: "pending" },
-    { id: "html", label: "SEO", status: "pending" },
-    { id: "content", label: "Tartalom", status: "pending" },
-    { id: "responsive", label: "Responsive", status: "pending" },
-    { id: "a11y", label: "Akadálymentesség", status: "pending" },
-    { id: "robots", label: "robots.txt / sitemap", status: "pending" },
-    { id: "pagespeed", label: "Teljesítmény", status: "pending" },
-    { id: "score", label: "Pontszámítás", status: "pending" },
-  ];
-}
-
 function finalize(
   record: WebsiteAuditRecord,
   findings: AuditFinding[],
@@ -367,14 +352,17 @@ function finalize(
 export async function runWebsiteAudit(options: {
   inputUrl: string;
   reuseCache?: boolean;
+  /** Reuse a pre-created queued record id (for async poll UX). */
+  auditId?: string;
+  createdAt?: string;
 }): Promise<WebsiteAuditRecord> {
   const now = new Date().toISOString();
-  const progress = initialProgress();
+  const progress = initialAuditProgress();
   const findings: AuditFinding[] = [];
 
   let record: WebsiteAuditRecord = {
-    id: newAuditId(),
-    createdAt: now,
+    id: options.auditId || newAuditId(),
+    createdAt: options.createdAt || now,
     updatedAt: now,
     inputUrl: options.inputUrl,
     normalizedUrl: options.inputUrl,
@@ -404,6 +392,8 @@ export async function runWebsiteAudit(options: {
     responsiveMatrix: null,
     securityExposureNote: null,
   };
+
+  record = saveAudit(record);
 
   setStep(progress, "validate", "running");
   const validated = await validateAndResolveAuditUrl(options.inputUrl);
