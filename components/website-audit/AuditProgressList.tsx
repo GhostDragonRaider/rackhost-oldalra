@@ -64,8 +64,8 @@ function countTerminalPrefix(steps: PublicAuditProgressStep[]): number {
 }
 
 /**
- * Premium staged checklist: never reports fully caught up until every item
- * is checked off, with ≥ stepDelayMs between ticks.
+ * Process-style progress: one focal step at a time on a flow rail,
+ * not a vertical checklist of every aspect.
  */
 export default function AuditProgressList({
   steps,
@@ -86,7 +86,6 @@ export default function AuditProgressList({
     [serverSteps]
   );
 
-  /** How far we are allowed to reveal right now. */
   const revealTarget = unlockAll
     ? total
     : Math.min(total, serverTerminalCount);
@@ -135,13 +134,11 @@ export default function AuditProgressList({
     }
 
     setPhase("running");
-    const delay = stepDelayMs;
-
     const timer = setTimeout(() => {
       lastAdvanceAt.current = Date.now();
       setPhase("checking");
       setRevealedCount((c) => Math.min(c + 1, revealTarget));
-    }, delay);
+    }, stepDelayMs);
 
     return () => clearTimeout(timer);
   }, [
@@ -154,7 +151,6 @@ export default function AuditProgressList({
   ]);
 
   useEffect(() => {
-    // Only "caught up" when EVERY aspect is checked off.
     const caughtUp = total > 0 && revealedCount >= total;
     if (caughtUp === caughtUpRef.current) return;
     caughtUpRef.current = caughtUp;
@@ -204,70 +200,97 @@ export default function AuditProgressList({
   }
 
   const allDone = revealedCount >= total;
-  const busy = !allDone;
+  const activeIndex = allDone
+    ? total - 1
+    : Math.min(revealedCount, total - 1);
+  const activeStep = displaySteps[activeIndex];
+  const activeStatus = normalizeStatus(activeStep?.status || "pending");
+  const progressPct = Math.round((revealedCount / total) * 100);
 
   return (
-    <div className={`wa-progress${className ? ` ${className}` : ""}`}>
-      <div className="wa-progress__meta" aria-live="polite">
-        <span className="wa-progress__count">
-          {revealedCount} / {total} ellenőrzés
+    <div
+      className={`wa-progress wa-progress--flow${className ? ` ${className}` : ""}`}
+    >
+      <div className="wa-flow__meta" aria-live="polite">
+        <span className="wa-flow__live">
+          {allDone ? "Ellenőrzési folyamat kész" : "Ellenőrzési folyamat"}
         </span>
-        <span className="wa-progress__live">
-          {busy ? "Weboldal vizsgálata…" : "Minden ellenőrzés kész"}
+        <span className="wa-flow__count">
+          {revealedCount} / {total}
         </span>
       </div>
 
-      <ol className="wa-progress-list" aria-label="Ellenőrzés előrehaladása">
+      <div
+        className="wa-flow__track"
+        role="list"
+        aria-label="Ellenőrzési folyamat"
+      >
+        <div className="wa-flow__rail" aria-hidden="true">
+          <div
+            className="wa-flow__rail-fill"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
         {displaySteps.map((step, index) => {
           const st = normalizeStatus(step.status);
-          const justDone = st === "done" && index === revealedCount - 1;
           return (
-            <li
+            <div
               key={step.id}
-              className={`wa-progress-item wa-progress-item--${st}${
-                justDone ? " wa-progress-item--just-done" : ""
+              role="listitem"
+              className={`wa-flow__node wa-flow__node--${st}${
+                index === activeIndex && !allDone ? " is-current" : ""
               }`}
+              title={step.label}
             >
-              <span className="wa-progress-item__marker" aria-hidden="true">
+              <span className="wa-flow__node-mark" aria-hidden="true">
                 {st === "done" ? (
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    focusable="false"
-                  >
+                  <svg viewBox="0 0 16 16" width="10" height="10">
                     <path
                       d="M3.5 8.5 L6.5 11.5 L12.5 4.5"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="2.2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
                 ) : st === "error" ? (
-                  <span className="wa-progress-item__mark-char">!</span>
+                  "!"
                 ) : st === "running" ? (
-                  <span className="wa-progress-item__pulse" />
-                ) : (
-                  <span className="wa-progress-item__dot" />
-                )}
-              </span>
-              <div className="wa-progress-item__body">
-                <div className="wa-progress-item__row">
-                  <span className="wa-progress-item__label">{step.label}</span>
-                  <span className="wa-progress-item__status">
-                    {statusLabel(step.status)}
-                  </span>
-                </div>
-                {step.detail && st !== "pending" ? (
-                  <p className="wa-progress-item__detail">{step.detail}</p>
+                  <span className="wa-flow__node-pulse" />
                 ) : null}
-              </div>
-            </li>
+              </span>
+              <span className="wa-sr-only">
+                {step.label}: {statusLabel(step.status)}
+              </span>
+            </div>
           );
         })}
-      </ol>
+      </div>
+
+      <div
+        className={`wa-flow__stage wa-flow__stage--${activeStatus}${
+          phase === "checking" ? " is-checking" : ""
+        }`}
+        key={activeStep?.id || "stage"}
+      >
+        <p className="wa-flow__stage-kicker">
+          {allDone
+            ? "Utolsó lépés"
+            : `Lépés ${Math.min(revealedCount + 1, total)} / ${total}`}
+        </p>
+        <h3 className="wa-flow__stage-title">{activeStep?.label}</h3>
+        <p className="wa-flow__stage-status">{statusLabel(activeStatus)}</p>
+        {activeStep?.detail && activeStatus !== "pending" ? (
+          <p className="wa-flow__stage-detail">{activeStep.detail}</p>
+        ) : (
+          <p className="wa-flow__stage-detail">
+            {allDone
+              ? "Minden szempont lefutott."
+              : "A vizsgálat ezen a ponton zajlik…"}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

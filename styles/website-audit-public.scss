@@ -361,13 +361,17 @@
   font-weight: 700;
 }
 
-/* Progress checklist — premium staged reveal */
+/* Progress — process flow (not a checklist) */
 .wa-progress {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
-.wa-progress__meta {
+.wa-progress--flow {
+  gap: 20px;
+}
+
+.wa-flow__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -375,170 +379,196 @@
   gap: 8px 16px;
 }
 
-.wa-progress__count {
+.wa-flow__live {
   font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 
-.wa-progress__live {
+.wa-flow__count {
   color: var(--muted);
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-.wa-progress-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0;
+.wa-flow__track {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  min-height: 28px;
+  padding: 4px 2px;
 }
 
-.wa-progress-item {
+.wa-flow__rail {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--line) 85%, var(--muted));
+  border-radius: 999px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.wa-flow__rail-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--wa-good) 70%, var(--blue)),
+    var(--blue)
+  );
+  border-radius: inherit;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wa-flow__node {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
   display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 14px;
-  align-items: start;
-  padding: 14px 16px;
-  border: 1px solid transparent;
-  border-radius: 14px;
-  background: transparent;
-  transition:
-    background 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  place-items: center;
 }
 
-.wa-progress-item--pending {
-  opacity: 0.55;
-}
-
-.wa-progress-item--running {
-  background: color-mix(in srgb, var(--blue) 8%, var(--surface));
-  border-color: color-mix(in srgb, var(--blue) 28%, var(--line));
-  opacity: 1;
-}
-
-.wa-progress-item--done,
-.wa-progress-item--error,
-.wa-progress-item--skipped {
-  opacity: 1;
-  background: var(--surface);
-  border-color: var(--line);
-}
-
-.wa-progress-item--just-done {
-  animation: wa-progress-check-in 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.wa-progress-item__marker {
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
+.wa-flow__node-mark {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 35%, var(--line));
+  background: var(--surface);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--line);
-  background: var(--surface-2);
-  color: #fff;
-  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
   transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.35s ease,
     border-color 0.35s ease,
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.35s ease;
 }
 
-.wa-progress-item--pending .wa-progress-item__marker {
-  background: transparent;
-  border-color: color-mix(in srgb, var(--muted) 40%, var(--line));
+.wa-flow__node--pending .wa-flow__node-mark {
+  background: var(--surface-2);
 }
 
-.wa-progress-item--running .wa-progress-item__marker {
-  border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
-  background: color-mix(in srgb, var(--blue) 12%, var(--surface));
+.wa-flow__node--running .wa-flow__node-mark,
+.wa-flow__node.is-current .wa-flow__node-mark {
+  border-color: color-mix(in srgb, var(--blue) 60%, var(--line));
+  background: color-mix(in srgb, var(--blue) 14%, var(--surface));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 14%, transparent);
+  transform: scale(1.15);
 }
 
-.wa-progress-item--done .wa-progress-item__marker {
+.wa-flow__node--done .wa-flow__node-mark {
   background: var(--wa-good);
   border-color: var(--wa-good);
-  color: #fff;
 }
 
-.wa-progress-item--error .wa-progress-item__marker {
+.wa-flow__node--error .wa-flow__node-mark {
   background: var(--wa-bad);
   border-color: var(--wa-bad);
-  color: #fff;
 }
 
-.wa-progress-item--skipped .wa-progress-item__marker {
-  background: var(--wa-na);
-  border-color: var(--wa-na);
-}
-
-.wa-progress-item__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--muted) 50%, var(--line));
-}
-
-.wa-progress-item__pulse {
-  width: 8px;
-  height: 8px;
+.wa-flow__node-pulse {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--blue);
   animation: wa-pulse 1.25s ease-in-out infinite;
 }
 
-.wa-progress-item__mark-char {
-  font-size: 0.72rem;
-  font-weight: 800;
-  line-height: 1;
+.wa-flow__stage {
+  padding: 22px 20px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--blue) 22%, var(--line));
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--blue) 10%, var(--surface)),
+      var(--surface) 55%
+    );
+  min-height: 7.5rem;
+  animation: wa-flow-stage-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.wa-progress-item__row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
+.wa-flow__stage--done {
+  border-color: color-mix(in srgb, var(--wa-good) 35%, var(--line));
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--wa-good) 12%, var(--surface)),
+      var(--surface) 55%
+    );
 }
 
-.wa-progress-item__label {
-  font-weight: 800;
-  letter-spacing: -0.01em;
+.wa-flow__stage--error {
+  border-color: color-mix(in srgb, var(--wa-bad) 35%, var(--line));
 }
 
-.wa-progress-item--pending .wa-progress-item__label {
-  font-weight: 650;
+.wa-flow__stage.is-checking {
+  animation: wa-flow-stage-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wa-flow__stage-kicker {
+  margin: 0 0 6px;
   color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.wa-progress-item__status {
-  color: var(--muted);
-  font-size: 0.8rem;
+.wa-flow__stage-title {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.wa-flow__stage-status {
+  margin: 8px 0 0;
+  color: var(--blue);
+  font-size: 0.88rem;
   font-weight: 700;
   text-transform: lowercase;
 }
 
-.wa-progress-item--running .wa-progress-item__status {
-  color: var(--blue);
-}
-
-.wa-progress-item--done .wa-progress-item__status {
+.wa-flow__stage--done .wa-flow__stage-status {
   color: var(--wa-good);
 }
 
-.wa-progress-item__detail {
-  margin: 4px 0 0;
+.wa-flow__stage--error .wa-flow__stage-status {
+  color: var(--wa-bad);
+}
+
+.wa-flow__stage-detail {
+  margin: 10px 0 0;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.wa-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @keyframes wa-pulse {
@@ -553,14 +583,14 @@
   }
 }
 
-@keyframes wa-progress-check-in {
-  0% {
-    transform: translateY(4px);
-    opacity: 0.7;
+@keyframes wa-flow-stage-in {
+  from {
+    opacity: 0.55;
+    transform: translateY(6px);
   }
-  100% {
-    transform: none;
+  to {
     opacity: 1;
+    transform: none;
   }
 }
 
@@ -928,14 +958,14 @@
     transition: none !important;
   }
 
-  .wa-progress-item,
-  .wa-progress-item__marker {
+  .wa-flow__stage,
+  .wa-flow__rail-fill,
+  .wa-flow__node-mark {
     transition: none !important;
     animation: none !important;
   }
 
-  .wa-progress-item--running .wa-progress-item__pulse,
-  .wa-progress-item--just-done {
+  .wa-flow__node-pulse {
     animation: none !important;
   }
 

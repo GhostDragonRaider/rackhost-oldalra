@@ -419,8 +419,8 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           <div className="audit-loading" aria-busy={!progressCaughtUp} aria-live="polite">
             <p className="audit-loading__title">Audit folyamatban…</p>
             <p className="admin-muted">
-              Az eredmény csak akkor jelenik meg, ha minden szempont ki van
-              pipálva. A lépések leggyorsabban 0,5 másodpercenként váltanak.
+              Folyamatszerű ellenőrzés: egyszerre egy szempont fut. Az eredmény
+              csak a teljes folyamat után jelenik meg (0,5 mp / lépés).
             </p>
             <AuditProgressList
               steps={liveAudit?.progress || []}
