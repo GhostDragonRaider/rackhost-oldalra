@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ElementType,
+  type ReactNode,
+} from "react";
 import type { AuditCategoryId, AuditSeverity } from "../../../lib/website-audit/types";
 import { SEVERITY_LABELS } from "../../../lib/website-audit/types";
 import {
@@ -7,6 +14,103 @@ import {
   SEVERITY_HELP,
 } from "../../../lib/website-audit/help-texts";
 import { DelayedHelpTip } from "./DelayedHelpTip";
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+type AuditRevealProps = {
+  children: ReactNode;
+  /** Reset reveal when this changes (e.g. audit id). */
+  resetKey?: string | number | null;
+  className?: string;
+  as?: ElementType;
+  /** Stagger delay after the element enters the viewport. */
+  delayMs?: number;
+  /** Accessible name when wrapping a landmark section. */
+  "aria-label"?: string;
+  style?: CSSProperties;
+};
+
+/**
+ * Fade/slide-in when the block scrolls into view.
+ * Used for post-audit result sections.
+ */
+export function AuditReveal({
+  children,
+  resetKey,
+  className = "",
+  as: Tag = "div",
+  delayMs = 0,
+  "aria-label": ariaLabel,
+  style,
+}: AuditRevealProps) {
+  const ref = useRef<HTMLElement | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    setRevealed(false);
+  }, [resetKey]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (prefersReducedMotion()) {
+      setRevealed(true);
+      return;
+    }
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const reveal = () => {
+      if (timer) return;
+      timer = setTimeout(() => setRevealed(true), delayMs);
+    };
+
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          reveal();
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -10% 0px" }
+    );
+    obs.observe(el);
+
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.9 && rect.bottom > 40) {
+      reveal();
+      obs.disconnect();
+    }
+
+    return () => {
+      obs.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [resetKey, delayMs]);
+
+  return (
+    <Tag
+      ref={ref}
+      className={`audit-reveal${revealed ? " is-revealed" : ""}${
+        className ? ` ${className}` : ""
+      }`}
+      aria-label={ariaLabel}
+      style={
+        {
+          ["--audit-reveal-delay" as string]: `${delayMs}ms`,
+          ...style,
+        } as CSSProperties
+      }
+    >
+      {children}
+    </Tag>
+  );
+}
 
 export function severityLabel(s: AuditSeverity | string): string {
   if (s in SEVERITY_LABELS) {
@@ -239,7 +343,7 @@ export function CategoryBarsSection({
   return (
     <section
       ref={sectionRef}
-      className={`audit-cat-section${revealed ? " is-revealed" : ""}`}
+      className={`audit-reveal audit-cat-section${revealed ? " is-revealed" : ""}`}
       aria-label="Kategóriák"
     >
       {title}

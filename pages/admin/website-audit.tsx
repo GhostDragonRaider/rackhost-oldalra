@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AdminShell from "../../components/admin/AdminShell";
 import {
+  AuditReveal,
   AuditSectionTitle,
   CategoryBarsSection,
   ScoreRing,
@@ -518,7 +519,12 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             className={`admin-audit-report admin-seo--${tone} audit-dashboard`}
             aria-label="Audit dashboard"
           >
-            <header className="audit-dash-head">
+            <AuditReveal
+              as="header"
+              className="audit-dash-head"
+              resetKey={audit.id}
+              delayMs={40}
+            >
               <ScoreRing
                 score={audit.overallScore}
                 label={audit.overallLabel || "Eredmény"}
@@ -570,14 +576,19 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   </Link>
                 </div>
               </div>
-            </header>
+            </AuditReveal>
 
-            <section aria-label="Súlyosság eloszlás">
+            <AuditReveal
+              as="section"
+              aria-label="Súlyosság eloszlás"
+              resetKey={audit.id}
+              delayMs={90}
+            >
               <AuditSectionTitle help={SECTION_HELP.severity}>
                 Súlyosság eloszlás
               </AuditSectionTitle>
               <SeverityDistribution counts={severityCounts} />
-            </section>
+            </AuditReveal>
 
             <CategoryBarsSection
               title={
@@ -595,9 +606,12 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               }}
             />
 
-            <section
+            <AuditReveal
+              as="section"
               className="audit-priority"
               aria-label="Mit javítsak először"
+              resetKey={audit.id}
+              delayMs={120}
             >
               <AuditSectionTitle help={SECTION_HELP.priority}>
                 Mit javítsak először?
@@ -619,21 +633,29 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   emptyText="Nincs prioritásos javítanivaló — erős állapot."
                 />
               )}
-            </section>
+            </AuditReveal>
 
             {audit.technical.indexability ? (
-              <section
+              <AuditReveal
+                as="section"
                 className={`audit-indexability audit-indexability--${audit.technical.indexability.status}`}
                 aria-label="Indexelhetőség"
+                resetKey={audit.id}
+                delayMs={140}
               >
                 <AuditSectionTitle help={SECTION_HELP.indexability}>
                   Indexelhetőség
                 </AuditSectionTitle>
                 <p>{audit.technical.indexability.summary}</p>
-              </section>
+              </AuditReveal>
             ) : null}
 
-            <section aria-label="Részletes audit">
+            <AuditReveal
+              as="section"
+              aria-label="Részletes audit"
+              resetKey={audit.id}
+              delayMs={160}
+            >
               <div className="audit-detail-head">
                 <AuditSectionTitle help={SECTION_HELP.details}>
                   Részletes ellenőrzések
@@ -707,8 +729,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   );
                 })}
               </div>
-            </section>
+            </AuditReveal>
 
+            <AuditReveal as="div" resetKey={audit.id} delayMs={200}>
             <details className="audit-tech-details">
               <summary>
                 <DelayedHelpTip text={SECTION_HELP.technical} placement="bottom">
@@ -875,6 +898,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                 </>
               ) : null}
             </details>
+            </AuditReveal>
           </article>
         ) : null}
       </section>
