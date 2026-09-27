@@ -20,13 +20,11 @@ const LANDING_PATHS = new Set<string>([
   "/kapcsolat",
   "/rolam",
   "/tudastar",
-  "/weboldal-ellenorzo",
 ]);
 
 function isLandingPath(pathname: string) {
   if (LANDING_PATHS.has(pathname)) return true;
   if (pathname.startsWith("/tudastar/")) return true;
-  if (pathname.startsWith("/weboldal-ellenorzo/")) return true;
   return false;
 }
 

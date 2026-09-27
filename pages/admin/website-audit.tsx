@@ -276,10 +276,8 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               </span>
             </div>
             <p className="admin-muted">
-              Admin nézet — ugyanaz a motor, mint a publikus{" "}
-              <Link href="/weboldal-ellenorzo">Weboldal-ellenőrző</Link>{" "}
-              oldalon (SSRF-védelem, nem intruzív security exposure). Kapcsolódó
-              Lab:{" "}
+              Admin tesztverzió — nem publikus szolgáltatás. SSRF-védelem, nem
+              intruzív security exposure. Kapcsolódó Lab:{" "}
               <Link href="/admin/lab/website-audit">Website Audit</Link>
               {" · "}
               <Link href="/admin/lab/seo-lab">SEO Lab</Link>

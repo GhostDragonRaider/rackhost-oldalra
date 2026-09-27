@@ -269,20 +269,17 @@ export default function LabModulePage() {
               </p>
               <div className="lab-main__actions">
                 <Link
-                  href="/weboldal-ellenorzo"
-                  className="lab-btn lab-btn--primary"
-                  onClick={() => bumpIdle()}
-                >
-                  Publikus ellenőrző
-                </Link>
-                <Link
                   href="/admin/website-audit"
-                  className="lab-btn"
+                  className="lab-btn lab-btn--primary"
                   onClick={() => bumpIdle()}
                 >
                   Admin audit
                 </Link>
               </div>
+              <p className="lab-muted">
+                A publikus Weboldal-ellenőrző jelenleg ki van kapcsolva — csak
+                adminból érhető el.
+              </p>
               <h3 style={{ marginTop: 24 }}>Authorized Security Assessment</h3>
               <p className="lab-muted">
                 Architektúra stub (nem publikus, nem auto-start). Workflow:
