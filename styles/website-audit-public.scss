@@ -361,14 +361,14 @@
   font-weight: 700;
 }
 
-/* Progress — process flow (not a checklist) */
+/* Progress — premium process flow */
 .wa-progress {
   display: grid;
   gap: 18px;
 }
 
 .wa-progress--flow {
-  gap: 20px;
+  gap: 22px;
 }
 
 .wa-flow__meta {
@@ -398,48 +398,122 @@
   align-items: center;
   justify-content: space-between;
   gap: 0;
-  min-height: 28px;
-  padding: 4px 2px;
+  min-height: 36px;
+  padding: 10px 4px;
 }
 
 .wa-flow__rail {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 10px;
+  right: 10px;
   top: 50%;
-  height: 2px;
+  height: 4px;
   transform: translateY(-50%);
-  background: color-mix(in srgb, var(--line) 85%, var(--muted));
+  background: color-mix(in srgb, var(--line) 80%, var(--muted));
   border-radius: 999px;
-  overflow: hidden;
+  overflow: visible;
   z-index: 0;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
 .wa-flow__rail-fill {
-  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 0;
+  border-radius: inherit;
+  overflow: hidden;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--wa-good) 70%, var(--blue)),
-    var(--blue)
+    color-mix(in srgb, var(--wa-good) 55%, var(--blue)),
+    var(--blue) 55%,
+    color-mix(in srgb, var(--blue) 70%, #7eb6ff)
   );
-  border-radius: inherit;
-  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--blue) 28%, transparent);
+  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wa-flow__rail-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 45%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  animation: wa-flow-sheen 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.wa-progress--flow.is-complete .wa-flow__rail-sheen {
+  animation: none;
+  opacity: 0.35;
+}
+
+.wa-flow__traveler {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff 0%,
+    color-mix(in srgb, var(--blue) 40%, #fff) 35%,
+    var(--blue) 70%
+  );
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--blue) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--blue) 45%, transparent);
+  opacity: 0;
+  transition:
+    left 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.wa-flow__traveler.is-active {
+  opacity: 1;
+  animation: wa-flow-traveler-breathe 1.4s ease-in-out infinite;
+}
+
+.wa-progress--flow.is-complete .wa-flow__traveler {
+  opacity: 0;
+  animation: none;
 }
 
 .wa-flow__node {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   display: grid;
   place-items: center;
 }
 
+.wa-flow__node-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--blue) 45%, transparent);
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
+
 .wa-flow__node-mark {
-  width: 18px;
-  height: 18px;
+  position: relative;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: 1.5px solid color-mix(in srgb, var(--muted) 35%, var(--line));
   background: var(--surface);
@@ -450,7 +524,7 @@
   font-size: 0.65rem;
   font-weight: 800;
   transition:
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.35s ease,
     border-color 0.35s ease,
     box-shadow 0.35s ease;
@@ -462,15 +536,32 @@
 
 .wa-flow__node--running .wa-flow__node-mark,
 .wa-flow__node.is-current .wa-flow__node-mark {
-  border-color: color-mix(in srgb, var(--blue) 60%, var(--line));
-  background: color-mix(in srgb, var(--blue) 14%, var(--surface));
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 14%, transparent);
-  transform: scale(1.15);
+  border-color: color-mix(in srgb, var(--blue) 65%, var(--line));
+  background: color-mix(in srgb, var(--blue) 16%, var(--surface));
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--blue) 16%, transparent),
+    0 0 16px color-mix(in srgb, var(--blue) 28%, transparent);
+  transform: scale(1.18);
+}
+
+.wa-flow__node.is-current .wa-flow__node-ring {
+  opacity: 1;
+  animation: wa-flow-ring 1.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 .wa-flow__node--done .wa-flow__node-mark {
   background: var(--wa-good);
   border-color: var(--wa-good);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wa-good) 18%, transparent);
+}
+
+.wa-flow__node.is-just-done .wa-flow__node-mark {
+  animation: wa-flow-node-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wa-flow__node.is-just-done .wa-flow__node-ring {
+  border-color: color-mix(in srgb, var(--wa-good) 55%, transparent);
+  animation: wa-flow-node-ripple 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .wa-flow__node--error .wa-flow__node-mark {
@@ -487,6 +578,7 @@
 }
 
 .wa-flow__stage {
+  position: relative;
   padding: 22px 20px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--blue) 22%, var(--line));
@@ -497,7 +589,22 @@
       var(--surface) 55%
     );
   min-height: 7.5rem;
+  overflow: hidden;
   animation: wa-flow-stage-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wa-flow__stage::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    var(--blue),
+    color-mix(in srgb, var(--blue) 30%, transparent)
+  );
 }
 
 .wa-flow__stage--done {
@@ -508,6 +615,14 @@
       color-mix(in srgb, var(--wa-good) 12%, var(--surface)),
       var(--surface) 55%
     );
+}
+
+.wa-flow__stage--done::before {
+  background: linear-gradient(
+    180deg,
+    var(--wa-good),
+    color-mix(in srgb, var(--wa-good) 25%, transparent)
+  );
 }
 
 .wa-flow__stage--error {
@@ -580,6 +695,59 @@
   50% {
     opacity: 0.4;
     transform: scale(0.85);
+  }
+}
+
+@keyframes wa-flow-sheen {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes wa-flow-traveler-breathe {
+  0%,
+  100% {
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.12);
+  }
+}
+
+@keyframes wa-flow-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+@keyframes wa-flow-node-pop {
+  0% {
+    transform: scale(0.7);
+  }
+  55% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes wa-flow-node-ripple {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.1);
   }
 }
 
@@ -960,7 +1128,10 @@
 
   .wa-flow__stage,
   .wa-flow__rail-fill,
-  .wa-flow__node-mark {
+  .wa-flow__traveler,
+  .wa-flow__node-mark,
+  .wa-flow__node-ring,
+  .wa-flow__rail-sheen {
     transition: none !important;
     animation: none !important;
   }

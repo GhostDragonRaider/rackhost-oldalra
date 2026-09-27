@@ -205,11 +205,16 @@ export default function AuditProgressList({
     : Math.min(revealedCount, total - 1);
   const activeStep = displaySteps[activeIndex];
   const activeStatus = normalizeStatus(activeStep?.status || "pending");
-  const progressPct = Math.round((revealedCount / total) * 100);
+  // Fill reaches the active node center along the rail
+  const progressPct =
+    total <= 1 ? 100 : Math.round((activeIndex / (total - 1)) * 100);
+  const justDoneIndex = revealedCount > 0 ? revealedCount - 1 : -1;
 
   return (
     <div
-      className={`wa-progress wa-progress--flow${className ? ` ${className}` : ""}`}
+      className={`wa-progress wa-progress--flow${allDone ? " is-complete" : ""}${
+        className ? ` ${className}` : ""
+      }`}
     >
       <div className="wa-flow__meta" aria-live="polite">
         <span className="wa-flow__live">
@@ -229,19 +234,28 @@ export default function AuditProgressList({
           <div
             className="wa-flow__rail-fill"
             style={{ width: `${progressPct}%` }}
+          >
+            <span className="wa-flow__rail-sheen" />
+          </div>
+          <span
+            className={`wa-flow__traveler${phase === "running" ? " is-active" : ""}`}
+            style={{ left: `${progressPct}%` }}
           />
         </div>
         {displaySteps.map((step, index) => {
           const st = normalizeStatus(step.status);
+          const isCurrent = index === activeIndex && !allDone;
+          const justDone = index === justDoneIndex;
           return (
             <div
               key={step.id}
               role="listitem"
               className={`wa-flow__node wa-flow__node--${st}${
-                index === activeIndex && !allDone ? " is-current" : ""
-              }`}
+                isCurrent ? " is-current" : ""
+              }${justDone ? " is-just-done" : ""}`}
               title={step.label}
             >
+              <span className="wa-flow__node-ring" aria-hidden="true" />
               <span className="wa-flow__node-mark" aria-hidden="true">
                 {st === "done" ? (
                   <svg viewBox="0 0 16 16" width="10" height="10">
@@ -256,7 +270,7 @@ export default function AuditProgressList({
                   </svg>
                 ) : st === "error" ? (
                   "!"
-                ) : st === "running" ? (
+                ) : st === "running" || isCurrent ? (
                   <span className="wa-flow__node-pulse" />
                 ) : null}
               </span>
