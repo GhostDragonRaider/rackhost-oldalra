@@ -53,6 +53,8 @@ export type LabModuleMeta = {
   version: string;
   status: LabModuleStatus;
   description: string;
+  /** Short layperson Hungarian tooltip for Lab nav (teen-friendly). */
+  helpHu: string;
   href: string;
   flags: LabModuleFlags;
   changelog: string[];

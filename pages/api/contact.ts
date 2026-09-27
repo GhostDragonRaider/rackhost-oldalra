@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { SITE_EMAIL } from "../../lib/site";
+import { recordContactLead } from "../../lib/lab/leads-store";
 
 type Body = {
   name?: string;
@@ -94,6 +95,8 @@ export default async function handler(
       subject: `AntiCode — Projektindítás — ${service}`,
       text,
     });
+
+    recordContactLead({ name, email, service, message });
 
     return res.status(200).json({
       ok: true,

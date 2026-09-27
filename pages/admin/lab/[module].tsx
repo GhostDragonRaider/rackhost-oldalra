@@ -2,24 +2,25 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LabShell, { ProvenanceBadge } from "../../../components/admin/lab/LabShell";
+import {
+  AiToolsPanel,
+  AnalyticsPanel,
+  AutomationPanel,
+  CareMonitorPanel,
+  ClientHubPanel,
+  ContentPanel,
+  DebugPanel,
+  ExperimentsPanel,
+  FormsFlowsPanel,
+  LeadsCrmPanel,
+  PerformancePanel,
+  SocialHubPanel,
+  TestingQaPanel,
+} from "../../../components/admin/lab/ModulePanels";
 import { getLabModule } from "../../../lib/lab/registry";
 import type { LabActionItem } from "../../../lib/lab/types";
 import type { DataProvenance } from "../../../lib/lab/integrity";
 import type { VpsSnapshot } from "../../../lib/lab/vps-metrics";
-
-function Unimplemented({ name }: { name: string }) {
-  return (
-    <div className="lab-empty">
-      <p>
-        <strong>{name}</strong> — architektúra regisztrálva, UI még nincs
-        implementálva.
-      </p>
-      <p className="lab-muted">
-        Nincs mock adat. Státusz: <ProvenanceBadge provenance="unavailable" />
-      </p>
-    </div>
-  );
-}
 
 function formatBytes(n: number | null | undefined): string {
   if (n == null || Number.isNaN(n)) return "—";
@@ -204,8 +205,44 @@ export default function LabModulePage() {
   return (
     <LabShell moduleId={meta.id} title={meta.nameHu}>
       {({ bumpIdle, refreshFlags, state, killSwitch }) => {
-        if (!meta.implemented) {
-          return <Unimplemented name={meta.nameHu} />;
+        if (meta.id === "forms-flows") {
+          return <FormsFlowsPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "client-hub") {
+          return <ClientHubPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "leads-crm") {
+          return <LeadsCrmPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "social-hub") {
+          return <SocialHubPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "care-monitor") {
+          return <CareMonitorPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "automation") {
+          return <AutomationPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "ai-tools") {
+          return <AiToolsPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "experiments") {
+          return <ExperimentsPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "content") {
+          return <ContentPanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "performance") {
+          return <PerformancePanel bumpIdle={bumpIdle} />;
+        }
+        if (meta.id === "analytics") {
+          return <AnalyticsPanel />;
+        }
+        if (meta.id === "testing-qa") {
+          return <TestingQaPanel />;
+        }
+        if (meta.id === "debug") {
+          return <DebugPanel />;
         }
 
         if (meta.id === "action-center") {
@@ -219,6 +256,7 @@ export default function LabModulePage() {
               {!actions.length ? (
                 <div className="lab-empty">Nincs nyitott Action Center tétel.</div>
               ) : (
+                <div className="lab-table-wrap">
                 <table className="lab-table">
                   <thead>
                     <tr>
@@ -254,6 +292,7 @@ export default function LabModulePage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           );
@@ -341,6 +380,7 @@ export default function LabModulePage() {
               {report?.gscIndexing?.urls?.length ? (
                 <section className="lab-card lab-card--wide">
                   <h2>URL lista</h2>
+                  <div className="lab-table-wrap">
                   <table className="lab-table">
                     <thead>
                       <tr>
@@ -365,6 +405,7 @@ export default function LabModulePage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </section>
               ) : null}
             </div>
@@ -391,6 +432,7 @@ export default function LabModulePage() {
                       <ProvenanceBadge provenance="unavailable" />
                     </p>
                   )}
+                  <div className="lab-table-wrap">
                   <table className="lab-table">
                     <thead>
                       <tr>
@@ -414,6 +456,7 @@ export default function LabModulePage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </>
               )}
             </div>
@@ -485,6 +528,7 @@ export default function LabModulePage() {
                       measured={vps.uptimeSec}
                     />
                     {vps.disk.mounts.value ? (
+                      <div className="lab-table-wrap">
                       <table className="lab-table">
                         <thead>
                           <tr>
@@ -505,6 +549,7 @@ export default function LabModulePage() {
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     ) : (
                       <p className="lab-muted">
                         Disk: {vps.disk.mounts.error}{" "}
@@ -515,6 +560,7 @@ export default function LabModulePage() {
                       <>
                         <h3>Top processzek (ESTIMATED rank)</h3>
                         <ProvenanceBadge provenance="estimated" />
+                        <div className="lab-table-wrap">
                         <table className="lab-table">
                           <thead>
                             <tr>
@@ -535,6 +581,7 @@ export default function LabModulePage() {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       </>
                     ) : null}
                   </>
@@ -724,6 +771,7 @@ export default function LabModulePage() {
               {!logs.length ? (
                 <div className="lab-empty">Még nincs naplóbejegyzés.</div>
               ) : (
+                <div className="lab-table-wrap">
                 <table className="lab-table">
                   <thead>
                     <tr>
@@ -746,6 +794,7 @@ export default function LabModulePage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
               <ProvenanceBadge provenance="real" />
             </div>
@@ -760,6 +809,7 @@ export default function LabModulePage() {
                 Credential értékek sosem jelennek meg. Hiányzó env = UNAVAILABLE,
                 nem „működik”.
               </p>
+              <div className="lab-table-wrap">
               <table className="lab-table">
                 <thead>
                   <tr>
@@ -781,36 +831,21 @@ export default function LabModulePage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           );
         }
 
-        if (meta.id === "debug" || meta.id === "testing-qa" || meta.id === "performance" || meta.id === "analytics") {
-          return (
-            <div className="lab-card lab-card--wide">
-              <h2>{meta.nameHu}</h2>
-              <p className="lab-muted">{meta.description}</p>
-              <p className="lab-muted">
-                Verzió {meta.version} · státusz {meta.status} ·{" "}
-                {meta.implemented ? "implemented shell" : "not implemented"}
-              </p>
-              {meta.id === "analytics" ? (
-                <p className="lab-muted">
-                  Belső analytics: Admin Monitor / analytics-store. GSC traffic:
-                  credential függő — lásd Integrations.
-                </p>
-              ) : null}
-              {meta.id === "testing-qa" ? (
-                <p className="lab-muted">
-                  Futtatás: <code>npm test</code>, <code>npm run typecheck</code>,{" "}
-                  <code>npm run build</code>
-                </p>
-              ) : null}
-            </div>
-          );
-        }
-
-        return <Unimplemented name={meta.nameHu} />;
+        return (
+          <div className="lab-empty">
+            <p>
+              A <strong>{meta.nameHu}</strong> modul regisztrálva van, de ehhez
+              a képernyőhöz még nincs külön nézet.
+            </p>
+            <p className="lab-muted">{meta.description}</p>
+            <ProvenanceBadge provenance="unavailable" />
+          </div>
+        );
       }}
     </LabShell>
   );

@@ -168,6 +168,7 @@ export default function LabOverviewPage() {
             {!data?.recentAudits?.length ? (
               <div className="lab-empty">Nincs még audit a store-ban.</div>
             ) : (
+              <div className="lab-table-wrap">
               <table className="lab-table">
                 <thead>
                   <tr>
@@ -188,6 +189,7 @@ export default function LabOverviewPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
             <ProvenanceBadge provenance="real" />
             <div style={{ marginTop: 12 }}>

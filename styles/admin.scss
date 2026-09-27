@@ -286,6 +286,8 @@ body.admin-active {
   align-items: center;
   gap: 8px;
   min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid transparent;
@@ -295,6 +297,14 @@ body.admin-active {
   font-size: 0.92rem;
   background: transparent;
   transition: color 0.28s ease;
+  cursor: help;
+}
+
+.admin-nav-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.25;
 }
 
 .admin-nav-link:hover,
@@ -2225,6 +2235,42 @@ button.audit-cat-bar:focus-visible,
   top: calc(100% + 10px);
 }
 
+.audit-help-tip__bubble--right {
+  /* Absolute fallback; fixed strategy sets inline coords. */
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.audit-help-tip__bubble--fixed {
+  bottom: auto;
+  animation: audit-tip-in-fixed 0.15s ease-out;
+  /* top/left/transform come from inline style */
+}
+
+@keyframes audit-tip-in-fixed {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.audit-help-tip__bubble--fixed.audit-help-tip__bubble--top {
+  /* override absolute bottom when fixed */
+  bottom: auto;
+}
+
+.audit-help-tip__bubble--fixed.audit-help-tip__bubble--bottom {
+  top: auto;
+}
+
+.audit-help-tip__bubble--fixed.audit-help-tip__bubble--right {
+  left: auto;
+  top: auto;
+}
+
 .audit-help-tip__bubble::after {
   content: "";
   position: absolute;
@@ -2241,6 +2287,25 @@ button.audit-cat-bar:focus-visible,
 .audit-help-tip__bubble--bottom::after {
   bottom: 100%;
   border-bottom-color: #0b1b36;
+}
+
+.audit-help-tip__bubble--right::after {
+  left: 0;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  border-right-color: #0b1b36;
+}
+
+.audit-help-tip__bubble--fixed.audit-help-tip__bubble--top::after,
+.audit-help-tip__bubble--fixed.audit-help-tip__bubble--bottom::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.audit-help-tip__bubble--fixed.audit-help-tip__bubble--right::after {
+  left: 0;
+  top: 50%;
+  transform: translate(-100%, -50%);
 }
 
 @keyframes audit-tip-in {

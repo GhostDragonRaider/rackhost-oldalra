@@ -52,6 +52,13 @@ describe("lab registry", () => {
     }
   });
 
+  it("marks every registered module as implemented with UI", () => {
+    for (const m of LAB_MODULES) {
+      assert.equal(m.implemented, true, m.id);
+      assert.ok(m.helpHu.length >= 24, m.id);
+    }
+  });
+
   it("groups categories without dumping all into admin root nav", () => {
     const groups = listLabModulesByCategory();
     assert.ok(groups.some((g) => g.category === "seo-lab"));
