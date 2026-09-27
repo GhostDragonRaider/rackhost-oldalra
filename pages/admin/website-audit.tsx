@@ -6,12 +6,11 @@ import {
   CategoryBarsSection,
   ScoreRing,
   SeverityDistribution,
-  severityIcon,
-  severityLabel,
   scoreTone,
 } from "../../components/admin/audit/AuditDashboardParts";
 import { DelayedHelpTip } from "../../components/admin/audit/DelayedHelpTip";
 import AuditProgressList from "../../components/website-audit/AuditProgressList";
+import { ExpandableFindingGrid } from "../../components/admin/audit/ExpandableFindingGrid";
 import type {
   AuditCategoryId,
   AuditFinding,
@@ -22,12 +21,8 @@ import type {
 import { CATEGORY_LABELS } from "../../lib/website-audit/types";
 import {
   CATEGORY_HELP,
-  FINDING_HELP,
   SECTION_HELP,
-  SEVERITY_HELP,
-  SOURCE_HELP,
   TECH_FIELD_HELP,
-  findingHelpText,
 } from "../../lib/website-audit/help-texts";
 import {
   partitionSecurityFindings,
@@ -103,6 +98,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [filter, setFilter] = useState<FindingFilter>("problems");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [openPriority, setOpenPriority] = useState<Record<string, boolean>>({});
+  const [openTiles, setOpenTiles] = useState<Record<string, boolean>>({});
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({});
 
   const loadHistory = useCallback(async () => {
@@ -125,6 +121,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setLiveAudit(null);
     setProgressCaughtUp(true);
     setOpenPriority({});
+    setOpenTiles({});
     const res = await fetch(`/api/admin/website-audit/${id}`, {
       credentials: "same-origin",
     });
@@ -151,6 +148,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setProgressCaughtUp(false);
     setActiveCategory(null);
     setOpenPriority({});
+    setOpenTiles({});
     try {
       const res = await fetch("/api/admin/website-audit", {
         method: "POST",
@@ -302,84 +300,32 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     return isProblem(f);
   }
 
-  function renderFindingItem(f: AuditFinding, catHelp: string) {
-    const sev = normalizeSeverity(f.severity);
-    const help =
-      findingHelpText(f.id) || FINDING_HELP[f.id] || catHelp || f.detail;
+  function toggleTile(key: string) {
+    setOpenTiles((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function togglePriority(key: string) {
+    setOpenPriority((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function renderFindingGrid(
+    items: AuditFinding[],
+    opts?: { keyPrefix?: string; showCategory?: boolean }
+  ) {
     return (
-      <li
-        key={f.id}
-        className={`audit-finding audit-sev--${sev}${
-          sev === "critical" ? " is-critical" : ""
-        }`}
-      >
-        <DelayedHelpTip text={help} placement="top" display="block">
-          <div className="audit-finding__body">
-            <div className="audit-finding__top">
-              <DelayedHelpTip text={SEVERITY_HELP[sev]} placement="top">
-                <span
-                  className={`admin-finding-tag audit-sev--${sev}`}
-                  tabIndex={0}
-                >
-                  <span aria-hidden>{severityIcon(sev)} </span>
-                  {severityLabel(sev)}
-                </span>
-              </DelayedHelpTip>
-              <strong tabIndex={0}>{f.title}</strong>
-              {f.source === "pagespeed_api" ? (
-                <DelayedHelpTip
-                  text={SOURCE_HELP.pagespeed_api}
-                  placement="top"
-                >
-                  <span className="audit-source" tabIndex={0}>
-                    PageSpeed / Lighthouse mérés
-                  </span>
-                </DelayedHelpTip>
-              ) : null}
-              {f.source === "local_estimate" ? (
-                <DelayedHelpTip
-                  text={SOURCE_HELP.local_estimate}
-                  placement="top"
-                >
-                  <span
-                    className="audit-source audit-source--local"
-                    tabIndex={0}
-                  >
-                    Helyi becslés
-                  </span>
-                </DelayedHelpTip>
-              ) : null}
-            </div>
-            <p>{f.detail}</p>
-            {f.detectedValue ? (
-              <p className="admin-muted admin-break">
-                Érték: {f.detectedValue}
-              </p>
-            ) : null}
-            {f.recommendation ? (
-              <p className="audit-fix">
-                <strong>Javaslat:</strong> {f.recommendation}
-              </p>
-            ) : null}
-            {f.evidence ? (
-              <pre className="admin-evidence">{f.evidence}</pre>
-            ) : null}
-          </div>
-        </DelayedHelpTip>
-      </li>
+      <ExpandableFindingGrid
+        items={items}
+        openMap={openTiles}
+        onToggle={toggleTile}
+        keyPrefix={opts?.keyPrefix}
+        showIndex={false}
+        showCategory={opts?.showCategory ?? false}
+        emptyText="Nincs találat a szűrőben."
+      />
     );
   }
 
-  function renderFindingList(items: AuditFinding[], catHelp: string) {
-    if (items.length === 0) {
-      return (
-        <li className="admin-muted">Nincs találat a szűrőben.</li>
-      );
-    }
-    return items.map((f) => renderFindingItem(f, catHelp));
-  }
-
-  function renderSecurityGroups(items: AuditFinding[], catHelp: string) {
+  function renderSecurityGroups(items: AuditFinding[]) {
     const { breachRisk, hardening } = partitionSecurityFindings(items);
     const groups: Array<{
       key: "breach_risk" | "hardening";
@@ -405,15 +351,21 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   {groupItems.length} tétel
                 </span>
               </div>
-              <ul className="audit-acc__list audit-sec-group__list">
-                {groupItems.length === 0 ? (
-                  <li className="admin-muted">
-                    Nincs találat ebben a csoportban a jelenlegi szűrővel.
-                  </li>
-                ) : (
-                  groupItems.map((f) => renderFindingItem(f, catHelp))
-                )}
-              </ul>
+              {groupItems.length === 0 ? (
+                <p className="admin-muted" style={{ padding: "0 14px 12px" }}>
+                  Nincs találat ebben a csoportban a jelenlegi szűrővel.
+                </p>
+              ) : (
+                <ExpandableFindingGrid
+                  items={groupItems}
+                  openMap={openTiles}
+                  onToggle={toggleTile}
+                  keyPrefix={`sec-${key}-`}
+                  showIndex={false}
+                  showCategory={false}
+                  listClassName="audit-sec-group__list"
+                />
+              )}
             </div>
           );
         })}
@@ -655,102 +607,17 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   Nincs prioritásos javítanivaló — erős állapot.
                 </p>
               ) : (
-                <ol className="audit-priority-list">
-                  {priorityFixes.map((f, i) => {
-                    const sev = normalizeSeverity(f.severity);
-                    const key = `${f.id}-${i}`;
-                    const open = openPriority[key] ?? false;
-                    const help =
-                      findingHelpText(f.id) ||
-                      CATEGORY_HELP[f.category as AuditCategoryId] ||
-                      f.detail;
-                    return (
-                      <li
-                        key={key}
-                        className={`audit-priority-item audit-sev--${sev}${
-                          sev === "critical" ? " is-critical" : ""
-                        }${open ? " is-open" : ""}`}
-                      >
-                        <button
-                          type="button"
-                          className="audit-priority-item__summary"
-                          aria-expanded={open}
-                          onClick={() =>
-                            setOpenPriority((prev) => ({
-                              ...prev,
-                              [key]: !prev[key],
-                            }))
-                          }
-                        >
-                          <span className="audit-priority-item__n" aria-hidden>
-                            {i + 1}
-                          </span>
-                          <span className="audit-priority-item__main">
-                            <span className="audit-priority-item__title">
-                              {f.title}
-                            </span>
-                            <span className="audit-priority-item__meta">
-                              <DelayedHelpTip
-                                text={SEVERITY_HELP[sev]}
-                                placement="top"
-                              >
-                                <span
-                                  className={`admin-finding-tag audit-sev--${sev}`}
-                                  tabIndex={0}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <span aria-hidden>{severityIcon(sev)} </span>
-                                  {severityLabel(sev)}
-                                </span>
-                              </DelayedHelpTip>
-                              <DelayedHelpTip
-                                text={
-                                  CATEGORY_HELP[f.category as AuditCategoryId] ||
-                                  ""
-                                }
-                                placement="top"
-                              >
-                                <span
-                                  className="audit-cat-pill"
-                                  tabIndex={0}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {CATEGORY_LABELS[
-                                    f.category as AuditCategoryId
-                                  ] || f.category}
-                                </span>
-                              </DelayedHelpTip>
-                            </span>
-                          </span>
-                          <span className="audit-priority-item__chev" aria-hidden>
-                            {open ? "▾" : "▸"}
-                          </span>
-                        </button>
-                        {open ? (
-                          <DelayedHelpTip
-                            text={help}
-                            placement="top"
-                            display="block"
-                          >
-                            <div className="audit-priority-item__body">
-                              <p>{f.detail}</p>
-                              {f.detectedValue ? (
-                                <p className="admin-muted admin-break">
-                                  Detektált: {f.detectedValue}
-                                </p>
-                              ) : null}
-                              {f.recommendation ? (
-                                <p className="audit-fix">
-                                  <strong>Javaslat:</strong> {f.recommendation}
-                                </p>
-                              ) : null}
-                            </div>
-                          </DelayedHelpTip>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ol>
+                <ExpandableFindingGrid
+                  items={priorityFixes}
+                  openMap={openPriority}
+                  onToggle={togglePriority}
+                  keyPrefix="prio-"
+                  showIndex
+                  showCategory
+                  asOrdered
+                  listClassName="audit-priority-list"
+                  emptyText="Nincs prioritásos javítanivaló — erős állapot."
+                />
               )}
             </section>
 
@@ -828,21 +695,13 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                         </button>
                       </DelayedHelpTip>
                       {open ? (
-                        cat.id === "security" ? (
-                          items.length === 0 ? (
-                            <ul className="audit-acc__list">
-                              <li className="admin-muted">
-                                Nincs találat a szűrőben.
-                              </li>
-                            </ul>
-                          ) : (
-                            renderSecurityGroups(items, catHelp)
-                          )
-                        ) : (
-                          <ul className="audit-acc__list">
-                            {renderFindingList(items, catHelp)}
-                          </ul>
-                        )
+                        <div className="audit-acc__body">
+                          {cat.id === "security"
+                            ? renderSecurityGroups(items)
+                            : renderFindingGrid(items, {
+                                keyPrefix: `cat-${cat.id}-`,
+                              })}
+                        </div>
                       ) : null}
                     </div>
                   );
