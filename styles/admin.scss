@@ -586,10 +586,14 @@ body.admin-active {
 
 .admin-gsc-index-item {
   min-width: 0;
-  padding: 10px 12px;
+  padding: 0;
   border: 1px solid #dce5f0;
   border-radius: 12px;
   background: #fff;
+  overflow: hidden;
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .admin-gsc-index-item.is-not-indexed {
@@ -602,16 +606,51 @@ body.admin-active {
   background: #fff8f7;
 }
 
+.admin-gsc-index-item.is-open {
+  box-shadow: 0 12px 32px rgba(16, 42, 77, 0.12);
+}
+
 .admin-gsc-index-item-head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+  padding: 2px 4px 2px 2px;
+}
+
+.admin-gsc-index-toggle {
+  flex: 1 1 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
   min-width: 0;
+  margin: 0;
+  padding: 10px 8px 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.admin-gsc-index-toggle:hover,
+.admin-gsc-index-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.7);
+  outline: none;
+}
+
+.admin-gsc-index-item.is-not-indexed .admin-gsc-index-toggle:hover,
+.admin-gsc-index-item.is-not-indexed .admin-gsc-index-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .admin-gsc-index-path {
-  flex: 1 1 140px;
+  flex: 1 1 120px;
   min-width: 0;
   color: #3f5f86;
   font-weight: 800;
@@ -620,21 +659,40 @@ body.admin-active {
   word-break: break-word;
 }
 
-.admin-gsc-index-path:hover {
-  color: #2a4a6e;
-  text-decoration: underline;
+.admin-gsc-index-chev {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: #3f5f86;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: rotate(-90deg);
+  display: inline-block;
 }
 
+.admin-gsc-index-chev.is-open,
+.admin-gsc-index-item.is-open .admin-gsc-index-chev {
+  transform: rotate(0deg);
+}
+
+.admin-gsc-index-ext,
 .admin-gsc-index-gsc {
+  flex: 0 0 auto;
   font-size: 0.8rem;
   font-weight: 800;
   color: #3f5f86;
   text-decoration: none;
   white-space: nowrap;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
+.admin-gsc-index-ext:hover,
 .admin-gsc-index-gsc:hover {
-  text-decoration: underline;
+  background: rgba(63, 95, 134, 0.1);
+  text-decoration: none;
+  color: #2a4a6e;
 }
 
 .admin-index-badge {
@@ -670,9 +728,56 @@ body.admin-active {
   color: #b42318;
 }
 
+.admin-gsc-index-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-gsc-index-item.is-open .admin-gsc-index-panel {
+  grid-template-rows: 1fr;
+}
+
+.admin-gsc-index-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.admin-gsc-index-body {
+  display: grid;
+  gap: 6px;
+  padding: 0 12px 0;
+  border-top: 1px solid transparent;
+  opacity: 0;
+  transform: translateY(-8px);
+  filter: blur(2px);
+  transition:
+    opacity 0.36s ease 0.04s,
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.4s ease,
+    border-color 0.32s ease,
+    padding 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-gsc-index-item.is-open .admin-gsc-index-body {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  border-top-color: #e4ebf4;
+  padding: 10px 12px 12px;
+}
+
+.admin-gsc-index-item.is-not-indexed.is-open .admin-gsc-index-body {
+  border-top-color: #f0dcc4;
+}
+
+.admin-gsc-index-item.is-error.is-open .admin-gsc-index-body {
+  border-top-color: #f5cfcb;
+}
+
 .admin-index-verdict,
 .admin-index-error {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 0.75rem;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -690,7 +795,7 @@ body.admin-active {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 10px;
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   min-width: 0;
 }
 
@@ -722,6 +827,16 @@ body.admin-active {
 @media (max-width: 900px) {
   .admin-gsc-index-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-gsc-index-item,
+  .admin-gsc-index-panel,
+  .admin-gsc-index-body,
+  .admin-gsc-index-chev,
+  .admin-gsc-index-toggle {
+    transition: none !important;
   }
 }
 
@@ -1498,10 +1613,6 @@ body.admin-active {
   .admin-nav-link {
     font-size: 0.78rem;
     padding: 10px 6px;
-  }
-
-  .admin-gsc-index-item {
-    padding: 10px 12px;
   }
 }
 

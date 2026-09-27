@@ -163,6 +163,13 @@ function MonitorWorkspace({
   const [seo, setSeo] = useState<SeoReport | null>(null);
   const [seoError, setSeoError] = useState("");
   const [seoRunning, setSeoRunning] = useState(false);
+  const [openIndexRows, setOpenIndexRows] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const toggleIndexRow = useCallback((url: string) => {
+    setOpenIndexRows((prev) => ({ ...prev, [url]: !prev[url] }));
+  }, []);
 
   const loadStats = useCallback(async () => {
     setStatsError("");
@@ -483,7 +490,7 @@ function MonitorWorkspace({
                     </p>
                     {seo.gscIndexing.urls.length > 0 ? (
                       <ul className="admin-gsc-index-list" aria-label="URL indexeltség">
-                        {seo.gscIndexing.urls.map((row) => {
+                        {seo.gscIndexing.urls.map((row, rowIndex) => {
                           const statusClass =
                             row.indexed === true
                               ? "is-indexed"
@@ -508,75 +515,125 @@ function MonitorWorkspace({
                               .join(" ") || "—";
                           const canonical =
                             row.googleCanonical || row.userCanonical || "—";
+                          const open = Boolean(openIndexRows[row.url]);
+                          const panelId = `gsc-index-panel-${rowIndex}`;
 
                           return (
                             <li
                               key={row.url}
-                              className={`admin-gsc-index-item ${statusClass}`}
+                              className={`admin-gsc-index-item ${statusClass}${
+                                open ? " is-open" : ""
+                              }`}
                             >
                               <div className="admin-gsc-index-item-head">
+                                <button
+                                  type="button"
+                                  className="admin-gsc-index-toggle"
+                                  aria-expanded={open}
+                                  aria-controls={panelId}
+                                  onClick={() => {
+                                    bumpIdle();
+                                    toggleIndexRow(row.url);
+                                  }}
+                                >
+                                  <span
+                                    className="admin-gsc-index-path"
+                                    title={row.url}
+                                  >
+                                    {shortPath(row.url)}
+                                  </span>
+                                  <span
+                                    className={`admin-index-badge admin-index-badge--${badgeTone}`}
+                                  >
+                                    {indexedLabel(row.indexed, row.error)}
+                                  </span>
+                                  <span
+                                    className={`admin-gsc-index-chev${
+                                      open ? " is-open" : ""
+                                    }`}
+                                    aria-hidden
+                                  >
+                                    ▾
+                                  </span>
+                                </button>
                                 <a
                                   href={row.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="admin-gsc-index-path"
-                                  title={row.url}
+                                  className="admin-gsc-index-ext"
+                                  title="Oldal megnyitása"
+                                  onClick={() => bumpIdle()}
                                 >
-                                  {shortPath(row.url)}
+                                  ↗
                                 </a>
-                                <span
-                                  className={`admin-index-badge admin-index-badge--${badgeTone}`}
-                                >
-                                  {indexedLabel(row.indexed, row.error)}
-                                </span>
                                 {row.inspectionResultLink ? (
                                   <a
                                     href={row.inspectionResultLink}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="admin-gsc-index-gsc"
+                                    onClick={() => bumpIdle()}
                                   >
                                     GSC
                                   </a>
                                 ) : null}
                               </div>
-                              {row.verdict ? (
-                                <p className="admin-index-verdict">{row.verdict}</p>
-                              ) : null}
-                              {row.error ? (
-                                <p className="admin-index-error">{row.error}</p>
-                              ) : null}
-                              <dl className="admin-gsc-index-meta">
-                                <div>
-                                  <dt>Lefedettség</dt>
-                                  <dd>{row.coverageState || "—"}</dd>
+                              <div
+                                id={panelId}
+                                className="admin-gsc-index-panel"
+                                role="region"
+                                aria-hidden={!open}
+                              >
+                                <div className="admin-gsc-index-panel-inner">
+                                  <div className="admin-gsc-index-body">
+                                    {row.verdict ? (
+                                      <p className="admin-index-verdict">
+                                        {row.verdict}
+                                      </p>
+                                    ) : null}
+                                    {row.error ? (
+                                      <p className="admin-index-error">
+                                        {row.error}
+                                      </p>
+                                    ) : null}
+                                    <dl className="admin-gsc-index-meta">
+                                      <div>
+                                        <dt>Lefedettség</dt>
+                                        <dd>{row.coverageState || "—"}</dd>
+                                      </div>
+                                      <div>
+                                        <dt>Utolsó crawl</dt>
+                                        <dd>
+                                          {formatCrawlTime(row.lastCrawlTime)}
+                                        </dd>
+                                      </div>
+                                      <div>
+                                        <dt>Robots</dt>
+                                        <dd>{row.robotsTxtState || "—"}</dd>
+                                      </div>
+                                      <div>
+                                        <dt>Fetch</dt>
+                                        <dd>{fetchLabel}</dd>
+                                      </div>
+                                      <div>
+                                        <dt>Mobil</dt>
+                                        <dd>
+                                          {row.mobileUsabilityVerdict || "—"}
+                                        </dd>
+                                      </div>
+                                      <div className="admin-gsc-index-meta-wide">
+                                        <dt>Canonical</dt>
+                                        <dd className="admin-break">
+                                          {canonical}
+                                          {row.sitemaps.length > 0
+                                            ? ` · sitemap: ${row.sitemaps.length}`
+                                            : ""}
+                                        </dd>
+                                      </div>
+                                    </dl>
+                                  </div>
                                 </div>
-                                <div>
-                                  <dt>Utolsó crawl</dt>
-                                  <dd>{formatCrawlTime(row.lastCrawlTime)}</dd>
-                                </div>
-                                <div>
-                                  <dt>Robots</dt>
-                                  <dd>{row.robotsTxtState || "—"}</dd>
-                                </div>
-                                <div>
-                                  <dt>Fetch</dt>
-                                  <dd>{fetchLabel}</dd>
-                                </div>
-                                <div>
-                                  <dt>Mobil</dt>
-                                  <dd>{row.mobileUsabilityVerdict || "—"}</dd>
-                                </div>
-                                <div className="admin-gsc-index-meta-wide">
-                                  <dt>Canonical</dt>
-                                  <dd className="admin-break">
-                                    {canonical}
-                                    {row.sitemaps.length > 0
-                                      ? ` · sitemap: ${row.sitemaps.length}`
-                                      : ""}
-                                  </dd>
-                                </div>
-                              </dl>
+                              </div>
                             </li>
                           );
                         })}
