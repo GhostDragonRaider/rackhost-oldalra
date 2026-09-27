@@ -33,6 +33,8 @@ export type PublicAuditFinding = {
   detectedValue?: string | null;
   reliability?: string | null;
   source?: string | null;
+  /** security category only: breach_risk | hardening */
+  securityGroup?: "breach_risk" | "hardening" | null;
 };
 
 export type PublicMatrixIssue = {

@@ -29,6 +29,10 @@ import {
   TECH_FIELD_HELP,
   findingHelpText,
 } from "../../lib/website-audit/help-texts";
+import {
+  partitionSecurityFindings,
+  SECURITY_GROUP_META,
+} from "../../lib/website-audit/security-groups";
 
 type FindingFilter = "all" | "problems" | "pass" | "critical_high";
 
@@ -289,6 +293,125 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     if (filter === "pass") return sev === "pass";
     if (filter === "critical_high") return sev === "critical" || sev === "high";
     return isProblem(f);
+  }
+
+  function renderFindingItem(f: AuditFinding, catHelp: string) {
+    const sev = normalizeSeverity(f.severity);
+    const help =
+      findingHelpText(f.id) || FINDING_HELP[f.id] || catHelp || f.detail;
+    return (
+      <li
+        key={f.id}
+        className={`audit-finding audit-sev--${sev}${
+          sev === "critical" ? " is-critical" : ""
+        }`}
+      >
+        <DelayedHelpTip text={help} placement="top" display="block">
+          <div className="audit-finding__body">
+            <div className="audit-finding__top">
+              <DelayedHelpTip text={SEVERITY_HELP[sev]} placement="top">
+                <span
+                  className={`admin-finding-tag audit-sev--${sev}`}
+                  tabIndex={0}
+                >
+                  <span aria-hidden>{severityIcon(sev)} </span>
+                  {severityLabel(sev)}
+                </span>
+              </DelayedHelpTip>
+              <strong tabIndex={0}>{f.title}</strong>
+              {f.source === "pagespeed_api" ? (
+                <DelayedHelpTip
+                  text={SOURCE_HELP.pagespeed_api}
+                  placement="top"
+                >
+                  <span className="audit-source" tabIndex={0}>
+                    PageSpeed / Lighthouse mérés
+                  </span>
+                </DelayedHelpTip>
+              ) : null}
+              {f.source === "local_estimate" ? (
+                <DelayedHelpTip
+                  text={SOURCE_HELP.local_estimate}
+                  placement="top"
+                >
+                  <span
+                    className="audit-source audit-source--local"
+                    tabIndex={0}
+                  >
+                    Helyi becslés
+                  </span>
+                </DelayedHelpTip>
+              ) : null}
+            </div>
+            <p>{f.detail}</p>
+            {f.detectedValue ? (
+              <p className="admin-muted admin-break">
+                Érték: {f.detectedValue}
+              </p>
+            ) : null}
+            {f.recommendation ? (
+              <p className="audit-fix">
+                <strong>Javaslat:</strong> {f.recommendation}
+              </p>
+            ) : null}
+            {f.evidence ? (
+              <pre className="admin-evidence">{f.evidence}</pre>
+            ) : null}
+          </div>
+        </DelayedHelpTip>
+      </li>
+    );
+  }
+
+  function renderFindingList(items: AuditFinding[], catHelp: string) {
+    if (items.length === 0) {
+      return (
+        <li className="admin-muted">Nincs találat a szűrőben.</li>
+      );
+    }
+    return items.map((f) => renderFindingItem(f, catHelp));
+  }
+
+  function renderSecurityGroups(items: AuditFinding[], catHelp: string) {
+    const { breachRisk, hardening } = partitionSecurityFindings(items);
+    const groups: Array<{
+      key: "breach_risk" | "hardening";
+      items: AuditFinding[];
+    }> = [
+      { key: "breach_risk", items: breachRisk },
+      { key: "hardening", items: hardening },
+    ];
+    return (
+      <div className="audit-sec-groups">
+        {groups.map(({ key, items: groupItems }) => {
+          if (filter !== "all" && groupItems.length === 0) return null;
+          const meta = SECURITY_GROUP_META[key];
+          return (
+            <div
+              key={key}
+              className={`audit-sec-group audit-sec-group--${key}`}
+            >
+              <div className="audit-sec-group__head">
+                <h4 className="audit-sec-group__title">{meta.title}</h4>
+                <p className="audit-sec-group__blurb">{meta.blurb}</p>
+                <span className="admin-muted audit-sec-group__count">
+                  {groupItems.length} tétel
+                </span>
+              </div>
+              <ul className="audit-acc__list audit-sec-group__list">
+                {groupItems.length === 0 ? (
+                  <li className="admin-muted">
+                    Nincs találat ebben a csoportban a jelenlegi szűrővel.
+                  </li>
+                ) : (
+                  groupItems.map((f) => renderFindingItem(f, catHelp))
+                )}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   function toggleCat(id: string) {
@@ -669,95 +792,21 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                         </button>
                       </DelayedHelpTip>
                       {open ? (
-                        <ul className="audit-acc__list">
-                          {items.length === 0 ? (
-                            <li className="admin-muted">
-                              Nincs találat a szűrőben.
-                            </li>
+                        cat.id === "security" ? (
+                          items.length === 0 ? (
+                            <ul className="audit-acc__list">
+                              <li className="admin-muted">
+                                Nincs találat a szűrőben.
+                              </li>
+                            </ul>
                           ) : (
-                            items.map((f) => {
-                              const sev = normalizeSeverity(f.severity);
-                              const help =
-                                findingHelpText(f.id) ||
-                                FINDING_HELP[f.id] ||
-                                catHelp ||
-                                f.detail;
-                              return (
-                                <li
-                                  key={f.id}
-                                  className={`audit-finding audit-sev--${sev}${
-                                    sev === "critical" ? " is-critical" : ""
-                                  }`}
-                                >
-                                  <DelayedHelpTip text={help} placement="top" display="block">
-                                    <div className="audit-finding__body">
-                                      <div className="audit-finding__top">
-                                        <DelayedHelpTip
-                                          text={SEVERITY_HELP[sev]}
-                                          placement="top"
-                                        >
-                                          <span
-                                            className={`admin-finding-tag audit-sev--${sev}`}
-                                            tabIndex={0}
-                                          >
-                                            <span aria-hidden>
-                                              {severityIcon(sev)}{" "}
-                                            </span>
-                                            {severityLabel(sev)}
-                                          </span>
-                                        </DelayedHelpTip>
-                                        <strong tabIndex={0}>{f.title}</strong>
-                                        {f.source === "pagespeed_api" ? (
-                                          <DelayedHelpTip
-                                            text={SOURCE_HELP.pagespeed_api}
-                                            placement="top"
-                                          >
-                                            <span
-                                              className="audit-source"
-                                              tabIndex={0}
-                                            >
-                                              PageSpeed / Lighthouse mérés
-                                            </span>
-                                          </DelayedHelpTip>
-                                        ) : null}
-                                        {f.source === "local_estimate" ? (
-                                          <DelayedHelpTip
-                                            text={SOURCE_HELP.local_estimate}
-                                            placement="top"
-                                          >
-                                            <span
-                                              className="audit-source audit-source--local"
-                                              tabIndex={0}
-                                            >
-                                              Helyi becslés
-                                            </span>
-                                          </DelayedHelpTip>
-                                        ) : null}
-                                      </div>
-                                      <p>{f.detail}</p>
-                                      {f.detectedValue ? (
-                                        <p className="admin-muted admin-break">
-                                          Érték: {f.detectedValue}
-                                        </p>
-                                      ) : null}
-                                      {f.recommendation ? (
-                                        <p className="audit-fix">
-                                          <strong>Javaslat:</strong>{" "}
-                                          {f.recommendation}
-                                        </p>
-                                      ) : null}
-                                      {f.evidence ? (
-                                        <pre className="admin-evidence">
-                                          {f.evidence}
-                                        </pre>
-                                      ) : null}
-                                    </div>
-                                  </DelayedHelpTip>
-                                </li>
-                              );
-                            })
-                          )}
-                        </ul>
+                            renderSecurityGroups(items, catHelp)
+                          )
+                        ) : (
+                          <ul className="audit-acc__list">
+                            {renderFindingList(items, catHelp)}
+                          </ul>
+                        )
                       ) : null}
                     </div>
                   );

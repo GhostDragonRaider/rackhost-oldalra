@@ -1992,6 +1992,71 @@ button.audit-cat-bar:focus-visible,
   padding-top: 12px;
 }
 
+.audit-sec-groups {
+  display: grid;
+  gap: 14px;
+  padding: 12px;
+  border-top: 1px solid #e8eef6;
+}
+
+.audit-sec-group {
+  border-radius: 10px;
+  border: 1px solid #dce5f0;
+  background: #f8fbff;
+  overflow: hidden;
+}
+
+.audit-sec-group--breach_risk {
+  border-color: #f0c2c2;
+  background: #fff8f8;
+}
+
+.audit-sec-group--hardening {
+  border-color: #d5e0ee;
+  background: #f7fafc;
+}
+
+.audit-sec-group__head {
+  padding: 12px 14px 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.audit-sec-group__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0b1b36;
+}
+
+.audit-sec-group--breach_risk .audit-sec-group__title {
+  color: #8b1e1e;
+}
+
+.audit-sec-group__blurb {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #4a5d78;
+}
+
+.audit-sec-group__count {
+  font-size: 0.75rem;
+}
+
+.audit-sec-group__list {
+  border-top: 1px solid transparent;
+  padding-top: 0;
+}
+
+.audit-sec-group--breach_risk .audit-sec-group__list {
+  border-top-color: #f3d4d4;
+}
+
+.audit-sec-group--hardening .audit-sec-group__list {
+  border-top-color: #e2eaf3;
+}
+
 .audit-finding {
   padding: 12px;
   border-radius: 10px;

@@ -24,7 +24,7 @@ export const CATEGORY_HELP: Record<AuditCategoryId, string> = {
   availability:
     "Technikai állapot: az oldal megnyílik-e, HTTP státusz, átirányítások, HTTPS/TLS alapok, válaszidő. Ha ez gyenge, a többi ellenőrzés is kevésbé releváns.",
   security:
-    "Biztonsági kitettség: nem intruzív, külsőleg látható jelek (HTTPS, headerek, cookie attribútumok, mixed content). Nem penetrációs teszt — nem bizonyítja, hogy az oldal feltörhető vagy feltörhetetlen.",
+    "Biztonsági kitettség két csoportban: (1) Aktív kockázat — kívülről látható hiányosságok, amelyek feltörhetővé tehetik az oldalt (pl. nincs HTTPS, hibás TLS, mixed content, lopható cookie); (2) Egyéb jelek / hardening — hiányzó védőfejlécek, technológia-kiszivárgás. Nem penetrációs teszt.",
   seo:
     "SEO (keresőoptimalizálás): title, leírás, canonical, indexelhetőség, közösségi megosztás jelek. Segít, hogy a keresők és a megosztások érthetően mutassák az oldalt.",
   content:

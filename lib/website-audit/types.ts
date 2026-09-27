@@ -59,6 +59,11 @@ export type AuditFinding = {
   /** Optional penalty override (absolute points deducted in category) */
   scoreImpact?: number | null;
   measuredAt?: string | null;
+  /**
+   * Security exposure subgroup (only for category === "security").
+   * breach_risk = can enable real compromise; hardening = the rest.
+   */
+  securityGroup?: "breach_risk" | "hardening" | null;
 };
 
 export type AuditCategoryScore = {

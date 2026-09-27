@@ -20,6 +20,7 @@ export function finding(partial: {
   source?: AuditFindingSource;
   scoreImpact?: number | null;
   measuredAt?: string | null;
+  securityGroup?: "breach_risk" | "hardening" | null;
 }): AuditFinding {
   const status: AuditCheckStatus =
     partial.status ??
@@ -54,5 +55,6 @@ export function finding(partial: {
     reliability,
     scoreImpact: partial.scoreImpact ?? null,
     measuredAt: partial.measuredAt ?? new Date().toISOString(),
+    securityGroup: partial.securityGroup ?? null,
   };
 }

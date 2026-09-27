@@ -1,4 +1,5 @@
 import { finding } from "./helpers";
+import { securityGroupFor } from "../security-groups";
 import type { AuditFinding } from "../types";
 
 function parseSetCookie(headers: Record<string, string>): string[] {
@@ -396,5 +397,8 @@ export function checkSecurity(input: {
     })
   );
 
-  return out;
+  return out.map((f) => ({
+    ...f,
+    securityGroup: securityGroupFor(f),
+  }));
 }
