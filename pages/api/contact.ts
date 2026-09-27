@@ -30,13 +30,16 @@ function bad(res: NextApiResponse, status: number, error: string) {
   return res.status(status).json({ ok: false, error });
 }
 
-function persistQuote(body: Body, fields: {
-  name: string;
-  email: string;
-  phone: string;
-  service: string;
-  message: string;
-}) {
+function persistQuote(
+  body: Body,
+  fields: {
+    name: string;
+    email: string;
+    phone: string;
+    service: string;
+    message: string;
+  }
+) {
   try {
     saveQuoteRequest({
       ...fields,
@@ -68,35 +71,24 @@ export default async function handler(
     return res.status(200).json({ ok: true });
   }
 
-  const testQuote = body.source === "audit-quote";
   const name = String(body.name || "").trim();
   const email = String(body.email || "").trim();
   const phone = String(body.phone || "").trim();
   const service = String(body.service || "").trim();
   const message = String(body.message || "").trim();
 
-  if (!testQuote) {
-    if (name.length < 2 || name.length > 100) {
-      return bad(res, 400, "Add meg a neved (legalább 2 karakter).");
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-      return bad(res, 400, "Érvényes e-mail címet adj meg.");
-    }
-    if (phone && (phone.length < 6 || phone.length > 40)) {
-      return bad(res, 400, "A telefonszám túl rövid vagy túl hosszú.");
-    }
-    if (message.length < 10 || message.length > 2000) {
-      return bad(res, 400, "Írj röviden a projektről (legalább 10 karakter).");
-    }
-  } else {
-    if (name.length > 100 || email.length > 254 || phone.length > 40) {
-      return bad(res, 400, "Egy mező túl hosszú.");
-    }
-    if (message.length > 2000) {
-      return bad(res, 400, "Az üzenet túl hosszú.");
-    }
+  if (name.length < 2 || name.length > 100) {
+    return bad(res, 400, "Add meg a neved (legalább 2 karakter).");
   }
-
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    return bad(res, 400, "Érvényes e-mail címet adj meg.");
+  }
+  if (phone && (phone.length < 6 || phone.length > 40)) {
+    return bad(res, 400, "A telefonszám túl rövid vagy túl hosszú.");
+  }
+  if (message.length < 10 || message.length > 2000) {
+    return bad(res, 400, "Írj röviden a projektről (legalább 10 karakter).");
+  }
   if (!SERVICES.has(service)) {
     return bad(res, 400, "Válassz egy szolgáltatási irányt.");
   }
@@ -109,9 +101,8 @@ export default async function handler(
     persistQuote(body, fields);
     return res.status(200).json({
       ok: true,
-      testMode: true,
       message:
-        "Megkaptam az üzeneted – az Árajánlatok listában is rögzítve (SMTP nincs beállítva).",
+        "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem.",
     });
   }
 
@@ -120,13 +111,13 @@ export default async function handler(
     body.auditId ? `Audit ID: ${body.auditId}` : null,
     body.websiteUrl ? `Weboldal: ${body.websiteUrl}` : null,
     body.overallScore != null ? `Pontszám: ${body.overallScore}/100` : null,
-    `Név: ${name || "—"}`,
-    `E-mail: ${email || "—"}`,
+    `Név: ${name}`,
+    `E-mail: ${email}`,
     `Telefon: ${phone || "—"}`,
     `Szolgáltatás: ${service}`,
     "",
     "Projekt:",
-    message || "—",
+    message,
   ]
     .filter((line) => line != null)
     .join("\n");
@@ -141,14 +132,11 @@ export default async function handler(
     },
   });
 
-  const replyTo =
-    email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : SITE_EMAIL;
-
   try {
     await transporter.sendMail({
       from: process.env.SMTP_FROM || `AntiCode <${SITE_EMAIL}>`,
       to: process.env.CONTACT_TO || SITE_EMAIL,
-      replyTo,
+      replyTo: email,
       subject: `AntiCode — Árajánlat — ${service}`,
       text,
     });
@@ -162,14 +150,6 @@ export default async function handler(
   } catch (err) {
     console.error("Contact SMTP error:", err);
     persistQuote(body, fields);
-    if (testQuote) {
-      return res.status(200).json({
-        ok: true,
-        testMode: true,
-        message:
-          "Teszt mód: az űrlap rögzítve (SMTP hiba — e-mail nem ment ki).",
-      });
-    }
     return bad(
       res,
       502,

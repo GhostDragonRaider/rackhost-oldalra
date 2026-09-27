@@ -65,9 +65,14 @@ function extractFixedWidths(html: string): number[] {
     const n = Number(m[1]);
     if (n >= 600) widths.push(n);
   }
-  // width="1200" attributes
+  // Intrinsic media dimensions (img/svg/video/…) are for aspect-ratio / CLS,
+  // not layout lock — skip those width="…" attributes.
+  const withoutMedia = html.replace(
+    /<(?:img|svg|video|canvas|iframe|source|object)\b[^>]*>/gi,
+    ""
+  );
   const attr = /width\s*=\s*["'](\d{3,4})["']/gi;
-  while ((m = attr.exec(html))) {
+  while ((m = attr.exec(withoutMedia))) {
     const n = Number(m[1]);
     if (n >= 600) widths.push(n);
   }
@@ -78,16 +83,20 @@ function hasHorizontalScrollHint(html: string): boolean {
   return /overflow-x\s*:\s*scroll/i.test(html) || /overflow\s*:\s*scroll/i.test(html);
 }
 
+function hasMediaQueries(html: string): boolean {
+  if (/@media[^{]+\{/i.test(html) || /<link[^>]+media=/i.test(html)) {
+    return true;
+  }
+  // External stylesheets often hold breakpoints; treat a stylesheet link as OK.
+  return /<link[^>]+rel=["']stylesheet["']/i.test(html);
+}
+
 function hasResponsiveImages(html: string): boolean {
   return (
     /<img[^>]+srcset=/i.test(html) ||
     /sizes=["']/i.test(html) ||
     /max-width\s*:\s*100%/i.test(html)
   );
-}
-
-function hasMediaQueries(html: string): boolean {
-  return /@media[^{]+\{/i.test(html) || /<link[^>]+media=/i.test(html);
 }
 
 function hasFixedNavHint(html: string): boolean {

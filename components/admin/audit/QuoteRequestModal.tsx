@@ -27,6 +27,10 @@ function buildDefaultMessage(ctx: QuoteRequestContext): string {
   return `Árajánlatot kérek a weboldal-ellenőrző alapján jelzett javításokra. URL: ${ctx.url} · ${score} · audit: ${ctx.auditId}`;
 }
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
+}
+
 export function QuoteRequestModal({
   open,
   context,
@@ -46,6 +50,12 @@ export function QuoteRequestModal({
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+    message?: string;
+  }>({});
   const [submitted, setSubmitted] = useState<{
     name: string;
     email: string;
@@ -68,6 +78,7 @@ export function QuoteRequestModal({
     setMessage(buildDefaultMessage(context));
     setStatus("");
     setError("");
+    setFieldErrors({});
     setSubmitted(null);
     const t = window.setTimeout(() => firstFieldRef.current?.focus(), 40);
     return () => window.clearTimeout(t);
@@ -90,6 +101,32 @@ export function QuoteRequestModal({
   if (!mounted || !open || !context) return null;
   const ctx = context;
 
+  function validateFields(snapshot: {
+    name: string;
+    email: string;
+    phone: string;
+    message: string;
+  }): boolean {
+    const next: typeof fieldErrors = {};
+    if (snapshot.name.length < 2 || snapshot.name.length > 100) {
+      next.name = "Add meg a neved (legalább 2 karakter).";
+    }
+    if (!isValidEmail(snapshot.email)) {
+      next.email = "Érvényes e-mail címet adj meg.";
+    }
+    if (
+      snapshot.phone &&
+      (snapshot.phone.length < 6 || snapshot.phone.length > 40)
+    ) {
+      next.phone = "A telefonszám túl rövid vagy túl hosszú.";
+    }
+    if (snapshot.message.length < 10 || snapshot.message.length > 2000) {
+      next.message = "Írj röviden a projektről (legalább 10 karakter).";
+    }
+    setFieldErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     onActivity?.();
@@ -102,6 +139,10 @@ export function QuoteRequestModal({
       phone: phone.trim(),
       message: message.trim(),
     };
+    if (!validateFields(snapshot)) {
+      setSending(false);
+      return;
+    }
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -111,7 +152,7 @@ export function QuoteRequestModal({
           email: snapshot.email,
           phone: snapshot.phone || undefined,
           service: SERVICE,
-          message: snapshot.message || "—",
+          message: snapshot.message,
           website: honeypot,
           source: "audit-quote",
           auditId: ctx.auditId,
@@ -121,16 +162,20 @@ export function QuoteRequestModal({
         }),
       });
       const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) {
+        setError(
+          json?.error ||
+            `Nem sikerült elküldeni. Írj közvetlenül: ${SITE_EMAIL}`
+        );
+        return;
+      }
       setSubmitted(snapshot);
       setStatus(
         json?.message ||
           "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem."
       );
     } catch {
-      setSubmitted(snapshot);
-      setStatus(
-        `Teszt mód: az adatok rögzítve. Ha kell, írj közvetlenül: ${SITE_EMAIL}`
-      );
+      setError(`Váratlan hiba. Írj közvetlenül: ${SITE_EMAIL}`);
     } finally {
       setSending(false);
     }
@@ -174,12 +219,10 @@ export function QuoteRequestModal({
             </header>
 
             <div className="quote-modal__meta">
-              <span>{context.url}</span>
+              <span>{ctx.url}</span>
               <span>
-                {context.overallScore != null
-                  ? `${context.overallScore}/100`
-                  : "—"}
-                {context.overallLabel ? ` · ${context.overallLabel}` : ""}
+                {ctx.overallScore != null ? `${ctx.overallScore}/100` : "—"}
+                {ctx.overallLabel ? ` · ${ctx.overallLabel}` : ""}
               </span>
             </div>
           </>
@@ -226,7 +269,7 @@ export function QuoteRequestModal({
                   </div>
                   <div>
                     <dt>Weboldal</dt>
-                    <dd>{context.url || "—"}</dd>
+                    <dd>{ctx.url || "—"}</dd>
                   </div>
                   <div className="quote-ticket__grid-wide">
                     <dt>Megjegyzés</dt>
@@ -240,11 +283,11 @@ export function QuoteRequestModal({
                   Hamarosan felvesszük Önnel a kapcsolatot.
                 </p>
                 <p className="quote-ticket__footer-meta">
-                  {context.auditId.slice(0, 8).toUpperCase()}
-                  {context.overallScore != null
-                    ? ` · ${context.overallScore}/100`
+                  {ctx.auditId.slice(0, 8).toUpperCase()}
+                  {ctx.overallScore != null
+                    ? ` · ${ctx.overallScore}/100`
                     : ""}
-                  {context.overallLabel ? ` · ${context.overallLabel}` : ""}
+                  {ctx.overallLabel ? ` · ${ctx.overallLabel}` : ""}
                 </p>
               </footer>
             </article>
@@ -257,66 +300,93 @@ export function QuoteRequestModal({
             </button>
           </div>
         ) : (
-          <form className="quote-modal__form" onSubmit={onSubmit} noValidate>
+          <form className="quote-modal__form" onSubmit={onSubmit}>
             <label>
               Név
               <input
                 ref={firstFieldRef}
                 name="name"
                 autoComplete="name"
+                required
+                minLength={2}
                 maxLength={100}
                 value={name}
+                aria-invalid={!!fieldErrors.name}
                 onChange={(e) => {
                   onActivity?.();
                   setName(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, name: undefined }));
                 }}
                 placeholder="Neved vagy céged"
               />
+              {fieldErrors.name ? (
+                <span className="quote-modal__field-error">{fieldErrors.name}</span>
+              ) : null}
             </label>
             <label>
               E-mail
               <input
                 name="email"
-                type="text"
+                type="email"
                 inputMode="email"
                 autoComplete="email"
+                required
                 maxLength={254}
                 value={email}
+                aria-invalid={!!fieldErrors.email}
                 onChange={(e) => {
                   onActivity?.();
                   setEmail(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, email: undefined }));
                 }}
                 placeholder="email@ceged.hu"
               />
+              {fieldErrors.email ? (
+                <span className="quote-modal__field-error">{fieldErrors.email}</span>
+              ) : null}
             </label>
             <label>
               Telefon
               <input
                 name="phone"
-                type="text"
+                type="tel"
                 inputMode="tel"
                 autoComplete="tel"
                 maxLength={40}
                 value={phone}
+                aria-invalid={!!fieldErrors.phone}
                 onChange={(e) => {
                   onActivity?.();
                   setPhone(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, phone: undefined }));
                 }}
                 placeholder="+36 …"
               />
+              {fieldErrors.phone ? (
+                <span className="quote-modal__field-error">{fieldErrors.phone}</span>
+              ) : null}
             </label>
             <label className="quote-modal__full">
               Üzenet
               <textarea
                 name="message"
+                required
+                minLength={10}
                 maxLength={2000}
                 rows={3}
                 value={message}
+                aria-invalid={!!fieldErrors.message}
                 onChange={(e) => {
                   onActivity?.();
                   setMessage(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, message: undefined }));
                 }}
               />
+              {fieldErrors.message ? (
+                <span className="quote-modal__field-error">
+                  {fieldErrors.message}
+                </span>
+              ) : null}
             </label>
             <label className="quote-modal__hp" aria-hidden="true">
               Website

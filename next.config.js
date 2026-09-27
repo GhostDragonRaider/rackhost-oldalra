@@ -34,8 +34,25 @@ const nextConfig = {
 
     return [
       {
+        source: "/_next/static/:path*",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
         source: "/:path*",
-        headers: securityHeaders,
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
       },
     ];
   },

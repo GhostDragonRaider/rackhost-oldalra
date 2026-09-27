@@ -416,13 +416,10 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           <div>
             <div className="admin-audit-title-row">
               <h2>Weboldal-ellenőrző</h2>
-              <span className="admin-audit-beta" title="Teszt verzió">
-                BETA
-              </span>
             </div>
             <p className="admin-muted">
-              Admin tesztverzió — nem publikus szolgáltatás. SSRF-védelem, nem
-              intruzív security exposure. Kapcsolódó modulok:{" "}
+              Belső ellenőrző eszköz. SSRF-védelem, nem intruzív security
+              exposure. Kapcsolódó modulok:{" "}
               <Link href="/admin">Monitor</Link>
               {" · "}
               <Link href="/admin/lab/seo-lab">SEO Lab</Link>
@@ -518,7 +515,6 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               <div className="audit-dash-meta">
                 <div className="admin-audit-title-row">
                   <h3>Weboldal health</h3>
-                  <span className="admin-audit-beta">Teszt verzió</span>
                 </div>
                 <p className="audit-dash-summary">{audit.summary}</p>
                 <p className="admin-muted admin-break">

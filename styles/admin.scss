@@ -1455,6 +1455,14 @@ body.admin-active {
   font-weight: 700;
 }
 
+.quote-modal__field-error {
+  display: block;
+  margin-top: 4px;
+  color: #b42318;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .quote-modal__actions {
   grid-column: 1 / -1;
   display: flex;

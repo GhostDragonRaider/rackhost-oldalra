@@ -516,7 +516,7 @@ export default function LandingPage() {
         className={`mobile-nav${menuOpen ? " open" : ""}`}
         id="mobile-nav"
         aria-label={t.chrome.mobileNavAria}
-        aria-hidden={!menuOpen}
+        {...(!menuOpen ? { inert: true } : {})}
       >
         {t.nav.map((link) => (
           <a
@@ -562,7 +562,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mock">
                   <small>{card.kicker}</small>
-                  <h3>{card.title}</h3>
+                  <p className="mock-title">{card.title}</p>
                   <div className="mock-grid">
                     <div className="mock-card mock-card-primary">
                       <span className="mock-card-label">{card.primary.label}</span>
@@ -725,6 +725,7 @@ export default function LandingPage() {
                         className="showcase-preview-img"
                         width={960}
                         height={600}
+                        sizes="(max-width: 900px) 100vw, 960px"
                         loading="lazy"
                         decoding="async"
                       />
