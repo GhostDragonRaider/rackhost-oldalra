@@ -18,17 +18,21 @@ export type PublicAuditCategory = {
 
 export type PublicAuditFinding = {
   id: string;
+  checkId?: string;
   category?: string;
   severity?: string;
   status?: string;
   title: string;
   detail?: string;
+  description?: string;
   recommendation?: string | null;
   evidence?: string | null;
   technicalDetails?: string | null;
   whyItMatters?: string | null;
   measuredAt?: string;
   detectedValue?: string | null;
+  reliability?: string | null;
+  source?: string | null;
 };
 
 export type PublicMatrixIssue = {

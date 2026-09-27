@@ -49,10 +49,12 @@ export default function FindingCard({
   const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
   const tone = severityClass(finding);
+  const checkKey = finding.checkId || finding.id;
   const why =
     finding.whyItMatters ||
-    (finding.id ? findingHelpText(finding.id) : null) ||
+    (checkKey ? findingHelpText(checkKey) : null) ||
     null;
+  const body = finding.detail || finding.description || "";
   const hasTech = Boolean(finding.technicalDetails?.trim());
 
   return (
@@ -64,8 +66,8 @@ export default function FindingCard({
         <h3 className="wa-finding__title">{finding.title}</h3>
       </header>
 
-      {finding.detail ? (
-        <p className="wa-finding__detail">{finding.detail}</p>
+      {body ? (
+        <p className="wa-finding__detail">{body}</p>
       ) : null}
 
       {why ? (

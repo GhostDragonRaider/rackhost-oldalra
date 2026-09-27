@@ -37,12 +37,16 @@ export type AuditFindingSource =
 
 export type AuditFinding = {
   id: string;
+  /** Spec alias — same as id (check identifier). Set by finding(). */
+  checkId?: string;
   category: AuditCategoryId;
   severity: AuditSeverity;
   status: AuditCheckStatus;
   title: string;
   /** What we found / why it matters */
   detail: string;
+  /** Spec alias for detail (layperson description). Set by finding(). */
+  description?: string;
   /** Concrete fix suggestion */
   recommendation?: string | null;
   /** Detected value shown in UI */
@@ -50,6 +54,8 @@ export type AuditFinding = {
   evidence?: string | null;
   technicalDetails?: string | null;
   source?: AuditFindingSource;
+  /** How reliable the measurement is for this check. */
+  reliability?: "measured" | "heuristic" | "unavailable" | "unknown";
   /** Optional penalty override (absolute points deducted in category) */
   scoreImpact?: number | null;
   measuredAt?: string | null;

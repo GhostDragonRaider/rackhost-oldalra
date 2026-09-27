@@ -28,18 +28,30 @@ export function finding(partial: {
       : partial.severity === "info"
         ? "pass"
         : "fail");
+  const reliability =
+    status === "not_available" || status === "not_applicable"
+      ? ("unavailable" as const)
+      : status === "unknown"
+        ? ("unknown" as const)
+        : partial.source === "static_html" ||
+            partial.source === "responsive_engine"
+          ? ("heuristic" as const)
+          : ("measured" as const);
   return {
     id: partial.id,
+    checkId: partial.id,
     category: partial.category,
     severity: partial.severity,
     status,
     title: partial.title,
     detail: partial.detail,
+    description: partial.detail,
     recommendation: partial.recommendation ?? null,
     detectedValue: partial.detectedValue ?? null,
     evidence: partial.evidence ?? null,
     technicalDetails: partial.technicalDetails ?? null,
     source: partial.source ?? null,
+    reliability,
     scoreImpact: partial.scoreImpact ?? null,
     measuredAt: partial.measuredAt ?? new Date().toISOString(),
   };
