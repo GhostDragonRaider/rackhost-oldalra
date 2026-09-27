@@ -26,14 +26,20 @@ body.admin-active {
   box-sizing: border-box;
 }
 
-/* landing.scss sets `section { padding: 94px 0 }` globally — reset inside admin,
-   but keep padding on admin cards (also rendered as <section>). */
-.admin-shell section:not(.admin-card) {
-  padding: 0;
+/* landing.scss sets `section { padding: 94px 0 }` globally — neutralize the
+   vertical leak inside admin without wiping intentional card padding
+   (admin cards and Lab cards are also rendered as <section>). */
+.admin-shell section:not(.admin-card):not(.lab-card) {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .admin-shell .admin-card {
   padding: 28px;
+}
+
+.admin-shell .lab-card {
+  padding: var(--lab-space-5, 20px);
 }
 
 .admin-card,
