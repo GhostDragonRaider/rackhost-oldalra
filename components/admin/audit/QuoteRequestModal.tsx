@@ -170,68 +170,148 @@ export function QuoteRequestModal({
       />
       <div
         ref={panelRef}
-        className="quote-modal__panel"
+        className={`quote-modal__panel${submitted ? " quote-modal__panel--ticket" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descId}
       >
         <div className="quote-modal__glow" aria-hidden />
-        <header className="quote-modal__head">
-          <div>
-            <p className="quote-modal__kicker">{meta.kicker}</p>
-            <h2 id={titleId}>
-              {submitted ? "Árajánlatkérés elküldve" : meta.title}
-            </h2>
-            <p id={descId} className="quote-modal__blurb">
-              {submitted
-                ? "Ellenőrizd a megadott elérhetőségeket."
-                : meta.blurb}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="quote-modal__close"
-            aria-label="Bezárás"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </header>
+        {!submitted ? (
+          <>
+            <header className="quote-modal__head">
+              <div>
+                <p className="quote-modal__kicker">{meta.kicker}</p>
+                <h2 id={titleId}>{meta.title}</h2>
+                <p id={descId} className="quote-modal__blurb">
+                  {meta.blurb}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="quote-modal__close"
+                aria-label="Bezárás"
+                onClick={onClose}
+              >
+                ×
+              </button>
+            </header>
 
-        <div className="quote-modal__meta">
-          <span>{context.url}</span>
-          <span>
-            {context.overallScore != null
-              ? `${context.overallScore}/100`
-              : "—"}
-            {context.overallLabel ? ` · ${context.overallLabel}` : ""}
-          </span>
-        </div>
+            <div className="quote-modal__meta">
+              <span>{context.url}</span>
+              <span>
+                {context.overallScore != null
+                  ? `${context.overallScore}/100`
+                  : "—"}
+                {context.overallLabel ? ` · ${context.overallLabel}` : ""}
+              </span>
+            </div>
+          </>
+        ) : null}
 
         {submitted ? (
-          <div className="quote-modal__success" role="status">
-            <strong>Köszönöm!</strong>
-            <p>{status}</p>
-            <dl className="quote-modal__receipt">
-              <div>
-                <dt>Név</dt>
-                <dd>{submitted.name || "—"}</dd>
+          <div className="quote-ticket-wrap" role="status">
+            <button
+              type="button"
+              className="quote-modal__close quote-ticket__close"
+              aria-label="Bezárás"
+              onClick={onClose}
+            >
+              ×
+            </button>
+            <article className="quote-ticket" aria-labelledby={titleId}>
+              <div className="quote-ticket__main">
+                <header className="quote-ticket__brand">
+                  <span className="quote-ticket__brand-mark" aria-hidden>
+                    ⌬
+                  </span>
+                  <div>
+                    <p className="quote-ticket__airline">AntiCode</p>
+                    <h2 id={titleId} className="quote-ticket__title">
+                      Árajánlat jegy
+                    </h2>
+                  </div>
+                  <span className="quote-ticket__status">ELKÜLDVE</span>
+                </header>
+
+                <div className="quote-ticket__route">
+                  <div>
+                    <span className="quote-ticket__code">WEB</span>
+                    <span className="quote-ticket__city">Ellenőrzés</span>
+                  </div>
+                  <div className="quote-ticket__flight" aria-hidden>
+                    <span className="quote-ticket__dash" />
+                    <span className="quote-ticket__plane">✈</span>
+                    <span className="quote-ticket__dash" />
+                  </div>
+                  <div>
+                    <span className="quote-ticket__code">AJÁ</span>
+                    <span className="quote-ticket__city">Árajánlat</span>
+                  </div>
+                </div>
+
+                <p id={descId} className="quote-ticket__note">
+                  {status}
+                </p>
+
+                <dl className="quote-ticket__grid">
+                  <div>
+                    <dt>Utas / Név</dt>
+                    <dd>{submitted.name || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>E-mail</dt>
+                    <dd>{submitted.email || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Telefon</dt>
+                    <dd>{submitted.phone || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Cél URL</dt>
+                    <dd>{context.url || "—"}</dd>
+                  </div>
+                  <div className="quote-ticket__grid-wide">
+                    <dt>Megjegyzés</dt>
+                    <dd>{submitted.message || "—"}</dd>
+                  </div>
+                </dl>
               </div>
-              <div>
-                <dt>E-mail</dt>
-                <dd>{submitted.email || "—"}</dd>
-              </div>
-              <div>
-                <dt>Telefon</dt>
-                <dd>{submitted.phone || "—"}</dd>
-              </div>
-              <div className="quote-modal__receipt-full">
-                <dt>Üzenet</dt>
-                <dd>{submitted.message || "—"}</dd>
-              </div>
-            </dl>
-            <button type="button" className="quote-modal__submit" onClick={onClose}>
+
+              <div className="quote-ticket__perforation" aria-hidden />
+
+              <aside className="quote-ticket__stub">
+                <p className="quote-ticket__stub-label">Jegy</p>
+                <p className="quote-ticket__stub-id">
+                  {context.auditId.slice(0, 8).toUpperCase()}
+                </p>
+                <p className="quote-ticket__stub-meta">
+                  {context.overallScore != null
+                    ? `${context.overallScore}/100`
+                    : "—"}
+                  {context.overallLabel ? ` · ${context.overallLabel}` : ""}
+                </p>
+                <div className="quote-ticket__barcode" aria-hidden>
+                  {Array.from({ length: 28 }).map((_, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: `${2 + ((i * 7) % 4)}px`,
+                        opacity: 0.55 + ((i * 13) % 45) / 100,
+                      }}
+                    />
+                  ))}
+                </div>
+                <p className="quote-ticket__stub-kind">
+                  {kind === "security" ? "SECURITY" : "FIX QUOTE"}
+                </p>
+              </aside>
+            </article>
+            <button
+              type="button"
+              className="quote-modal__submit quote-ticket__done"
+              onClick={onClose}
+            >
               Bezárás
             </button>
           </div>
