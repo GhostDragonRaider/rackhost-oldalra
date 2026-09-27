@@ -71,9 +71,9 @@ function writeJson(file: string, data: unknown) {
 function readFormsFile(): FormsFile {
   ensureDir();
   if (!fs.existsSync(FORMS_FILE)) {
-    const empty: FormsFile = { forms: [] };
-    writeJson(FORMS_FILE, empty);
-    return empty;
+    const seeded = seedFormsFile();
+    writeJson(FORMS_FILE, seeded);
+    return seeded;
   }
   try {
     const parsed = JSON.parse(fs.readFileSync(FORMS_FILE, "utf8")) as FormsFile;
@@ -82,6 +82,55 @@ function readFormsFile(): FormsFile {
   } catch {
     return { forms: [] };
   }
+}
+
+function seedFormsFile(): FormsFile {
+  const now = new Date().toISOString();
+  return {
+    forms: [
+      {
+        id: "contact-flow",
+        name: "Kapcsolat űrlap (Lab)",
+        description:
+          "Példa feltételes mezőkre: ha „Webshop”-ot választasz, megjelenik a termékek száma.",
+        updatedAt: now,
+        fields: [
+          { id: "name", label: "Név", type: "text", required: true },
+          { id: "email", label: "E-mail", type: "email", required: true },
+          {
+            id: "service",
+            label: "Mit szeretnél?",
+            type: "select",
+            required: true,
+            options: ["Weboldal", "Webshop", "SEO", "Egyéb"],
+          },
+          {
+            id: "products",
+            label: "Hány termék lesz a webshopban?",
+            type: "text",
+            showIf: { fieldId: "service", equals: "Webshop" },
+          },
+          {
+            id: "seoGoal",
+            label: "SEO cél (pl. Google első oldal)",
+            type: "textarea",
+            showIf: { fieldId: "service", equals: "SEO" },
+          },
+          {
+            id: "message",
+            label: "Üzenet",
+            type: "textarea",
+            required: true,
+          },
+          {
+            id: "newsletter",
+            label: "Kérek hírlevelet",
+            type: "checkbox",
+          },
+        ],
+      },
+    ],
+  };
 }
 
 function readLeadsFile(): LeadsFile {
