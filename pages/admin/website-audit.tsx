@@ -699,7 +699,9 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                     <div
                       key={cat.id}
                       id={`audit-cat-${cat.id}`}
-                      className={`audit-acc audit-acc--${catTone}`}
+                      className={`audit-acc audit-acc--${catTone}${
+                        open ? " is-open" : ""
+                      }`}
                     >
                       <DelayedHelpTip text={catHelp} placement="bottom" display="block">
                         <button
