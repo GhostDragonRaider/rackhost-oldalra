@@ -59,7 +59,8 @@ function viewportContent(html: string): string | null {
 
 function extractFixedWidths(html: string): number[] {
   const widths: number[] = [];
-  const re = /(?:min-)?width\s*:\s*(\d{3,4})px/gi;
+  // Do not match inside max-width / min-width (sizes="(max-width: 900px) …").
+  const re = /(?<![\w-])width\s*:\s*(\d{3,4})px/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) {
     const n = Number(m[1]);
