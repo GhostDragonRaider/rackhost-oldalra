@@ -28,15 +28,14 @@ const KIND_META: Record<
     title: "Árajánlat a javításokra",
     kicker: "Ajánlatkérés",
     service: "Meglévő oldal megújítása",
-    blurb:
-      "Add meg az elérhetőséged — az audit alapján visszajelzek a javítási keretről, kötelezettség nélkül.",
+    blurb: "Add meg az elérhetőséged — kötelezettség nélkül visszajelzek.",
   },
   security: {
     title: "Árajánlat biztonsági felmérésre",
     kicker: "Authorized Assessment",
     service: "Még egyeztetném",
     blurb:
-      "Írásos engedélyhez és scope-hoz kötött felmérés. Add meg az elérhetőséged, és egyeztetünk a következő lépésről.",
+      "Írásos engedélyhez kötött felmérés. Add meg az elérhetőséged az egyeztetéshez.",
   },
 };
 
@@ -45,20 +44,13 @@ function buildDefaultMessage(
   ctx: QuoteRequestContext
 ): string {
   if (kind === "security") {
-    return [
-      "Biztonsági felmérés árajánlatát kérem (Authorized Security Assessment).",
-      "Tudom, hogy ez írásos engedélyhez és scope-hoz kötött, nem automatikus scan.",
-      `Audit ID (public exposure check): ${ctx.auditId}`,
-      `URL: ${ctx.url}`,
-    ].join("\n");
+    return `Biztonsági felmérés árajánlatát kérem az alábbi oldalra: ${ctx.url} (audit: ${ctx.auditId}).`;
   }
-  return [
-    "Weboldal-ellenőrző alapján árajánlatot kérek a hibák javítására.",
-    `Audit ID: ${ctx.auditId}`,
-    `Ellenőrzött URL: ${ctx.url}`,
-    `Összpontszám: ${ctx.overallScore ?? "—"}/100 (${ctx.overallLabel || ""})`,
-    `Prioritás: ${ctx.priorityTitles.slice(0, 5).join("; ") || "—"}`,
-  ].join("\n");
+  const score =
+    ctx.overallScore != null
+      ? `${ctx.overallScore}/100${ctx.overallLabel ? ` · ${ctx.overallLabel}` : ""}`
+      : "—";
+  return `Árajánlatot kérek a weboldal-ellenőrző alapján jelzett javításokra. URL: ${ctx.url} · ${score} · audit: ${ctx.auditId}`;
 }
 
 export function QuoteRequestModal({
@@ -263,7 +255,7 @@ export function QuoteRequestModal({
                 required
                 minLength={10}
                 maxLength={2000}
-                rows={6}
+                rows={3}
                 value={message}
                 onChange={(e) => {
                   onActivity?.();

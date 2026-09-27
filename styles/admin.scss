@@ -1266,7 +1266,7 @@ body.admin-active {
   z-index: 80;
   display: grid;
   place-items: center;
-  padding: 20px 14px;
+  padding: 16px 12px;
 }
 
 .quote-modal__backdrop {
@@ -1285,11 +1285,11 @@ body.admin-active {
 .quote-modal__panel {
   position: relative;
   z-index: 1;
-  width: min(560px, 100%);
-  max-height: min(92vh, 820px);
-  overflow: auto;
-  padding: 22px 22px 18px;
-  border-radius: 20px;
+  width: min(540px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+  padding: 16px 18px 14px;
+  border-radius: 18px;
   border: 1px solid rgba(220, 229, 240, 0.9);
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.97) 0%, #f4f8fc 55%, #eef5f1 100%);
@@ -1302,14 +1302,14 @@ body.admin-active {
 .quote-modal__glow {
   pointer-events: none;
   position: absolute;
-  top: -40%;
-  right: -20%;
-  width: 280px;
-  height: 280px;
+  top: -48%;
+  right: -24%;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(63, 95, 134, 0.18) 0%,
+    rgba(63, 95, 134, 0.16) 0%,
     transparent 70%
   );
 }
@@ -1318,14 +1318,14 @@ body.admin-active {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   position: relative;
 }
 
 .quote-modal__kicker {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   color: #3f5f86;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1334,26 +1334,26 @@ body.admin-active {
 .quote-modal__head h2 {
   margin: 0;
   color: #0b1b36;
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   line-height: 1.25;
 }
 
 .quote-modal__blurb {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   color: #52637a;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 
 .quote-modal__close {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(11, 27, 54, 0.06);
   color: #0b1b36;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
@@ -1370,14 +1370,14 @@ body.admin-active {
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
-  margin: 16px 0 0;
-  padding: 10px 12px;
-  border-radius: 12px;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  padding: 7px 10px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid #e4ebf4;
   color: #3f5f86;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -1385,16 +1385,16 @@ body.admin-active {
 .quote-modal__form {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px 10px;
+  margin-top: 12px;
 }
 
 .quote-modal__form label {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   color: #0b1b36;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 800;
 }
 
@@ -1412,12 +1412,13 @@ body.admin-active {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 11px 12px;
+  padding: 9px 10px;
   border: 1px solid #d5e0ec;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
   color: #0b1b36;
   font: inherit;
+  font-size: 0.9rem;
   font-weight: 500;
   transition:
     border-color 0.2s ease,
@@ -1432,9 +1433,10 @@ body.admin-active {
 }
 
 .quote-modal__form textarea {
-  resize: vertical;
-  min-height: 120px;
-  line-height: 1.45;
+  resize: none;
+  min-height: 0;
+  height: 4.6rem;
+  line-height: 1.4;
 }
 
 .quote-modal__hp {
@@ -1449,7 +1451,7 @@ body.admin-active {
   grid-column: 1 / -1;
   margin: 0;
   color: #b42318;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
@@ -1459,14 +1461,14 @@ body.admin-active {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .quote-modal__ghost,
 .quote-modal__submit {
-  min-height: 44px;
-  padding: 11px 16px;
-  border-radius: 12px;
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: 10px;
   font: inherit;
   font-weight: 800;
   cursor: pointer;
@@ -1492,7 +1494,7 @@ body.admin-active {
   border: 0;
   background: linear-gradient(135deg, #3f5f86 0%, #2a4a6e 100%);
   color: #fff;
-  box-shadow: 0 10px 24px rgba(42, 74, 110, 0.28);
+  box-shadow: 0 8px 20px rgba(42, 74, 110, 0.26);
 }
 
 .quote-modal__submit:hover,
@@ -1511,16 +1513,16 @@ body.admin-active {
   grid-column: 1 / -1;
   margin: 0;
   color: #7a8ba3;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .quote-modal__success {
   position: relative;
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 14px;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
   background: rgba(227, 248, 233, 0.7);
   border: 1px solid #b7e4c7;
   animation: quote-modal-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1533,7 +1535,7 @@ body.admin-active {
 }
 
 .quote-modal__success p {
-  margin: 6px 0 14px;
+  margin: 6px 0 12px;
   color: #334155;
 }
 
@@ -1561,12 +1563,22 @@ body.admin-active {
 
 @media (max-width: 640px) {
   .quote-modal__form {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quote-modal__form label:nth-of-type(3) {
+    grid-column: 1 / -1;
   }
 
   .quote-modal__panel {
-    padding: 18px 14px 14px;
+    padding: 14px 12px 12px;
     border-radius: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .quote-modal__form {
+    grid-template-columns: 1fr;
   }
 }
 
