@@ -65,6 +65,10 @@ export default function WebsiteAuditResultPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [forceBusy, setForceBusy] = useState(false);
+  /** Staged checklist catch-up — keep progress visible until checkmarks finish. */
+  const [progressCaughtUp, setProgressCaughtUp] = useState(false);
+  /** True once we observed this audit in a running/queued state (not a cold completed load). */
+  const [sawActiveRun, setSawActiveRun] = useState(false);
 
   const load = useCallback(async (auditId: string) => {
     const res = await fetch(`/api/website-audit/${encodeURIComponent(auditId)}`, {
@@ -123,6 +127,17 @@ export default function WebsiteAuditResultPage() {
   }, []);
 
   useEffect(() => {
+    setProgressCaughtUp(false);
+    setSawActiveRun(false);
+  }, [id]);
+
+  useEffect(() => {
+    if (audit && isActiveStatus(audit.status)) {
+      setSawActiveRun(true);
+    }
+  }, [audit]);
+
+  useEffect(() => {
     if (!id || !router.isReady) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -174,6 +189,12 @@ export default function WebsiteAuditResultPage() {
     String(audit?.status || "").toLowerCase() === "completed" ||
     String(audit?.status || "").toLowerCase() === "complete";
   const failed = String(audit?.status || "").toLowerCase() === "failed";
+  const staging =
+    sawActiveRun && Boolean(audit?.progress?.length) && !progressCaughtUp;
+  const showProgress = Boolean(audit?.progress?.length) && (active || staging);
+  const showResults =
+    completed && (!sawActiveRun || progressCaughtUp || !audit?.progress?.length);
+  const showFailed = failed && (!sawActiveRun || progressCaughtUp);
 
   const helpHref = `/kapcsolat?${new URLSearchParams({
     service: "Meglévő oldal megújítása",
@@ -310,24 +331,30 @@ export default function WebsiteAuditResultPage() {
             </p>
           ) : null}
 
-          {audit && (active || (!completed && !failed && audit.progress?.length)) ? (
-            <section className="wa-section" aria-busy={active}>
+          {audit && showProgress ? (
+            <section className="wa-section wa-section--progress" aria-busy={active || !progressCaughtUp}>
               <div className="wa-section-head">
                 <h2>Folyamat</h2>
                 <p>
-                  Valós szerveroldali lépések — nem időzített „fake” progress.
+                  Valós szerveroldali ellenőrzések — a lista sorban pipálódik ki,
+                  ahogy egy-egy lépés elkészül.
                 </p>
               </div>
-              {active ? (
+              {active || !progressCaughtUp ? (
                 <p className="wa-running-note" role="status">
-                  Az ellenőrzés fut. Az állapot ~1,2 másodpercenként frissül.
+                  Weboldal vizsgálata folyamatban. Egy lépés kipipálása után
+                  legalább egy másodperc telik el a következőig.
                 </p>
               ) : null}
-              <AuditProgressList steps={audit.progress || []} />
+              <AuditProgressList
+                steps={audit.progress || []}
+                stepDelayMs={1000}
+                onVisualCaughtUp={setProgressCaughtUp}
+              />
             </section>
           ) : null}
 
-          {failed ? (
+          {failed && showFailed ? (
             <section className="wa-section">
               <div className="wa-error-banner" role="alert">
                 {audit?.error ||
@@ -344,7 +371,7 @@ export default function WebsiteAuditResultPage() {
             </section>
           ) : null}
 
-          {completed ? (
+          {showResults ? (
             <>
               <section className="wa-section">
                 <div className={`wa-overall wa-overall--${tone}`}>
