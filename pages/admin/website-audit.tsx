@@ -223,7 +223,7 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     }
   }
 
-  // When staged checklist catches up to a finished live audit, reveal the report.
+  // When every checklist item is checked off AND the job finished, reveal report.
   useEffect(() => {
     if (!liveAudit) return;
     const st = String(liveAudit.status || "").toLowerCase();
@@ -236,6 +236,11 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
       st === "failed" ? "Az ellenőrzés hibával zárult." : "Kész."
     );
   }, [liveAudit, progressCaughtUp]);
+
+  const liveFinished = useMemo(() => {
+    const st = String(liveAudit?.status || "").toLowerCase();
+    return st === "completed" || st === "complete" || st === "failed";
+  }, [liveAudit?.status]);
 
   const tone = audit ? scoreTone(audit.overallScore) : "neutral";
 
@@ -411,21 +416,22 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
         </div>
 
         {running || liveAudit ? (
-          <div className="audit-loading" aria-busy={running} aria-live="polite">
+          <div className="audit-loading" aria-busy={!progressCaughtUp} aria-live="polite">
             <p className="audit-loading__title">Audit folyamatban…</p>
             <p className="admin-muted">
-              Valós szerveroldali lépések — a lista sorban pipálódik ki, lépésenként
-              legalább 1 másodperccel.
+              Az eredmény csak akkor jelenik meg, ha minden szempont ki van
+              pipálva. A lépések leggyorsabban 0,5 másodpercenként váltanak.
             </p>
             <AuditProgressList
               steps={liveAudit?.progress || []}
-              stepDelayMs={1000}
+              stepDelayMs={500}
+              unlockAll={liveFinished}
               onVisualCaughtUp={setProgressCaughtUp}
             />
           </div>
         ) : null}
 
-        {audit && !liveAudit ? (
+        {audit && !liveAudit && progressCaughtUp ? (
           <article
             className={`admin-audit-report admin-seo--${tone} audit-dashboard`}
             aria-label="Audit dashboard"

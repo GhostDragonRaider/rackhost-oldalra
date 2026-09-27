@@ -4,13 +4,21 @@ import type { PublicAuditProgressStep } from "./publicTypes";
 type AuditProgressListProps = {
   steps: PublicAuditProgressStep[];
   className?: string;
-  /** Fired when the staged UI has caught up to server-terminal steps. */
+  /**
+   * Fired only when every checklist item has been visually checked off.
+   * Intermediate server progress never reports caughtUp=true.
+   */
   onVisualCaughtUp?: (caughtUp: boolean) => void;
-  /** Minimum pause between checking off successive items (ms). */
+  /** Minimum pause between checking off successive items (ms). Default 500. */
   stepDelayMs?: number;
+  /**
+   * When true (audit finished), remaining steps may be revealed even if the
+   * server left a trailing pending — UI still ticks them off one-by-one.
+   */
+  unlockAll?: boolean;
 };
 
-const DEFAULT_STEP_DELAY_MS = 1000;
+const DEFAULT_STEP_DELAY_MS = 500;
 
 function normalizeStatus(status: string): string {
   const s = String(status || "").toLowerCase();
@@ -46,10 +54,6 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/**
- * Counts how many leading steps the server has finished (done/error/skipped).
- * The runner advances sequentially, so a prefix count is the reliable target.
- */
 function countTerminalPrefix(steps: PublicAuditProgressStep[]): number {
   let n = 0;
   for (const step of steps) {
@@ -60,29 +64,37 @@ function countTerminalPrefix(steps: PublicAuditProgressStep[]): number {
 }
 
 /**
- * Premium staged checklist: server truth decides what may become done,
- * the UI reveals checkmarks one-by-one (≥ stepDelayMs apart).
+ * Premium staged checklist: never reports fully caught up until every item
+ * is checked off, with ≥ stepDelayMs between ticks.
  */
 export default function AuditProgressList({
   steps,
   className = "",
   onVisualCaughtUp,
   stepDelayMs = DEFAULT_STEP_DELAY_MS,
+  unlockAll = false,
 }: AuditProgressListProps) {
   const serverSteps = useMemo(
     () => (Array.isArray(steps) ? steps : []),
     [steps]
   );
   const stepIdsKey = serverSteps.map((s) => s.id).join("|");
+  const total = serverSteps.length;
+
   const serverTerminalCount = useMemo(
     () => countTerminalPrefix(serverSteps),
     [serverSteps]
   );
+
+  /** How far we are allowed to reveal right now. */
+  const revealTarget = unlockAll
+    ? total
+    : Math.min(total, serverTerminalCount);
+
   const serverRunningIndex = useMemo(() => {
-    const idx = serverSteps.findIndex(
+    return serverSteps.findIndex(
       (s) => normalizeStatus(s.status) === "running"
     );
-    return idx;
   }, [serverSteps]);
 
   const [revealedCount, setRevealedCount] = useState(0);
@@ -92,7 +104,6 @@ export default function AuditProgressList({
   const onCaughtUpRef = useRef(onVisualCaughtUp);
   onCaughtUpRef.current = onVisualCaughtUp;
 
-  // New audit / new step list → restart staging
   useEffect(() => {
     setRevealedCount(0);
     setPhase("idle");
@@ -101,19 +112,21 @@ export default function AuditProgressList({
     onCaughtUpRef.current?.(false);
   }, [stepIdsKey]);
 
-  // Staged reveal toward serverTerminalCount
   useEffect(() => {
-    if (!serverSteps.length) return;
+    if (!total) return;
 
     if (prefersReducedMotion()) {
-      setRevealedCount(serverTerminalCount);
+      setRevealedCount(revealTarget);
       setPhase("idle");
       return;
     }
 
-    // Fully caught up to what the server has finished
-    if (revealedCount >= serverTerminalCount) {
-      if (serverRunningIndex === revealedCount) {
+    if (revealedCount >= revealTarget) {
+      if (
+        !unlockAll &&
+        serverRunningIndex === revealedCount &&
+        revealedCount < total
+      ) {
         setPhase("running");
       } else {
         setPhase("idle");
@@ -121,34 +134,32 @@ export default function AuditProgressList({
       return;
     }
 
-    // Reveal next terminal step: show running, then check off after ≥1s
     setPhase("running");
-    // First item: short lead-in; later items: full stepDelayMs between ticks
-    const delay =
-      lastAdvanceAt.current === 0 ? Math.min(700, stepDelayMs) : stepDelayMs;
+    const delay = stepDelayMs;
 
     const timer = setTimeout(() => {
       lastAdvanceAt.current = Date.now();
       setPhase("checking");
-      setRevealedCount((c) => Math.min(c + 1, serverTerminalCount));
+      setRevealedCount((c) => Math.min(c + 1, revealTarget));
     }, delay);
 
     return () => clearTimeout(timer);
   }, [
-    serverSteps.length,
-    serverTerminalCount,
+    total,
+    revealTarget,
     revealedCount,
     serverRunningIndex,
     stepDelayMs,
+    unlockAll,
   ]);
 
   useEffect(() => {
-    const caughtUp =
-      serverSteps.length > 0 && revealedCount >= serverTerminalCount;
+    // Only "caught up" when EVERY aspect is checked off.
+    const caughtUp = total > 0 && revealedCount >= total;
     if (caughtUp === caughtUpRef.current) return;
     caughtUpRef.current = caughtUp;
     onCaughtUpRef.current?.(caughtUp);
-  }, [revealedCount, serverTerminalCount, serverSteps.length]);
+  }, [revealedCount, total]);
 
   const displaySteps = useMemo(() => {
     return serverSteps.map((step, index) => {
@@ -168,7 +179,8 @@ export default function AuditProgressList({
       if (
         index === revealedCount &&
         serverRunningIndex === index &&
-        revealedCount >= serverTerminalCount
+        revealedCount >= revealTarget &&
+        revealedCount < total
       ) {
         return { ...step, status: "running" };
       }
@@ -179,10 +191,11 @@ export default function AuditProgressList({
     revealedCount,
     phase,
     serverRunningIndex,
-    serverTerminalCount,
+    revealTarget,
+    total,
   ]);
 
-  if (!serverSteps.length) {
+  if (!total) {
     return (
       <p className="wa-empty" role="status">
         Az ellenőrzés lépései hamarosan megjelennek…
@@ -190,8 +203,8 @@ export default function AuditProgressList({
     );
   }
 
-  const total = serverSteps.length;
-  const busy = phase === "running" || revealedCount < total;
+  const allDone = revealedCount >= total;
+  const busy = !allDone;
 
   return (
     <div className={`wa-progress${className ? ` ${className}` : ""}`}>
@@ -200,7 +213,7 @@ export default function AuditProgressList({
           {revealedCount} / {total} ellenőrzés
         </span>
         <span className="wa-progress__live">
-          {busy ? "Weboldal vizsgálata…" : "Ellenőrzések kész"}
+          {busy ? "Weboldal vizsgálata…" : "Minden ellenőrzés kész"}
         </span>
       </div>
 
