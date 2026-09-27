@@ -37,6 +37,7 @@ export const hu: Dictionary = {
     { href: "/#szolgaltatasok", label: "Szolgáltatások" },
     { href: "/arak", label: "Árak" },
     { href: "/tudastar", label: "Tudástár" },
+    { href: "/weboldal-ellenorzo", label: "Weboldal-ellenőrző" },
     { href: "/#referenciak", label: "Referenciák" },
     { href: "/kapcsolat", label: "Kapcsolat" },
   ],

@@ -187,6 +187,8 @@ export default function LandingShell({
             {" · "}
             <Link href="/tudastar">Tudástár</Link>
             {" · "}
+            <Link href="/weboldal-ellenorzo">Weboldal-ellenőrző</Link>
+            {" · "}
             <Link href="/kapcsolat">{t.chrome.cta}</Link>
             {" · "}© {year} AntiCode
           </p>

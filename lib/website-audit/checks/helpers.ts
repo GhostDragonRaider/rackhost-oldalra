@@ -19,6 +19,7 @@ export function finding(partial: {
   technicalDetails?: string | null;
   source?: AuditFindingSource;
   scoreImpact?: number | null;
+  measuredAt?: string | null;
 }): AuditFinding {
   const status: AuditCheckStatus =
     partial.status ??
@@ -40,5 +41,6 @@ export function finding(partial: {
     technicalDetails: partial.technicalDetails ?? null,
     source: partial.source ?? null,
     scoreImpact: partial.scoreImpact ?? null,
+    measuredAt: partial.measuredAt ?? new Date().toISOString(),
   };
 }

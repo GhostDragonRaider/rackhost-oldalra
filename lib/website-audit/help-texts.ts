@@ -35,6 +35,8 @@ export const CATEGORY_HELP: Record<AuditCategoryId, string> = {
     "Akadálymentesség: mennyire használható az oldal pl. képernyőolvasóval vagy nagyítással (nyelv, képleírások, űrlap címkék). Automatikus ellenőrzés — nem egyenlő hivatalos WCAG tanúsítvánnyal.",
   best_practices:
     "Best practices: általános, jól bevált webtechnikai szokások (HTTPS, robots.txt, favicon, viewport stb.). Nem „hibák listája”, inkább ajánlott alapok.",
+  responsive:
+    "Reszponzív: az oldal hogyan viselkedik különböző nézetméreteken. Ha a mérés nem elérhető, azt UNAVAILABLE-ként jelezzük — soha nem számít automatikus PASS-nak.",
 };
 
 export const SEVERITY_HELP: Record<AuditSeverity | "warning", string> = {

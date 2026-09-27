@@ -33,15 +33,24 @@ export default function KapcsolatPage() {
     const serviceRaw = typeof q.service === "string" ? q.service : "";
     const websiteUrl =
       typeof q.website_url === "string" ? q.website_url.trim() : "";
+    const auditId =
+      typeof q.audit_id === "string" ? q.audit_id.trim() : "";
     const service = SERVICE_OPTIONS.includes(
       serviceRaw as (typeof SERVICE_OPTIONS)[number]
     )
       ? serviceRaw
       : "";
-    const messageWithUrl =
-      websiteUrl && message && !message.includes(websiteUrl)
-        ? `${message}\nURL: ${websiteUrl}`
-        : message;
+    let messageWithUrl = message;
+    if (websiteUrl && messageWithUrl && !messageWithUrl.includes(websiteUrl)) {
+      messageWithUrl = `${messageWithUrl}\nURL: ${websiteUrl}`;
+    }
+    if (auditId && messageWithUrl && !messageWithUrl.includes(auditId)) {
+      messageWithUrl = `${messageWithUrl}\nAudit ID: ${auditId}`;
+    } else if (auditId && !messageWithUrl) {
+      messageWithUrl = `Audit ID: ${auditId}${
+        websiteUrl ? `\nURL: ${websiteUrl}` : ""
+      }`;
+    }
     return { message: messageWithUrl, service };
   }, [router.query]);
 
