@@ -1521,7 +1521,7 @@ body.admin-active {
 .quote-modal__success {
   position: relative;
   margin-top: 12px;
-  padding: 14px;
+  padding: 12px 14px 14px;
   border-radius: 12px;
   background: rgba(227, 248, 233, 0.7);
   border: 1px solid #b7e4c7;
@@ -1531,12 +1531,58 @@ body.admin-active {
 .quote-modal__success strong {
   display: block;
   color: #067647;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
 }
 
 .quote-modal__success p {
-  margin: 6px 0 12px;
+  margin: 4px 0 10px;
   color: #334155;
+  font-size: 0.88rem;
+}
+
+.quote-modal__receipt {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.quote-modal__receipt > div {
+  min-width: 0;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(183, 228, 199, 0.8);
+}
+
+.quote-modal__receipt-full {
+  grid-column: 1 / -1;
+}
+
+.quote-modal__receipt dt {
+  margin: 0;
+  color: #52637a;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quote-modal__receipt dd {
+  margin: 3px 0 0;
+  color: #0b1b36;
+  font-size: 0.86rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-height: 4.8em;
+  overflow: hidden;
+}
+
+.quote-modal__success .quote-modal__submit {
+  width: 100%;
 }
 
 @keyframes quote-modal-fade {
@@ -1568,6 +1614,10 @@ body.admin-active {
 
   .quote-modal__form label:nth-of-type(3) {
     grid-column: 1 / -1;
+  }
+
+  .quote-modal__receipt {
+    grid-template-columns: 1fr;
   }
 
   .quote-modal__panel {

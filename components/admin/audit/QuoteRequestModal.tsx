@@ -74,6 +74,12 @@ export function QuoteRequestModal({
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    message: string;
+  } | null>(null);
 
   const [mounted, setMounted] = useState(false);
 
@@ -90,6 +96,7 @@ export function QuoteRequestModal({
     setMessage(buildDefaultMessage(kind, context));
     setStatus("");
     setError("");
+    setSubmitted(null);
     const t = window.setTimeout(() => firstFieldRef.current?.focus(), 40);
     return () => window.clearTimeout(t);
   }, [open, kind, context]);
@@ -116,30 +123,38 @@ export function QuoteRequestModal({
     setSending(true);
     setStatus("");
     setError("");
+    const snapshot = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      message: message.trim(),
+    };
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
-          email,
-          phone: phone.trim() || undefined,
+          name: snapshot.name,
+          email: snapshot.email,
+          phone: snapshot.phone || undefined,
           service: meta.service,
-          message: message.trim(),
+          message: snapshot.message || "—",
           website: honeypot,
+          source: "audit-quote",
         }),
       });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        setError(json.error || "Nem sikerült elküldeni.");
-        return;
-      }
-      setStatus(json.message || "Elküldve.");
-      setName("");
-      setEmail("");
-      setPhone("");
+      const json = await res.json().catch(() => ({}));
+      // Teszt: mindig továbbengedjük a visszaigazolásra a beírt adatokkal.
+      setSubmitted(snapshot);
+      setStatus(
+        json?.message ||
+          "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem."
+      );
     } catch {
-      setError(`Váratlan hiba. Írj közvetlenül: ${SITE_EMAIL}`);
+      setSubmitted(snapshot);
+      setStatus(
+        `Teszt mód: az adatok rögzítve. Ha kell, írj közvetlenül: ${SITE_EMAIL}`
+      );
     } finally {
       setSending(false);
     }
@@ -165,9 +180,13 @@ export function QuoteRequestModal({
         <header className="quote-modal__head">
           <div>
             <p className="quote-modal__kicker">{meta.kicker}</p>
-            <h2 id={titleId}>{meta.title}</h2>
+            <h2 id={titleId}>
+              {submitted ? "Árajánlatkérés elküldve" : meta.title}
+            </h2>
             <p id={descId} className="quote-modal__blurb">
-              {meta.blurb}
+              {submitted
+                ? "Ellenőrizd a megadott elérhetőségeket."
+                : meta.blurb}
             </p>
           </div>
           <button
@@ -190,10 +209,28 @@ export function QuoteRequestModal({
           </span>
         </div>
 
-        {status ? (
+        {submitted ? (
           <div className="quote-modal__success" role="status">
             <strong>Köszönöm!</strong>
             <p>{status}</p>
+            <dl className="quote-modal__receipt">
+              <div>
+                <dt>Név</dt>
+                <dd>{submitted.name || "—"}</dd>
+              </div>
+              <div>
+                <dt>E-mail</dt>
+                <dd>{submitted.email || "—"}</dd>
+              </div>
+              <div>
+                <dt>Telefon</dt>
+                <dd>{submitted.phone || "—"}</dd>
+              </div>
+              <div className="quote-modal__receipt-full">
+                <dt>Üzenet</dt>
+                <dd>{submitted.message || "—"}</dd>
+              </div>
+            </dl>
             <button type="button" className="quote-modal__submit" onClick={onClose}>
               Bezárás
             </button>
@@ -206,8 +243,6 @@ export function QuoteRequestModal({
                 ref={firstFieldRef}
                 name="name"
                 autoComplete="name"
-                required
-                minLength={2}
                 maxLength={100}
                 value={name}
                 onChange={(e) => {
@@ -221,9 +256,9 @@ export function QuoteRequestModal({
               E-mail
               <input
                 name="email"
-                type="email"
+                type="text"
+                inputMode="email"
                 autoComplete="email"
-                required
                 maxLength={254}
                 value={email}
                 onChange={(e) => {
@@ -234,10 +269,11 @@ export function QuoteRequestModal({
               />
             </label>
             <label>
-              Telefon <span className="quote-modal__optional">(opcionális)</span>
+              Telefon
               <input
                 name="phone"
-                type="tel"
+                type="text"
+                inputMode="tel"
                 autoComplete="tel"
                 maxLength={40}
                 value={phone}
@@ -252,8 +288,6 @@ export function QuoteRequestModal({
               Üzenet
               <textarea
                 name="message"
-                required
-                minLength={10}
                 maxLength={2000}
                 rows={3}
                 value={message}
@@ -291,8 +325,7 @@ export function QuoteRequestModal({
               </button>
             </div>
             <p className="quote-modal__fine">
-              Az adatokat csak az ajánlatkéréshez használom. Válasz: 1 munkanapon
-              belül · {SITE_EMAIL}
+              Teszt: a név / e-mail / telefon nincs ellenőrizve. · {SITE_EMAIL}
             </p>
           </form>
         )}
