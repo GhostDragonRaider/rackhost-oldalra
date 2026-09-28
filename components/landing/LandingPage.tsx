@@ -999,7 +999,7 @@ export default function LandingPage() {
       <footer>
         <div className="container footer">
           <p>
-            <BrandMark className="brand footer-brand" asLink={false} /> /{" "}
+            <BrandMark className="brand footer-brand" asLink={false} variant="mark" /> /{" "}
             <Link href="/weboldal-keszites">{t.homePricing.categories[0].title}</Link>
             {" · "}
             <Link href="/arak">{t.chrome.prices}</Link>
