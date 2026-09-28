@@ -44,12 +44,9 @@ export default function BrandMark({
         ))}
       </span>
       {variant === "full" ? (
-        <>
-          <span className="ac-logo__track">
-            <span className="ac-logo__runner" />
-          </span>
-          <span className="ac-logo__status">Loading experience</span>
-        </>
+        <span className="ac-logo__track">
+          <span className="ac-logo__runner" />
+        </span>
       ) : null}
     </span>
   );
