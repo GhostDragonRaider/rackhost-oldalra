@@ -1105,21 +1105,19 @@ body.admin-active {
 }
 
 .admin-audit-run {
-  border: 0;
-  border-radius: 12px;
-  padding: 12px 18px;
-  min-height: 44px;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-  background: #3f5f86;
-  color: #fff;
+  /* styled via .anticode-cta */
   white-space: nowrap;
 }
 
 .admin-audit-run:disabled {
   opacity: 0.7;
   cursor: wait;
+  transform: none !important;
+  filter: none !important;
+}
+
+.admin-audit-run:disabled::before {
+  display: none;
 }
 
 .admin-audit-check {
@@ -1238,25 +1236,161 @@ body.admin-active {
 }
 
 .admin-report-offer-cta {
+  /* styled via .anticode-cta */
+  text-decoration: none;
+}
+
+/* —— Premium AntiCode CTA (audit start + quote) —— */
+.anticode-cta {
+  --cta-blue-light: #5e86b2;
+  --cta-blue: #416b9b;
+  --cta-blue-dark: #31557f;
+
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 12px 18px;
-  border: 0;
-  border-radius: 12px;
-  background: #3f5f86;
+  gap: 11px;
+  min-height: 50px;
+  padding: 0 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    var(--cta-blue-light) 0%,
+    var(--cta-blue) 48%,
+    var(--cta-blue-dark) 100%
+  );
   color: #fff;
   font: inherit;
-  font-weight: 800;
-  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   cursor: pointer;
+  box-shadow:
+    0 10px 24px rgba(49, 85, 127, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.3s ease;
 }
 
-.admin-report-offer-cta:hover,
-.admin-report-offer-cta:focus-visible {
-  background: #2a4a6e;
+.anticode-cta::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -85px;
+  width: 48px;
+  height: 220%;
+  pointer-events: none;
+  transform: rotate(24deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.48),
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  filter: blur(0.3px);
+  transition: left 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.anticode-cta::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 9%;
+  right: 9%;
+  height: 42%;
+  pointer-events: none;
+  border-radius: 13px 13px 50% 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+}
+
+.anticode-cta .cta-label {
+  position: relative;
+  z-index: 2;
+}
+
+.anticode-cta .cta-arrow {
+  position: relative;
+  z-index: 2;
+  width: 17px;
+  height: 1.5px;
+  flex-shrink: 0;
+  border-radius: 100px;
+  background: #fff;
+  transition:
+    width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.anticode-cta .cta-arrow::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid #fff;
+  border-right: 1.5px solid #fff;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.anticode-cta:hover:not(:disabled) {
+  transform: translateY(-3px);
+  filter: brightness(1.035);
+  box-shadow:
+    0 17px 36px rgba(49, 85, 127, 0.27),
+    0 4px 10px rgba(49, 85, 127, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.anticode-cta:hover:not(:disabled)::before {
+  left: calc(100% + 45px);
+}
+
+.anticode-cta:hover:not(:disabled) .cta-arrow {
+  width: 29px;
+  transform: translateX(2px);
+}
+
+.anticode-cta:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.985);
+  box-shadow:
+    0 8px 18px rgba(49, 85, 127, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.anticode-cta:focus-visible {
   outline: none;
+  box-shadow:
+    0 0 0 3px rgba(82, 123, 168, 0.2),
+    0 0 0 5px rgba(82, 123, 168, 0.1),
+    0 17px 36px rgba(49, 85, 127, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anticode-cta,
+  .anticode-cta::before,
+  .anticode-cta .cta-arrow {
+    transition: none;
+  }
+
+  .anticode-cta:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .anticode-cta:hover:not(:disabled)::before {
+    left: -85px;
+  }
 }
 
 /* —— Premium quote request modal —— */

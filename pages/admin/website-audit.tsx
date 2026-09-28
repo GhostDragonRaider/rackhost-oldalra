@@ -455,11 +455,14 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             />
             <button
               type="submit"
-              className="admin-audit-run"
+              className="anticode-cta admin-audit-run"
               disabled={running}
               aria-busy={running}
             >
-              {running ? "Ellenőrzés…" : "Ellenőrzés indítása"}
+              <span className="cta-label">
+                {running ? "Ellenőrzés…" : "Ellenőrzés indítása"}
+              </span>
+              <span className="cta-arrow" aria-hidden="true" />
             </button>
           </div>
           <p id="audit-url-hint" className="admin-muted">
@@ -552,13 +555,14 @@ function WebsiteAuditWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   </button>
                   <button
                     type="button"
-                    className="admin-report-offer-cta"
+                    className="anticode-cta admin-report-offer-cta"
                     onClick={() => {
                       bumpIdle();
                       setQuoteOpen(true);
                     }}
                   >
-                    Árajánlatot kérek
+                    <span className="cta-label">Árajánlatot kérek</span>
+                    <span className="cta-arrow" aria-hidden="true" />
                   </button>
                 </div>
               </div>
