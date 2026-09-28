@@ -1,13 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { SITE_EMAIL } from "../../lib/site";
+import { saveQuoteRequest } from "../../lib/quotes-store";
 
 type Body = {
   name?: string;
   email?: string;
+  phone?: string;
   service?: string;
   message?: string;
   website?: string; // honeypot
+  source?: string;
+  auditId?: string;
+  websiteUrl?: string;
+  overallScore?: number | null;
+  overallLabel?: string;
 };
 
 const SERVICES = new Set([
@@ -21,6 +28,31 @@ const SERVICES = new Set([
 
 function bad(res: NextApiResponse, status: number, error: string) {
   return res.status(status).json({ ok: false, error });
+}
+
+function persistQuote(
+  body: Body,
+  fields: {
+    name: string;
+    email: string;
+    phone: string;
+    service: string;
+    message: string;
+  }
+) {
+  try {
+    saveQuoteRequest({
+      ...fields,
+      source: body.source,
+      auditId: body.auditId || null,
+      websiteUrl: body.websiteUrl || null,
+      overallScore:
+        typeof body.overallScore === "number" ? body.overallScore : null,
+      overallLabel: body.overallLabel || null,
+    });
+  } catch (err) {
+    console.error("Quote store error:", err);
+  }
 }
 
 export default async function handler(
@@ -41,6 +73,7 @@ export default async function handler(
 
   const name = String(body.name || "").trim();
   const email = String(body.email || "").trim();
+  const phone = String(body.phone || "").trim();
   const service = String(body.service || "").trim();
   const message = String(body.message || "").trim();
 
@@ -50,31 +83,44 @@ export default async function handler(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     return bad(res, 400, "Érvényes e-mail címet adj meg.");
   }
-  if (!SERVICES.has(service)) {
-    return bad(res, 400, "Válassz egy szolgáltatási irányt.");
+  if (phone && (phone.length < 6 || phone.length > 40)) {
+    return bad(res, 400, "A telefonszám túl rövid vagy túl hosszú.");
   }
   if (message.length < 10 || message.length > 2000) {
     return bad(res, 400, "Írj röviden a projektről (legalább 10 karakter).");
   }
+  if (!SERVICES.has(service)) {
+    return bad(res, 400, "Válassz egy szolgáltatási irányt.");
+  }
+
+  const fields = { name, email, phone, service, message };
 
   const smtpUser = process.env.SMTP_USER || SITE_EMAIL;
   const smtpPass = process.env.SMTP_PASS;
   if (!smtpPass) {
-    return bad(
-      res,
-      503,
-      "Az űrlap küldése átmenetileg nem elérhető. Írj közvetlenül a info@anticode.hu címre."
-    );
+    persistQuote(body, fields);
+    return res.status(200).json({
+      ok: true,
+      message:
+        "Megkaptam az üzeneted – 1 munkanapon belül jelentkezem.",
+    });
   }
 
   const text = [
+    body.source ? `Forrás: ${body.source}` : null,
+    body.auditId ? `Audit ID: ${body.auditId}` : null,
+    body.websiteUrl ? `Weboldal: ${body.websiteUrl}` : null,
+    body.overallScore != null ? `Pontszám: ${body.overallScore}/100` : null,
     `Név: ${name}`,
     `E-mail: ${email}`,
+    `Telefon: ${phone || "—"}`,
     `Szolgáltatás: ${service}`,
     "",
     "Projekt:",
     message,
-  ].join("\n");
+  ]
+    .filter((line) => line != null)
+    .join("\n");
 
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.rackhost.hu",
@@ -91,9 +137,11 @@ export default async function handler(
       from: process.env.SMTP_FROM || `AntiCode <${SITE_EMAIL}>`,
       to: process.env.CONTACT_TO || SITE_EMAIL,
       replyTo: email,
-      subject: `AntiCode — Projektindítás — ${service}`,
+      subject: `AntiCode — Árajánlat — ${service}`,
       text,
     });
+
+    persistQuote(body, fields);
 
     return res.status(200).json({
       ok: true,
@@ -101,6 +149,7 @@ export default async function handler(
     });
   } catch (err) {
     console.error("Contact SMTP error:", err);
+    persistQuote(body, fields);
     return bad(
       res,
       502,
