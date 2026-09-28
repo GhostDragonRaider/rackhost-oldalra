@@ -1381,3 +1381,262 @@ body.landing-active .lang-btn svg{
     flex: 0 0 auto;
   }
 }
+
+/* =============================================
+   AntiCode signature logo (nav / brand mark)
+   Scaled from Signature Loader demo to original brand size
+   ============================================= */
+
+body.landing-active .brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: normal;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--text);
+}
+
+body.landing-active .brand:hover {
+  transform: translateY(-2px);
+  filter: none;
+}
+
+body.landing-active .brand .cap,
+body.landing-active .brand .cap.accent {
+  /* legacy selectors — mark now uses .ac-logo__letter */
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+
+.ac-logo {
+  --ac-green: #2ac66d;
+  --ac-blue: #527ba8;
+  --ac-border: rgba(45, 70, 105, 0.13);
+  --ac-muted: #718096;
+
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+[data-theme="dark"] .ac-logo {
+  --ac-border: rgba(170, 195, 225, 0.1);
+  --ac-muted: #879ab4;
+}
+
+.ac-logo__word {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  font-family: Georgia, "Times New Roman", serif;
+  /* ~original brand optical height (was 1.18rem base + 1.55em caps) */
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--text);
+}
+
+.ac-logo__letter {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(10px) scale(0.97);
+  animation: acLetterReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.ac-logo__letter:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.ac-logo__letter:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.ac-logo__letter:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.ac-logo__letter:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.ac-logo__letter:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.ac-logo__letter:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.ac-logo__letter:nth-child(7) {
+  animation-delay: 0.35s;
+}
+.ac-logo__letter:nth-child(8) {
+  animation-delay: 0.4s;
+}
+
+.ac-logo__letter--green {
+  color: var(--ac-green);
+  text-shadow: 0 0 18px rgba(42, 198, 109, 0.18);
+  animation:
+    acLetterReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards,
+    acGreenGlow 3s ease-in-out 1.3s infinite;
+}
+
+@keyframes acLetterReveal {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(10px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes acGreenGlow {
+  0%,
+  100% {
+    text-shadow: 0 0 10px rgba(42, 198, 109, 0.1);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(42, 198, 109, 0.32);
+  }
+}
+
+.ac-logo__track {
+  position: relative;
+  z-index: 2;
+  width: 5.4em;
+  height: 2px;
+  margin: 0.45em auto 0;
+  overflow: hidden;
+  border-radius: 100px;
+  background: var(--ac-border);
+  opacity: 0;
+  animation: acShowTrack 0.5s ease 1s forwards;
+}
+
+@keyframes acShowTrack {
+  to {
+    opacity: 1;
+  }
+}
+
+.ac-logo__runner {
+  position: absolute;
+  top: 0;
+  width: 38%;
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ac-blue),
+    var(--ac-green),
+    transparent
+  );
+  box-shadow: 0 0 10px rgba(42, 198, 109, 0.25);
+  animation: acTravel 3.2s cubic-bezier(0.65, 0, 0.35, 1) 1.15s infinite
+    alternate;
+}
+
+@keyframes acTravel {
+  from {
+    left: -38%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+.ac-logo__status {
+  position: relative;
+  z-index: 2;
+  margin-top: 0.35em;
+  color: var(--ac-muted);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  animation: acStatusReveal 0.6s ease 1.1s forwards;
+}
+
+@keyframes acStatusReveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 0.75;
+    transform: translateY(0);
+  }
+}
+
+/* Footer: letters only, no loader chrome */
+.ac-logo--mark .ac-logo__word {
+  font-size: 1em;
+}
+
+.footer-brand {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.footer-brand:hover {
+  transform: none;
+  filter: none;
+}
+
+.footer-brand .ac-logo__letter--green {
+  color: #2ac66d;
+}
+
+@media (max-width: 850px) {
+  .ac-logo__word {
+    font-size: clamp(1.25rem, 4.2vw, 1.55rem);
+  }
+
+  .nav {
+    height: auto;
+    min-height: 68px;
+    padding: 8px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-logo__letter {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    animation: none;
+  }
+
+  .ac-logo__track,
+  .ac-logo__status {
+    opacity: 1;
+    animation: none;
+  }
+
+  .ac-logo__runner {
+    left: 31%;
+    animation: none;
+  }
+
+  .ac-logo__letter--green {
+    animation: none;
+  }
+}

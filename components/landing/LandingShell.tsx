@@ -177,7 +177,7 @@ export default function LandingShell({
       <footer>
         <div className="container footer">
           <p>
-            <BrandMark className="brand footer-brand" asLink={false} /> /{" "}
+            <BrandMark className="brand footer-brand" asLink={false} variant="mark" /> /{" "}
             {t.chrome.footerTag}
           </p>
           <p>
