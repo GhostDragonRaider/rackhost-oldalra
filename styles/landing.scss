@@ -1417,7 +1417,6 @@ body.landing-active .brand .cap.accent {
   --ac-green: #2ac66d;
   --ac-blue: #527ba8;
   --ac-border: rgba(45, 70, 105, 0.13);
-  --ac-muted: #718096;
 
   display: inline-flex;
   flex-direction: column;
@@ -1428,7 +1427,6 @@ body.landing-active .brand .cap.accent {
 
 [data-theme="dark"] .ac-logo {
   --ac-border: rgba(170, 195, 225, 0.1);
-  --ac-muted: #879ab4;
 }
 
 .ac-logo__word {
