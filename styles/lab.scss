@@ -1,4 +1,4 @@
-/* AntiCode Lab design tokens + shell — premium SaaS, controlled glass */
+/* Irányítópult (ex AntiCode Lab) design tokens + shell — premium SaaS, controlled glass */
 
 :root {
   /* Primitive greens */
@@ -164,6 +164,21 @@
   color: var(--lab-text-secondary);
   font: inherit;
   cursor: pointer;
+}
+
+.lab-cmd-trigger--icon {
+  width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  padding: 10px;
+}
+
+.lab-cmd-trigger--icon:hover,
+.lab-cmd-trigger--icon:focus-visible {
+  color: var(--lab-text-primary);
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.08);
+  outline: none;
 }
 
 .lab-cmd-trigger kbd {
@@ -569,6 +584,122 @@
   border: 1px solid var(--lab-border-subtle);
   background: var(--lab-surface-glass);
   backdrop-filter: blur(18px);
+}
+
+.lab-forms__aside-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: var(--lab-space-4);
+}
+
+.lab-forms__aside-head h2,
+.lab-forms__aside-head h3 {
+  margin: 0;
+}
+
+.lab-forms__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.lab-forms__item {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--lab-radius-md);
+  border: 1px solid var(--lab-border-default);
+  background: var(--lab-bg-secondary);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lab-forms__item strong {
+  font-size: 0.9rem;
+}
+
+.lab-forms__item span {
+  font-size: 0.75rem;
+  color: var(--lab-text-muted);
+}
+
+.lab-forms__item.is-active,
+.lab-forms__item:hover,
+.lab-forms__item:focus-visible {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.08);
+  outline: none;
+}
+
+.lab-forms__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lab-space-4);
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--lab-space-4);
+}
+
+.lab-forms__head h2 {
+  margin: 0;
+}
+
+.lab-ghost.is-active {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.lab-forms__fields {
+  display: grid;
+  gap: var(--lab-space-4);
+}
+
+.lab-forms__field-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  padding: 14px;
+  border-radius: var(--lab-radius-md);
+  border: 1px solid var(--lab-border-subtle);
+  background: var(--lab-bg-secondary);
+}
+
+.lab-forms__span {
+  grid-column: 1 / -1;
+}
+
+.lab-forms__check {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.lab-forms__check input {
+  width: auto;
+  margin: 0;
+}
+
+.lab-forms__field-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lab-forms__answers {
+  display: block;
+  max-width: 42ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
 }
 
 @media (max-width: 960px) {

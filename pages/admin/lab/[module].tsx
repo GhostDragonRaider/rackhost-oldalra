@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LabShell, { ProvenanceBadge } from "../../../components/admin/lab/LabShell";
+import FormsFlowsPanel from "../../../components/admin/lab/FormsFlowsPanel";
 import { getLabModule } from "../../../lib/lab/registry";
 import type { LabActionItem } from "../../../lib/lab/types";
 import type { DataProvenance } from "../../../lib/lab/integrity";
@@ -122,6 +123,17 @@ export default function LabModulePage() {
 
   useEffect(() => {
     if (!moduleParam) return;
+    if (moduleParam === "website-audit") {
+      void router.replace("/admin/website-audit");
+      return;
+    }
+    if (moduleParam === "monitor") {
+      void router.replace("/admin");
+    }
+  }, [moduleParam, router]);
+
+  useEffect(() => {
+    if (!moduleParam) return;
     if (moduleParam === "action-center") {
       void loadSection("actions").then((j) => setActions(j.items || []));
     }
@@ -208,6 +220,10 @@ export default function LabModulePage() {
           return <Unimplemented name={meta.nameHu} />;
         }
 
+        if (meta.id === "forms-flows") {
+          return <FormsFlowsPanel bumpIdle={bumpIdle} />;
+        }
+
         if (meta.id === "action-center") {
           return (
             <div className="lab-card lab-card--wide">
@@ -259,25 +275,10 @@ export default function LabModulePage() {
           );
         }
 
-        if (meta.id === "website-audit") {
+        if (meta.id === "website-audit" || meta.id === "monitor") {
           return (
             <div className="lab-card lab-card--wide">
-              <h2>Website Audit Engine</h2>
-              <p className="lab-muted">
-                A meglévő SSRF-védett audit motor a Labból érhető el. Új publikus
-                UI nincs — a futó eszköz: Admin → Weboldal-ellenőrző.
-              </p>
-              <Link
-                href="/admin/website-audit"
-                className="lab-btn lab-btn--primary"
-                onClick={() => bumpIdle()}
-              >
-                Audit megnyitása
-              </Link>
-              <p className="lab-muted" style={{ marginTop: 16 }}>
-                Pluginok (meglévő checks): availability, SEO, security,
-                accessibility, performance, content, best-practices.
-              </p>
+              <p className="lab-muted">Átirányítás…</p>
             </div>
           );
         }

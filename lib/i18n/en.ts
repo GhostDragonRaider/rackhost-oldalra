@@ -183,9 +183,9 @@ export const en: Dictionary = {
   },
   references: {
     eyebrow: "My work",
-    h2: "Mini case studies with live demos.",
+    h2: "Portfolio demos that show how I work.",
     lead:
-      "Problem → design decision → solution → live demo. Five own examples: corporate, booking, catalogue, cockpit, and picture cards.",
+      "Five own demos: corporate site, booking system, car catalogue, virtual cockpit, and picture cards — each openable as a live preview.",
     listAria: "Reference projects",
     projects: [
       {

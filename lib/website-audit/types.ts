@@ -6,12 +6,13 @@ export type AuditSeverity =
   | "high"
   | "critical";
 
-/** Outcome of a single check — independent from severity weighting. */
 export type AuditCheckStatus =
   | "pass"
   | "fail"
+  | "warning"
   | "not_available"
-  | "not_applicable";
+  | "not_applicable"
+  | "unknown";
 
 export type AuditCategoryId =
   | "availability"
@@ -20,7 +21,8 @@ export type AuditCategoryId =
   | "content"
   | "performance"
   | "accessibility"
-  | "best_practices";
+  | "best_practices"
+  | "responsive";
 
 export type AuditFindingSource =
   | "pagespeed_api"
@@ -30,16 +32,21 @@ export type AuditFindingSource =
   | "tls"
   | "robots"
   | "sitemap"
+  | "responsive_engine"
   | null;
 
 export type AuditFinding = {
   id: string;
+  /** Spec alias — same as id (check identifier). Set by finding(). */
+  checkId?: string;
   category: AuditCategoryId;
   severity: AuditSeverity;
   status: AuditCheckStatus;
   title: string;
   /** What we found / why it matters */
   detail: string;
+  /** Spec alias for detail (layperson description). Set by finding(). */
+  description?: string;
   /** Concrete fix suggestion */
   recommendation?: string | null;
   /** Detected value shown in UI */
@@ -47,17 +54,27 @@ export type AuditFinding = {
   evidence?: string | null;
   technicalDetails?: string | null;
   source?: AuditFindingSource;
+  /** How reliable the measurement is for this check. */
+  reliability?: "measured" | "heuristic" | "unavailable" | "unknown";
   /** Optional penalty override (absolute points deducted in category) */
   scoreImpact?: number | null;
+  measuredAt?: string | null;
+  /**
+   * Security exposure subgroup (only for category === "security").
+   * breach_risk = can enable real compromise; hardening = the rest.
+   */
+  securityGroup?: "breach_risk" | "hardening" | null;
 };
 
 export type AuditCategoryScore = {
   id: AuditCategoryId;
   label: string;
-  score: number;
+  /** null when category has no measurable checks (never treat as 100). */
+  score: number | null;
   maxScore: number;
   findingCount: number;
-  status: "good" | "ok" | "warn" | "bad";
+  status: "good" | "ok" | "warn" | "bad" | "unavailable";
+  measurable: boolean;
 };
 
 export type AuditProgressStep = {
@@ -138,7 +155,7 @@ export type WebsiteAuditRecord = {
   inputUrl: string;
   normalizedUrl: string;
   status: "queued" | "running" | "completed" | "failed";
-  overallScore: number;
+  overallScore: number | null;
   overallLabel: string;
   summary: string;
   error: string | null;
@@ -149,6 +166,15 @@ export type WebsiteAuditRecord = {
   technical: AuditTechnical;
   progress: AuditProgressStep[];
   beta: true;
+  /** Short-cache reuse marker for UI */
+  fromCache?: boolean;
+  cachedFromId?: string | null;
+  checkedAt?: string | null;
+  /** How overall score was derived (shown as „Hogyan számoltuk?”). */
+  scoringExplanation?: string | null;
+  responsiveMatrix?: import("./responsive-engine").ResponsiveMatrix | null;
+  /** Public security exposure disclaimer (always present when security ran). */
+  securityExposureNote?: string | null;
 };
 
 export type WebsiteAuditSummary = {
@@ -157,19 +183,20 @@ export type WebsiteAuditSummary = {
   inputUrl: string;
   normalizedUrl: string;
   status: WebsiteAuditRecord["status"];
-  overallScore: number;
+  overallScore: number | null;
   summary: string;
   error: string | null;
 };
 
 export const CATEGORY_LABELS: Record<AuditCategoryId, string> = {
-  availability: "Elérhetőség",
-  security: "Biztonság",
+  availability: "Technikai állapot",
+  security: "Biztonsági kitettség",
   seo: "SEO",
   content: "Tartalom",
   performance: "Teljesítmény",
   accessibility: "Akadálymentesség",
   best_practices: "Best practices",
+  responsive: "Responsive",
 };
 
 export const SEVERITY_LABELS: Record<AuditSeverity, string> = {
@@ -183,10 +210,29 @@ export const SEVERITY_LABELS: Record<AuditSeverity, string> = {
 
 export const CATEGORY_ORDER: AuditCategoryId[] = [
   "availability",
-  "security",
   "seo",
+  "security",
   "content",
+  "responsive",
   "performance",
   "accessibility",
   "best_practices",
 ];
+
+/** Public result page primary categories (overall score uses these). */
+export const PUBLIC_CATEGORY_IDS = [
+  "availability",
+  "seo",
+  "security",
+  "content",
+  "responsive",
+] as const satisfies readonly AuditCategoryId[];
+
+export const CHECK_STATUS_LABELS: Record<AuditCheckStatus, string> = {
+  pass: "PASS",
+  fail: "FAIL",
+  warning: "WARNING",
+  not_available: "UNAVAILABLE",
+  not_applicable: "N/A",
+  unknown: "UNKNOWN",
+};

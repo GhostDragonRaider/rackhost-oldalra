@@ -162,7 +162,7 @@ ${styleNodes}
         <h2>Önéletrajzom elküldése</h2>
         <p className="admin-muted">
           Önéletrajz kezelése, letöltése és álláspályázatok előkészítése.{" "}
-          <Link href="/admin/lab">AntiCode Lab →</Link>
+          <Link href="/admin/lab">Irányítópult →</Link>
         </p>
       </div>
 

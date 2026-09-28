@@ -183,9 +183,9 @@ export const hu: Dictionary = {
   },
   references: {
     eyebrow: "Munkáim",
-    h2: "Mini esettanulmányok élő demóval.",
+    h2: "Portfólió demók, amelyek megmutatják, hogyan dolgozom.",
     lead:
-      "Probléma → tervezési döntés → megoldás → élő demó. Öt saját példa: corporate, foglaló, katalógus, cockpit és képeskártyák.",
+      "Öt saját demó: corporate oldal, foglaló rendszer, autókatalógus, virtual cockpit és képeskártyák — mindegyik élő előnézetben megnyitható.",
     listAria: "Referencia projektek",
     projects: [
       {

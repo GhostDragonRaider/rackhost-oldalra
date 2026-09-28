@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-export type AdminNavId = "monitor" | "audit" | "cv" | "lab";
+export type AdminNavId = "lab" | "quotes" | "cv" | "outreach";
 
 type AdminShellProps = {
   active: AdminNavId;
@@ -27,24 +27,29 @@ const GLASS_SELECTOR = ".admin-nav-link";
 
 const NAV: Array<{ id: AdminNavId; href: string; label: string; icon: string }> =
   [
-    { id: "monitor", href: "/admin", label: "Monitor", icon: "▣" },
     {
       id: "lab",
       href: "/admin/lab",
-      label: "AntiCode Lab",
+      label: "Irányítópult",
       icon: "⌬",
     },
     {
-      id: "audit",
-      href: "/admin/website-audit",
-      label: "Weboldal-ellenőrző",
-      icon: "⌀",
+      id: "quotes",
+      href: "/admin/quotes",
+      label: "Árajánlatok",
+      icon: "✉",
     },
     {
       id: "cv",
       href: "/admin/cv",
       label: "Önéletrajzom elküldése",
       icon: "▤",
+    },
+    {
+      id: "outreach",
+      href: "/admin/outreach",
+      label: "Ügyfélszerzés",
+      icon: "◈",
     },
   ];
 
@@ -291,7 +296,15 @@ export default function AdminShell({
             </Link>
           </form>
         ) : (
-          <div className={`admin-dash${active === "lab" ? " admin-dash--lab" : ""}`}>
+          <div
+            className={`admin-dash${
+              active === "lab" ||
+              active === "quotes" ||
+              active === "outreach"
+                ? " admin-dash--lab"
+                : ""
+            }`}
+          >
             <header className="admin-top">
               <div>
                 <h1>AntiCode Admin</h1>
