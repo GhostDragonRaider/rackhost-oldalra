@@ -384,6 +384,7 @@ export default function LandingPage() {
       service: String(formData.get("service") || "").trim(),
       message: String(formData.get("message") || "").trim(),
       website: String(formData.get("website") || ""),
+      source: "landing",
     };
 
     setFormSending(true);
@@ -515,7 +516,7 @@ export default function LandingPage() {
         className={`mobile-nav${menuOpen ? " open" : ""}`}
         id="mobile-nav"
         aria-label={t.chrome.mobileNavAria}
-        aria-hidden={!menuOpen}
+        {...(!menuOpen ? { inert: true } : {})}
       >
         {t.nav.map((link) => (
           <a
@@ -561,7 +562,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mock">
                   <small>{card.kicker}</small>
-                  <h3>{card.title}</h3>
+                  <p className="mock-title">{card.title}</p>
                   <div className="mock-grid">
                     <div className="mock-card mock-card-primary">
                       <span className="mock-card-label">{card.primary.label}</span>
@@ -724,6 +725,7 @@ export default function LandingPage() {
                         className="showcase-preview-img"
                         width={960}
                         height={600}
+                        sizes="(max-width: 900px) 100vw, 960px"
                         loading="lazy"
                         decoding="async"
                       />
@@ -999,7 +1001,7 @@ export default function LandingPage() {
       <footer>
         <div className="container footer">
           <p>
-            <BrandMark className="brand footer-brand" asLink={false} /> /{" "}
+            <BrandMark className="brand footer-brand" asLink={false} variant="mark" /> /{" "}
             <Link href="/weboldal-keszites">{t.homePricing.categories[0].title}</Link>
             {" · "}
             <Link href="/arak">{t.chrome.prices}</Link>

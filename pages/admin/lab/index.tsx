@@ -191,8 +191,8 @@ export default function LabOverviewPage() {
             )}
             <ProvenanceBadge provenance="real" />
             <div style={{ marginTop: 12 }}>
-              <Link href="/admin/lab/website-audit" className="lab-ghost">
-                Website Audit modul
+              <Link href="/admin/website-audit" className="lab-ghost">
+                Weboldal-ellenőrző
               </Link>
             </div>
           </section>

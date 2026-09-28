@@ -38,10 +38,14 @@ describe("lab integrity", () => {
 });
 
 describe("lab registry", () => {
-  it("has overview and settings always present", () => {
+  it("has overview, monitor and settings always present", () => {
     assert.ok(getLabModule("overview"));
+    assert.ok(getLabModule("monitor"));
     assert.ok(getLabModule("settings"));
     assert.ok(getLabModule("vps-monitor"));
+    assert.ok(getLabModule("website-audit"));
+    assert.equal(getLabModule("website-audit")?.href, "/admin/website-audit");
+    assert.equal(getLabModule("monitor")?.href, "/admin");
     assert.ok(LAB_MODULES.length >= 10);
   });
 
@@ -54,6 +58,7 @@ describe("lab registry", () => {
 
   it("groups categories without dumping all into admin root nav", () => {
     const groups = listLabModulesByCategory();
+    assert.ok(groups.some((g) => g.category === "monitor"));
     assert.ok(groups.some((g) => g.category === "seo-lab"));
     assert.ok(groups.every((g) => g.modules.length > 0));
   });
@@ -71,6 +76,12 @@ describe("lab flags kill switch", () => {
     const overview = getLabModule("overview");
     assert.ok(overview);
     assert.equal(resolveModuleFlags(overview).enabled, true);
+    const monitor = getLabModule("monitor");
+    assert.ok(monitor);
+    assert.equal(resolveModuleFlags(monitor).enabled, true);
+    const audit = getLabModule("website-audit");
+    assert.ok(audit);
+    assert.equal(resolveModuleFlags(audit).enabled, true);
     setLabKillSwitch(before);
   });
 });
