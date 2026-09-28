@@ -22,9 +22,9 @@ export const SECTION_HELP = {
 
 export const CATEGORY_HELP: Record<AuditCategoryId, string> = {
   availability:
-    "Elérhetőség: az oldal egyáltalán megnyílik-e a böngészőben. HTTP hibák (pl. 404, 500), túl sok átirányítás vagy hálózati gond ide tartozik. Ha ez gyenge, a többi ellenőrzés is kevésbé releváns.",
+    "Technikai állapot: az oldal megnyílik-e, HTTP státusz, átirányítások, HTTPS/TLS alapok, válaszidő. Ha ez gyenge, a többi ellenőrzés is kevésbé releváns.",
   security:
-    "Biztonság: HTTPS, tanúsítvány, biztonsági válaszfejlécek és cookie beállítások. Célja, hogy a látogatók kapcsolata védettebb legyen — ez nem teljes biztonsági audit vagy „feltörhetetlen” minősítés.",
+    "Biztonsági kitettség két csoportban: (1) Aktív kockázat — kívülről látható hiányosságok, amelyek feltörhetővé tehetik az oldalt (pl. nincs HTTPS, hibás TLS, mixed content, lopható cookie); (2) Egyéb jelek / hardening — hiányzó védőfejlécek, technológia-kiszivárgás. Nem penetrációs teszt.",
   seo:
     "SEO (keresőoptimalizálás): title, leírás, canonical, indexelhetőség, közösségi megosztás jelek. Segít, hogy a keresők és a megosztások érthetően mutassák az oldalt.",
   content:
@@ -35,6 +35,8 @@ export const CATEGORY_HELP: Record<AuditCategoryId, string> = {
     "Akadálymentesség: mennyire használható az oldal pl. képernyőolvasóval vagy nagyítással (nyelv, képleírások, űrlap címkék). Automatikus ellenőrzés — nem egyenlő hivatalos WCAG tanúsítvánnyal.",
   best_practices:
     "Best practices: általános, jól bevált webtechnikai szokások (HTTPS, robots.txt, favicon, viewport stb.). Nem „hibák listája”, inkább ajánlott alapok.",
+  responsive:
+    "Responsive: reprezentatív viewport-sorozaton (320–2560 px) statikus HTML/CSS jelek. Screenshot/layout overflow böngésző nélkül UNAVAILABLE — soha nem hamis PASS.",
 };
 
 export const SEVERITY_HELP: Record<AuditSeverity | "warning", string> = {

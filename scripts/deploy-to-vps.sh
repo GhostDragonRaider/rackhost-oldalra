@@ -6,13 +6,27 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HOST="${VPS_HOST:-anticode-vps}"
 REMOTE_DIR="${REMOTE_DIR:-/var/www/anticode}"
 APP_PORT="${APP_PORT:-3000}"
+DEPLOY_COMMIT="${DEPLOY_COMMIT:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)}"
+
+# Prefer SSHPASS (sshpass) when set — avoids interactive password prompts in CI/agents.
+if [[ -n "${SSHPASS:-}" ]]; then
+  if ! command -v sshpass >/dev/null 2>&1; then
+    echo "SSHPASS is set but sshpass is not installed" >&2
+    exit 1
+  fi
+  SSH=(sshpass -e ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=accept-new)
+  RSYNC_RSH=${RSYNC_RSH:-"sshpass -e ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=accept-new"}
+  export RSYNC_RSH
+else
+  SSH=(ssh)
+fi
 
 echo ">>> Local build check"
 cd "$ROOT"
 npm run build
 
 echo ">>> Ensure remote dirs"
-ssh "$HOST" "mkdir -p '$REMOTE_DIR' /etc/nginx/sites-available /etc/nginx/sites-enabled"
+"${SSH[@]}" "$HOST" "mkdir -p '$REMOTE_DIR' /etc/nginx/sites-available /etc/nginx/sites-enabled /var/backups/anticode"
 
 echo ">>> Rsync app (no node_modules / .git / out)"
 rsync -az --delete \
@@ -29,9 +43,12 @@ rsync -az --delete \
   --exclude '*.log' \
   "$ROOT/" "$HOST:$REMOTE_DIR/"
 
+echo ">>> Record deploy commit marker"
+"${SSH[@]}" "$HOST" "printf '%s\n' '$DEPLOY_COMMIT' > '$REMOTE_DIR/.deploy-commit'"
+
 echo ">>> Remote install + build + pm2"
 # Quoted heredoc: nginx $host / $scheme must not expand locally under set -u
-ssh "$HOST" "REMOTE_DIR='$REMOTE_DIR' APP_PORT='$APP_PORT' bash -s" <<'REMOTE'
+"${SSH[@]}" "$HOST" "REMOTE_DIR='$REMOTE_DIR' APP_PORT='$APP_PORT' bash -s" <<'REMOTE'
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 cd "$REMOTE_DIR"

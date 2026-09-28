@@ -41,6 +41,7 @@ export default function SeoHead({
 
   return (
     <Head>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>{resolvedTitle}</title>
       <meta name="description" content={resolvedDescription} />
       <meta name="robots" content={robots} />

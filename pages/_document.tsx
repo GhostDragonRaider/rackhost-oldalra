@@ -18,6 +18,7 @@ export default function Document() {
               "html,body{background-image:none!important}",
               'html:not([data-theme="dark"]),html:not([data-theme="dark"]) body{background-color:#f5f8fc}',
               'html[data-theme="dark"],html[data-theme="dark"] body{background-color:#081426}',
+              "img{max-width:100%;height:auto}",
               "body.landing-active .nav .links a{color:#52637a}",
               'html[data-theme="dark"] body.landing-active .nav .links a{color:#b6c6dd}',
             ].join(""),

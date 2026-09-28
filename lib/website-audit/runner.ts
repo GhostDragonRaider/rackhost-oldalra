@@ -9,6 +9,7 @@ import {
   getAuditById,
   newAuditId,
   saveAudit,
+  initialAuditProgress,
 } from "./store";
 import {
   computeCategoryScores,
@@ -17,6 +18,7 @@ import {
   prioritizeFixes,
   scoreBandLabel,
   summarizeFindings,
+  SCORING_EXPLANATION_HU,
 } from "./score";
 import { getCachedAuditId, setCachedAuditId } from "./rate-limit";
 import { parseHtmlDocument } from "./html";
@@ -33,6 +35,10 @@ import {
   finding,
   robotsTxtLikelyBlocks,
 } from "./checks";
+import {
+  buildResponsiveMatrix,
+  checkResponsive,
+} from "./responsive-engine";
 import { fetchPagespeed } from "./pagespeed";
 import type {
   AuditFinding,
@@ -320,27 +326,13 @@ function classifySitemap(
   };
 }
 
-function initialProgress(): AuditProgressStep[] {
-  return [
-    { id: "validate", label: "URL ellenőrzése", status: "pending" },
-    { id: "fetch", label: "Weboldal lekérése", status: "pending" },
-    { id: "tls", label: "Biztonság ellenőrzése (TLS)", status: "pending" },
-    { id: "headers", label: "Biztonsági headerek", status: "pending" },
-    { id: "html", label: "SEO és tartalom elemzése", status: "pending" },
-    { id: "a11y", label: "Akadálymentesség", status: "pending" },
-    { id: "robots", label: "robots.txt / sitemap", status: "pending" },
-    { id: "pagespeed", label: "PageSpeed", status: "pending" },
-    { id: "score", label: "Pontszámítás", status: "pending" },
-  ];
-}
-
 function finalize(
   record: WebsiteAuditRecord,
   findings: AuditFinding[],
   progress: AuditProgressStep[]
 ): WebsiteAuditRecord {
   const categories = computeCategoryScores(findings);
-  const overall = computeOverallScore(categories);
+  const overall = computeOverallScore(categories, { publicOnly: true });
   record.categories = categories;
   record.findings = findings;
   record.priorityFixes = prioritizeFixes(findings).slice(0, 12);
@@ -350,26 +342,33 @@ function finalize(
   record.summary = summarizeFindings(overall, findings);
   record.progress = progress;
   record.updatedAt = new Date().toISOString();
+  record.checkedAt = record.updatedAt;
+  record.scoringExplanation = SCORING_EXPLANATION_HU;
+  record.securityExposureNote =
+    "Ez egy automatizált, nem intruzív külső biztonsági ellenőrzés. Az eredmény nem bizonyítja, hogy a weboldal feltörhető vagy feltörhetetlen.";
   return record;
 }
 
 export async function runWebsiteAudit(options: {
   inputUrl: string;
   reuseCache?: boolean;
+  /** Reuse a pre-created queued record id (for async poll UX). */
+  auditId?: string;
+  createdAt?: string;
 }): Promise<WebsiteAuditRecord> {
   const now = new Date().toISOString();
-  const progress = initialProgress();
+  const progress = initialAuditProgress();
   const findings: AuditFinding[] = [];
 
   let record: WebsiteAuditRecord = {
-    id: newAuditId(),
-    createdAt: now,
+    id: options.auditId || newAuditId(),
+    createdAt: options.createdAt || now,
     updatedAt: now,
     inputUrl: options.inputUrl,
     normalizedUrl: options.inputUrl,
     status: "running",
-    overallScore: 0,
-    overallLabel: scoreBandLabel(0),
+    overallScore: null,
+    overallLabel: scoreBandLabel(null),
     summary: "Fut…",
     error: null,
     categories: [],
@@ -386,7 +385,15 @@ export async function runWebsiteAudit(options: {
     technical: emptyTechnical(),
     progress,
     beta: true,
+    fromCache: false,
+    cachedFromId: null,
+    checkedAt: null,
+    scoringExplanation: null,
+    responsiveMatrix: null,
+    securityExposureNote: null,
   };
+
+  record = saveAudit(record);
 
   setStep(progress, "validate", "running");
   const validated = await validateAndResolveAuditUrl(options.inputUrl);
@@ -406,7 +413,7 @@ export async function runWebsiteAudit(options: {
     record.status = "failed";
     record.error = validated.error;
     record = finalize(record, findings, progress);
-    record.overallScore = 0;
+    record.overallScore = null;
     record.summary = validated.error;
     return saveAudit(record);
   }
@@ -420,7 +427,7 @@ export async function runWebsiteAudit(options: {
     if (cachedId) {
       const cached = getAuditById(cachedId);
       if (cached && cached.status === "completed") {
-        return {
+        const cloned: WebsiteAuditRecord = {
           ...cached,
           id: record.id,
           createdAt: record.createdAt,
@@ -428,7 +435,11 @@ export async function runWebsiteAudit(options: {
           inputUrl: options.inputUrl,
           summary: `${cached.summary} (cache · 10 perc)`,
           beta: true,
+          fromCache: true,
+          cachedFromId: cached.id,
+          checkedAt: cached.checkedAt || cached.updatedAt,
         };
+        return saveAudit(cloned);
       }
     }
   }
@@ -588,8 +599,20 @@ export async function runWebsiteAudit(options: {
         indexability,
       })
     );
-    findings.push(...checkContent(doc));
     setStep(progress, "html", "done");
+    setStep(progress, "content", "running");
+    findings.push(...checkContent(doc));
+    setStep(progress, "content", "done");
+
+    setStep(progress, "responsive", "running");
+    const matrix = buildResponsiveMatrix({
+      html: html || null,
+      pagePath: finalUrl.pathname || "/",
+      pageLabel: "Kezdőlap",
+    });
+    record.responsiveMatrix = matrix;
+    findings.push(...checkResponsive({ html: html || null, matrix }));
+    setStep(progress, "responsive", "done", matrix.summary.slice(0, 120));
 
     setStep(progress, "a11y", "running");
     // a11y first pass without lighthouse; enrich after PSI
