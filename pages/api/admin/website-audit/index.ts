@@ -1,8 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { clientIp, requireAdmin } from "../../../../lib/admin-auth";
 import { checkAuditRateLimit } from "../../../../lib/website-audit/rate-limit";
+import { enqueueAuditJob, auditQueueStats } from "../../../../lib/website-audit/queue";
 import { runWebsiteAudit } from "../../../../lib/website-audit/runner";
-import { listAuditSummaries } from "../../../../lib/website-audit/store";
+import {
+  createQueuedAuditRecord,
+  listAuditSummaries,
+  saveAudit,
+  getAuditById,
+} from "../../../../lib/website-audit/store";
 import { validateAuditUrlInput } from "../../../../lib/website-audit/ssrf";
 
 export const config = {
@@ -13,8 +19,7 @@ export const config = {
       sizeLimit: "32kb",
     },
   },
-  // PageSpeed can take 20–40s; keep the route alive.
-  maxDuration: 60,
+  maxDuration: 90,
 };
 
 export default async function handler(
@@ -54,19 +59,60 @@ export default async function handler(
       });
     }
 
-    try {
-      const audit = await runWebsiteAudit({
-        inputUrl: url,
-        reuseCache: !force,
+    const shell = createQueuedAuditRecord(url);
+    saveAudit(shell);
+
+    const enqueued = enqueueAuditJob(shell.id, async () => {
+      const current = getAuditById(shell.id);
+      if (current) {
+        saveAudit({
+          ...current,
+          status: "running",
+          summary: "Weboldal vizsgálata…",
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      try {
+        await runWebsiteAudit({
+          inputUrl: url,
+          reuseCache: !force,
+          auditId: shell.id,
+          createdAt: shell.createdAt,
+        });
+      } catch (e) {
+        console.error("[admin/website-audit] run", e);
+        const failed = getAuditById(shell.id);
+        if (failed) {
+          saveAudit({
+            ...failed,
+            status: "failed",
+            error: "Az ellenőrzés sikertelen (belső hiba).",
+            summary: "Belső hiba — nem készült hamis eredmény.",
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
+
+    if (enqueued.ok === false) {
+      saveAudit({
+        ...shell,
+        status: "failed",
+        error: enqueued.error,
+        summary: enqueued.error,
+        updatedAt: new Date().toISOString(),
       });
-      return res.status(200).json({ ok: true, audit });
-    } catch (e) {
-      console.error("[admin/website-audit] run", e);
-      return res.status(500).json({
-        ok: false,
-        error: "Az ellenőrzés sikertelen.",
-      });
+      return res.status(503).json({ ok: false, error: enqueued.error });
     }
+
+    return res.status(202).json({
+      ok: true,
+      id: shell.id,
+      status: "queued",
+      position: enqueued.position,
+      queue: auditQueueStats(),
+      audit: shell,
+    });
   }
 
   res.setHeader("Allow", "GET, POST");

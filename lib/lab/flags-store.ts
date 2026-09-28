@@ -90,12 +90,23 @@ export function resolveModuleFlags(module: LabModuleMeta): LabModuleFlags {
   const merged: LabModuleFlags = { ...module.flags, ...override };
   if (state.killSwitch) {
     // Kill switch disables experimental / non-core modules
-    if (module.id !== "overview" && module.id !== "settings") {
+    if (!isCoreLabModule(module.id)) {
       merged.enabled = false;
       merged.maintenanceMode = true;
     }
   }
   return merged;
+}
+
+const CORE_LAB_MODULES = new Set([
+  "overview",
+  "monitor",
+  "website-audit",
+  "settings",
+]);
+
+function isCoreLabModule(id: string): boolean {
+  return CORE_LAB_MODULES.has(id);
 }
 
 export function listResolvedModules(): Array<
@@ -107,7 +118,7 @@ export function listResolvedModules(): Array<
     const effectivelyAvailable =
       resolvedFlags.enabled &&
       !resolvedFlags.maintenanceMode &&
-      (!state.killSwitch || m.id === "overview" || m.id === "settings");
+      (!state.killSwitch || isCoreLabModule(m.id));
     return { ...m, resolvedFlags, effectivelyAvailable };
   });
 }

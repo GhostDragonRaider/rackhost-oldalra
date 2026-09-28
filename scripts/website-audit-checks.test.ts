@@ -208,6 +208,14 @@ describe("security checks", () => {
     assert.ok(csp?.detail.includes("Content-Security-Policy"));
     assert.ok(csp?.detail.includes("nem jelenti"));
     assert.ok(findings.some((f) => f.id === "hdr-x-powered-by"));
+    assert.equal(
+      findings.find((f) => f.id === "hdr-csp")?.securityGroup,
+      "hardening"
+    );
+    assert.equal(
+      findings.find((f) => f.id === "hdr-x-powered-by")?.securityGroup,
+      "hardening"
+    );
   });
 
   it("flags mixed content as high", () => {
@@ -219,7 +227,26 @@ describe("security checks", () => {
       tls: { ok: true, protocol: "TLSv1.3", authorized: true, error: null },
       mixedContentUrls: ["http://x/a.js"],
     });
-    assert.ok(findings.some((f) => f.id === "mixed-content" && f.severity === "high"));
+    const mixed = findings.find((f) => f.id === "mixed-content");
+    assert.ok(mixed && mixed.severity === "high");
+    assert.equal(mixed?.securityGroup, "breach_risk");
+  });
+
+  it("tags http-only and tls-fail as breach_risk", () => {
+    const findings = checkSecurity({
+      startProtocol: "http:",
+      finalProtocol: "http:",
+      chain: ["http://example.com/"],
+      headers: {},
+      tls: { ok: null, protocol: null, authorized: null, error: null },
+      mixedContentUrls: [],
+    });
+    const httpOnly = findings.find((f) => f.id === "http-only");
+    const tlsNo = findings.find((f) => f.id === "tls-no-https");
+    assert.ok(httpOnly);
+    assert.equal(httpOnly?.securityGroup, "breach_risk");
+    assert.ok(tlsNo);
+    assert.equal(tlsNo?.securityGroup, "breach_risk");
   });
 });
 

@@ -1,4 +1,5 @@
 import { finding } from "./helpers";
+import { securityGroupFor } from "../security-groups";
 import type { AuditFinding } from "../types";
 
 function parseSetCookie(headers: Record<string, string>): string[] {
@@ -386,13 +387,18 @@ export function checkSecurity(input: {
       id: "security-disclaimer",
       category: "security",
       severity: "info",
-      status: "pass",
-      title: "Biztonsági audit korlát",
+      status: "not_applicable",
+      title: "Nem intruzív külső biztonsági ellenőrzés",
       detail:
-        "A sikeres security ellenőrzések nem jelentik, hogy az oldal teljesen biztonságos. Ez automatikus, felületi ellenőrzés — nem penetrációs teszt.",
+        "Ez egy automatizált, nem intruzív külső biztonsági ellenőrzés. Az eredmény nem bizonyítja, hogy a weboldal feltörhető vagy feltörhetetlen. Nincs jelszótörés, exploit, SQL/XSS payload, brute-force vagy DoS.",
+      recommendation:
+        "Mélyebb, engedélyköteles biztonsági felméréshez kérj külön ajánlatot (Authorized Security Assessment).",
       source: "http",
     })
   );
 
-  return out;
+  return out.map((f) => ({
+    ...f,
+    securityGroup: securityGroupFor(f),
+  }));
 }

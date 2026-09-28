@@ -33,15 +33,24 @@ export default function KapcsolatPage() {
     const serviceRaw = typeof q.service === "string" ? q.service : "";
     const websiteUrl =
       typeof q.website_url === "string" ? q.website_url.trim() : "";
+    const auditId =
+      typeof q.audit_id === "string" ? q.audit_id.trim() : "";
     const service = SERVICE_OPTIONS.includes(
       serviceRaw as (typeof SERVICE_OPTIONS)[number]
     )
       ? serviceRaw
       : "";
-    const messageWithUrl =
-      websiteUrl && message && !message.includes(websiteUrl)
-        ? `${message}\nURL: ${websiteUrl}`
-        : message;
+    let messageWithUrl = message;
+    if (websiteUrl && messageWithUrl && !messageWithUrl.includes(websiteUrl)) {
+      messageWithUrl = `${messageWithUrl}\nURL: ${websiteUrl}`;
+    }
+    if (auditId && messageWithUrl && !messageWithUrl.includes(auditId)) {
+      messageWithUrl = `${messageWithUrl}\nAudit ID: ${auditId}`;
+    } else if (auditId && !messageWithUrl) {
+      messageWithUrl = `Audit ID: ${auditId}${
+        websiteUrl ? `\nURL: ${websiteUrl}` : ""
+      }`;
+    }
     return { message: messageWithUrl, service };
   }, [router.query]);
 
@@ -90,6 +99,15 @@ export default function KapcsolatPage() {
           service: data.get("service"),
           message: data.get("message"),
           website: data.get("website"),
+          source: "kapcsolat",
+          auditId:
+            typeof router.query.audit_id === "string"
+              ? router.query.audit_id
+              : undefined,
+          websiteUrl:
+            typeof router.query.website_url === "string"
+              ? router.query.website_url
+              : undefined,
         }),
       });
       const json = await res.json();
