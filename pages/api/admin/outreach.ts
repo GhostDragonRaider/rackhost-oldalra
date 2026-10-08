@@ -15,6 +15,7 @@ import {
   deleteOutreachContact,
   getActiveOutreachContacts,
   getOutreachCampaign,
+  ensureBusinessSeedIfEmpty,
   importEmails,
   listOutreachContacts,
   listOutreachLogs,
@@ -23,8 +24,10 @@ import {
   renderOutreachBody,
   updateOutreachCampaign,
   updateOutreachContact,
+  upsertBusinessContacts,
   type OutreachContactStatus,
 } from "../../../lib/outreach-store";
+import { OUTREACH_BUSINESS_SEED } from "../../../lib/outreach-business-seed";
 
 const STATUSES = new Set<OutreachContactStatus>([
   "active",
@@ -88,6 +91,7 @@ export default async function handler(
 
   try {
     if (req.method === "GET") {
+      const seed = ensureBusinessSeedIfEmpty();
       const mail = getOutreachMailPublicStatus();
       return res.status(200).json({
         ok: true,
@@ -97,6 +101,7 @@ export default async function handler(
         smtpConfigured: mail.configured,
         mailbox: mail,
         signature: getOutreachSignaturePublic(mail.mailbox),
+        seeded: seed,
       });
     }
 
@@ -200,6 +205,20 @@ export default async function handler(
           ok: true,
           ...result,
           parsed: rows.length,
+          contacts: listOutreachContacts(),
+        });
+      }
+
+      if (action === "seed-businesses") {
+        const result = upsertBusinessContacts(
+          OUTREACH_BUSINESS_SEED.map((row) => ({
+            ...row,
+            source: "business-seed",
+          }))
+        );
+        return res.status(200).json({
+          ok: true,
+          ...result,
           contacts: listOutreachContacts(),
         });
       }

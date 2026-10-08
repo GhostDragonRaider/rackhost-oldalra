@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { OUTREACH_BUSINESS_SEED } from "./outreach-business-seed";
 
 export type OutreachContactStatus = "active" | "paused" | "unsubscribed";
 
@@ -136,9 +137,90 @@ function normalizeContact(raw: Partial<OutreachContact>): OutreachContact {
 }
 
 export function listOutreachContacts(): OutreachContact[] {
+  ensureBusinessSeedIfEmpty();
   return [...ensureStore().contacts].sort((a, b) =>
     a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
   );
+}
+
+/** Ha a tartós címlista üres, betölti a commitolt vállalkozás-seedet. */
+export function ensureBusinessSeedIfEmpty(): {
+  seeded: boolean;
+  added: number;
+} {
+  const store = ensureStore();
+  if (store.contacts.length > 0) {
+    return { seeded: false, added: 0 };
+  }
+  const result = upsertBusinessContacts(
+    OUTREACH_BUSINESS_SEED.map((row) => ({
+      ...row,
+      source: "business-seed",
+    }))
+  );
+  return { seeded: result.added > 0, added: result.added };
+}
+
+/** Seed / import: újat ad hozzá, meglévőnél frissíti a vállalkozást és telephelyet. */
+export function upsertBusinessContacts(
+  entries: Array<{
+    email?: string;
+    name?: string;
+    company?: string;
+    location?: string;
+    notes?: string;
+    source?: string;
+  }>
+): { added: number; updated: number; skipped: number; contacts: OutreachContact[] } {
+  let added = 0;
+  let updated = 0;
+  let skipped = 0;
+  const touched: OutreachContact[] = [];
+
+  for (const entry of entries) {
+    const email = normalizeEmail(String(entry.email || ""));
+    if (!EMAIL_RE.test(email)) {
+      skipped += 1;
+      continue;
+    }
+    const store = ensureStore();
+    const existing = store.contacts.find((c) => c.email === email);
+    if (!existing) {
+      try {
+        const c = addOutreachContact(entry);
+        touched.push(c);
+        added += 1;
+      } catch {
+        skipped += 1;
+      }
+      continue;
+    }
+
+    const company = String(entry.company || "").trim().slice(0, 160);
+    const location = String(entry.location || "").trim().slice(0, 240);
+    const name = entry.name != null ? String(entry.name).trim().slice(0, 100) : undefined;
+    const patch: {
+      company?: string;
+      location?: string;
+      name?: string;
+    } = {};
+    if (company && company !== existing.company) patch.company = company;
+    if (location && location !== existing.location) patch.location = location;
+    if (name != null && name !== existing.name) patch.name = name;
+
+    if (Object.keys(patch).length) {
+      const c = updateOutreachContact(existing.id, patch);
+      if (c) {
+        touched.push(c);
+        updated += 1;
+      } else skipped += 1;
+    } else {
+      touched.push(existing);
+      skipped += 1;
+    }
+  }
+
+  return { added, updated, skipped, contacts: touched };
 }
 
 export function getOutreachCampaign(): OutreachCampaign {
@@ -281,20 +363,8 @@ export function importEmails(entries: Array<{
   location?: string;
   notes?: string;
   source?: string;
-}>): { added: number; skipped: number; contacts: OutreachContact[] } {
-  let added = 0;
-  let skipped = 0;
-  const contacts: OutreachContact[] = [];
-  for (const entry of entries) {
-    try {
-      const c = addOutreachContact(entry);
-      contacts.push(c);
-      added += 1;
-    } catch {
-      skipped += 1;
-    }
-  }
-  return { added, skipped, contacts };
+}>): { added: number; updated: number; skipped: number; contacts: OutreachContact[] } {
+  return upsertBusinessContacts(entries);
 }
 
 /**

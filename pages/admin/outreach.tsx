@@ -171,7 +171,16 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     if (data) {
       setBulkText("");
       setMsg(
-        `Címlista feltöltés: ${data.added} új, ${data.skipped} kihagyva (${data.parsed} sor felismerve).`
+        `Címlista feltöltés: ${data.added} új, ${data.updated || 0} frissítve, ${data.skipped} kihagyva (${data.parsed} sor felismerve).`
+      );
+    }
+  }
+
+  async function onSeedBusinesses() {
+    const data = await post("seed-businesses");
+    if (data) {
+      setMsg(
+        `Alap vállalkozások: ${data.added} új, ${data.updated || 0} frissítve, ${data.skipped} változatlan.`
       );
     }
   }
@@ -256,6 +265,14 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             }}
           >
             Frissítés
+          </button>
+          <button
+            type="button"
+            className="lab-btn"
+            disabled={busy}
+            onClick={() => void onSeedBusinesses()}
+          >
+            Alap vállalkozások
           </button>
           <button
             type="button"
