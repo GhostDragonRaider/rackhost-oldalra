@@ -1,7 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../../../lib/admin-auth";
-import { SITE_EMAIL } from "../../../lib/site";
+import {
+  getOutreachMailConfig,
+  getOutreachMailPublicStatus,
+} from "../../../lib/outreach-mail";
 import { listQuotes } from "../../../lib/quotes-store";
 import {
   addOutreachContact,
@@ -29,27 +32,27 @@ async function sendViaSmtp(params: {
   subject: string;
   text: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const smtpUser = process.env.SMTP_USER || SITE_EMAIL;
-  const smtpPass = process.env.SMTP_PASS;
-  if (!smtpPass) {
+  const cfg = getOutreachMailConfig();
+  if (!cfg.pass) {
     return {
       ok: false,
       error:
-        "SMTP_PASS nincs beállítva — a levél nem lett elküldve (csak naplózva skip).",
+        `OUTREACH_SMTP_PASS nincs beállítva a(z) ${cfg.mailbox} postafiókhoz — a levél nem lett elküldve (csak naplózva skip).`,
     };
   }
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.rackhost.hu",
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: { user: smtpUser, pass: smtpPass },
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: { user: cfg.user, pass: cfg.pass },
     });
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || `AntiCode <${SITE_EMAIL}>`,
+      from: cfg.from,
       to: params.to,
       subject: params.subject,
       text: params.text,
+      replyTo: cfg.mailbox,
     });
     return { ok: true };
   } catch (err) {
@@ -68,12 +71,14 @@ export default async function handler(
 
   try {
     if (req.method === "GET") {
+      const mail = getOutreachMailPublicStatus();
       return res.status(200).json({
         ok: true,
         contacts: listOutreachContacts(),
         campaign: getOutreachCampaign(),
         logs: listOutreachLogs(80),
-        smtpConfigured: Boolean(process.env.SMTP_PASS),
+        smtpConfigured: mail.configured,
+        mailbox: mail,
       });
     }
 
@@ -191,7 +196,7 @@ export default async function handler(
           } else {
             const detail =
               "error" in result ? result.error : "SMTP hiba";
-            const skippedSmtp = !process.env.SMTP_PASS;
+            const skippedSmtp = !getOutreachMailConfig().pass;
             markOutreachSent({
               contactId: contact.id,
               email: contact.email,
@@ -204,6 +209,7 @@ export default async function handler(
           }
         }
 
+        const mail = getOutreachMailPublicStatus();
         return res.status(200).json({
           ok: true,
           sent,
@@ -212,7 +218,8 @@ export default async function handler(
           contacts: listOutreachContacts(),
           campaign: getOutreachCampaign(),
           logs: listOutreachLogs(80),
-          smtpConfigured: Boolean(process.env.SMTP_PASS),
+          smtpConfigured: mail.configured,
+          mailbox: mail,
         });
       }
 

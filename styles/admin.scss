@@ -3770,6 +3770,41 @@ body.admin-active[data-theme="dark"] .audit-loading {
   overflow-x: auto;
 }
 
+.admin-outreach__mailbox-meta {
+  display: grid;
+  gap: 12px 20px;
+  margin: 0 0 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.admin-outreach__mailbox-meta dt {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(15, 40, 80, 0.55);
+}
+
+.admin-outreach__mailbox-meta dd {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.admin-outreach__status {
+  display: inline-block;
+  padding: 2px 0;
+  font-weight: 600;
+}
+
+.admin-outreach__status--ok {
+  color: #1a6b3c;
+}
+
+.admin-outreach__status--warn {
+  color: #8a5a12;
+}
+
 @media (max-width: 900px) {
   .admin-outreach__grid {
     grid-template-columns: 1fr;

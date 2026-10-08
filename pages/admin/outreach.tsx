@@ -27,11 +27,19 @@ const STATUS_LABEL: Record<OutreachContactStatus, string> = {
   unsubscribed: "Leiratkozott",
 };
 
+type MailboxStatus = {
+  mailbox: string;
+  from: string;
+  host: string;
+  configured: boolean;
+};
+
 function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [contacts, setContacts] = useState<OutreachContact[]>([]);
   const [campaign, setCampaign] = useState<OutreachCampaign | null>(null);
   const [logs, setLogs] = useState<OutreachSendLog[]>([]);
   const [smtpConfigured, setSmtpConfigured] = useState(false);
+  const [mailbox, setMailbox] = useState<MailboxStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -60,6 +68,9 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setContacts(data.contacts || []);
     setLogs(data.logs || []);
     setSmtpConfigured(Boolean(data.smtpConfigured));
+    if (data.mailbox && typeof data.mailbox === "object") {
+      setMailbox(data.mailbox as MailboxStatus);
+    }
     const c = data.campaign as OutreachCampaign;
     setCampaign(c);
     setSubject(c.subject);
@@ -100,6 +111,9 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
       if (data.logs) setLogs(data.logs);
       if (typeof data.smtpConfigured === "boolean") {
         setSmtpConfigured(data.smtpConfigured);
+      }
+      if (data.mailbox && typeof data.mailbox === "object") {
+        setMailbox(data.mailbox as MailboxStatus);
       }
       return data;
     } catch {
@@ -187,10 +201,7 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           <h2>E-mail gyűjtés és időszakos levelek</h2>
           <p className="admin-muted">
             Itt gyűjtjük az e-mail címeket, és időközönként ügyfélszerző leveleket
-            küldünk.{" "}
-            {smtpConfigured
-              ? "SMTP konfigurálva."
-              : "SMTP_PASS nincs beállítva — a kiküldés naplózza, de nem küld."}
+            küldünk a Rackhost postafiókból.
           </p>
         </div>
         <div className="admin-quotes__actions">
@@ -228,6 +239,46 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
         <p className="admin-muted">Betöltés…</p>
       ) : (
         <div className="admin-outreach__grid">
+          <div className="admin-outreach__panel admin-outreach__panel--wide admin-outreach__mailbox">
+            <h3>Küldő postafiók</h3>
+            <dl className="admin-outreach__mailbox-meta">
+              <div>
+                <dt>Cím</dt>
+                <dd>
+                  <strong>{mailbox?.mailbox || "sandor@anticode.hu"}</strong>
+                </dd>
+              </div>
+              <div>
+                <dt>Feladó</dt>
+                <dd>{mailbox?.from || "AntiCode <sandor@anticode.hu>"}</dd>
+              </div>
+              <div>
+                <dt>SMTP</dt>
+                <dd>{mailbox?.host || "smtp.rackhost.hu"}</dd>
+              </div>
+              <div>
+                <dt>Állapot</dt>
+                <dd>
+                  <span
+                    className={
+                      smtpConfigured || mailbox?.configured
+                        ? "admin-outreach__status admin-outreach__status--ok"
+                        : "admin-outreach__status admin-outreach__status--warn"
+                    }
+                  >
+                    {smtpConfigured || mailbox?.configured
+                      ? "SMTP kész — kiküldés aktív"
+                      : "OUTREACH_SMTP_PASS hiányzik — kiküldés csak naplóz"}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+            <p className="admin-muted">
+              Ez a Rackhost postafiók csak az ügyfélszerzéshez tartozik; a
+              kapcsolatfelvétel továbbra is az info@ címen megy.
+            </p>
+          </div>
+
           <form className="admin-outreach__panel lab-form" onSubmit={onAdd}>
             <h3>Új e-mail cím</h3>
             <label>
