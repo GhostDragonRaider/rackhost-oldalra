@@ -19,6 +19,7 @@ import {
   listOutreachContacts,
   listOutreachLogs,
   markOutreachSent,
+  parseBusinessContactRows,
   renderOutreachBody,
   updateOutreachCampaign,
   updateOutreachContact,
@@ -107,6 +108,7 @@ export default async function handler(
           email: req.body?.email,
           name: req.body?.name,
           company: req.body?.company,
+          location: req.body?.location,
           notes: req.body?.notes,
           source: req.body?.source || "manual",
         });
@@ -126,6 +128,7 @@ export default async function handler(
         const contact = updateOutreachContact(id, {
           name: req.body?.name,
           company: req.body?.company,
+          location: req.body?.location,
           notes: req.body?.notes,
           status,
         });
@@ -172,6 +175,31 @@ export default async function handler(
         return res.status(200).json({
           ok: true,
           ...result,
+          contacts: listOutreachContacts(),
+        });
+      }
+
+      if (action === "import-business") {
+        const rows = parseBusinessContactRows(String(req.body?.text || ""));
+        if (!rows.length) {
+          return res.status(400).json({
+            ok: false,
+            error:
+              "Nem találtam érvényes sort. Formátum: Vállalkozás | E-mail | Telephely",
+          });
+        }
+        const result = importEmails(
+          rows.map((r) => ({
+            email: r.email,
+            company: r.company,
+            location: r.location,
+            source: "business-list",
+          }))
+        );
+        return res.status(200).json({
+          ok: true,
+          ...result,
+          parsed: rows.length,
           contacts: listOutreachContacts(),
         });
       }

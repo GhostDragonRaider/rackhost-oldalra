@@ -65,9 +65,9 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [busy, setBusy] = useState(false);
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [company, setCompany] = useState("");
-  const [notes, setNotes] = useState("");
+  const [location, setLocation] = useState("");
+  const [bulkText, setBulkText] = useState("");
 
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -151,13 +151,28 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
   async function onAdd(e: FormEvent) {
     e.preventDefault();
-    const data = await post("add", { email, name, company, notes });
+    const data = await post("add", {
+      email,
+      company,
+      location,
+      source: "manual",
+    });
     if (data) {
       setEmail("");
-      setName("");
       setCompany("");
-      setNotes("");
-      setMsg("E-mail cím hozzáadva.");
+      setLocation("");
+      setMsg("Vállalkozás hozzáadva a címlistához.");
+    }
+  }
+
+  async function onImportBusiness(e: FormEvent) {
+    e.preventDefault();
+    const data = await post("import-business", { text: bulkText });
+    if (data) {
+      setBulkText("");
+      setMsg(
+        `Címlista feltöltés: ${data.added} új, ${data.skipped} kihagyva (${data.parsed} sor felismerve).`
+      );
     }
   }
 
@@ -326,33 +341,32 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           </div>
 
           <form className="admin-outreach__panel lab-form" onSubmit={onAdd}>
-            <h3>Új e-mail cím</h3>
+            <h3>Új vállalkozás</h3>
             <label>
-              E-mail *
+              Vállalkozás *
+              <input
+                required
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="pl. Tamások Használtautó"
+              />
+            </label>
+            <label>
+              E-mail-cím *
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="pl. zsta@freemail.hu"
               />
             </label>
             <label>
-              Név
-              <input value={name} onChange={(e) => setName(e.target.value)} />
-            </label>
-            <label>
-              Cég
+              Telephely
               <input
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-              />
-            </label>
-            <label>
-              Megjegyzés
-              <textarea
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="pl. 4027 Debrecen, Böszörményi út 66."
               />
             </label>
             <button
@@ -366,6 +380,38 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
 
           <form
             className="admin-outreach__panel lab-form"
+            onSubmit={onImportBusiness}
+          >
+            <h3>Címlista feltöltés</h3>
+            <p className="admin-muted">
+              Illeszd be a sorokat: Vállalkozás, E-mail-cím, Telephely
+              (tabulátorral vagy | jellel elválasztva). Opcionális sorszám az
+              elején.
+            </p>
+            <label>
+              Lista
+              <textarea
+                rows={8}
+                required
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder={[
+                  "Vállalkozás\tE-mail-cím\tTelephely",
+                  "1\tTamások Használtautó\tzsta@freemail.hu\t4027 Debrecen, Böszörményi út 66.",
+                ].join("\n")}
+              />
+            </label>
+            <button
+              type="submit"
+              className="lab-btn lab-btn--primary"
+              disabled={busy}
+            >
+              Feltöltés a címlistába
+            </button>
+          </form>
+
+          <form
+            className="admin-outreach__panel lab-form admin-outreach__panel--wide"
             onSubmit={onSaveCampaign}
           >
             <h3>Kampány / időszakos levél</h3>
@@ -387,8 +433,8 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               />
             </label>
             <p className="admin-muted">
-              Helyettesítők: {"{{name}}"}, {"{{email}}"}, {"{{company}}"}. Az
-              aláírás automatikusan a levél végére kerül.
+              Helyettesítők: {"{{company}}"}, {"{{email}}"}, {"{{location}}"},{" "}
+              {"{{name}}"}. Az aláírás automatikusan a levél végére kerül.
             </p>
             <label>
               Időköz (nap)
@@ -437,16 +483,16 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             <h3>Címlista ({contacts.length})</h3>
             {!contacts.length ? (
               <p className="admin-muted">
-                Még nincs e-mail a listán. Add hozzá kézzel, vagy importáld az
-                árajánlatokból.
+                Még nincs vállalkozás a listán. Add hozzá kézzel, vagy töltsd
+                fel a listát fent.
               </p>
             ) : (
               <table className="lab-table">
                 <thead>
                   <tr>
-                    <th>E-mail</th>
-                    <th>Név / cég</th>
-                    <th>Forrás</th>
+                    <th>Vállalkozás</th>
+                    <th>E-mail-cím</th>
+                    <th>Telephely</th>
                     <th>Státusz</th>
                     <th>Utolsó levél</th>
                     <th />
@@ -456,16 +502,10 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                   {contacts.map((c) => (
                     <tr key={c.id}>
                       <td>
-                        <strong>{c.email}</strong>
-                        {c.notes ? (
-                          <div className="admin-muted">{c.notes}</div>
-                        ) : null}
+                        <strong>{c.company || c.name || "—"}</strong>
                       </td>
-                      <td>
-                        {c.name || "—"}
-                        <div className="admin-muted">{c.company || "—"}</div>
-                      </td>
-                      <td>{c.source}</td>
+                      <td>{c.email}</td>
+                      <td>{c.location || "—"}</td>
                       <td>
                         <select
                           value={c.status}
