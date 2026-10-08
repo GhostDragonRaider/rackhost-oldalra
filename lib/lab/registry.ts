@@ -410,6 +410,22 @@ export const LAB_MODULES: LabModuleMeta[] = [
     securityStatus: "n/a",
     performanceStatus: "n/a",
   }),
+  mod({
+    id: "promo-offers",
+    name: "Promo Offers",
+    nameHu: "Akciós ajánlatok",
+    category: "content",
+    version: "1.0.0",
+    status: "development",
+    description:
+      "Akciós árak és kedvezmény-jelölés szabályozása, élő előnézettel.",
+    href: "/admin/lab/promo-offers",
+    implemented: true,
+    flags: { enabled: true, beta: false },
+    testStatus: "pending",
+    securityStatus: "pass",
+    performanceStatus: "n/a",
+  }),
 ];
 
 export const LAB_CATEGORY_LABELS: Record<LabCategoryId, string> = {

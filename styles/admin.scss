@@ -3826,3 +3826,166 @@ body.admin-active[data-theme="dark"] .audit-loading {
     grid-template-columns: 1fr;
   }
 }
+
+/* —— Akciós ajánlatok (Lab) —— */
+.lab-promos__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lab-promos__master {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 40, 80, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.lab-promos__grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lab-promos__grid .lab-card--wide {
+  grid-column: 1 / -1;
+}
+
+.lab-promos__preview {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 40, 80, 0.12);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f8f5 100%);
+}
+
+.lab-promos__preview--off {
+  background: #f7f8fa;
+}
+
+.lab-promos__preview-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.lab-promos__preview-tiers {
+  display: grid;
+  gap: 10px;
+}
+
+.lab-promos__tier {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 40, 80, 0.08);
+}
+
+.lab-promos__tier-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(15, 40, 80, 0.55);
+}
+
+.lab-promos__plain {
+  font-size: 1rem;
+  color: #0b1b36;
+}
+
+.lab-promos__preview-note {
+  margin: 14px 0 0;
+  font-size: 0.9rem;
+  color: rgba(15, 40, 80, 0.7);
+}
+
+.lab-promos__off-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e8edf3;
+  color: #52637a;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.lab-promos__inline-demo {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(15, 40, 80, 0.1);
+}
+
+.lab-promos__inline-demo-head {
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(15, 40, 80, 0.55);
+}
+
+.promo-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.promo-price__badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #12a35a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.promo-price__badge--lg {
+  font-size: 0.85rem;
+  padding: 5px 10px;
+}
+
+.promo-price__stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.2;
+}
+
+.promo-price__old {
+  font-size: 0.78rem;
+  color: rgba(15, 40, 80, 0.45);
+  text-decoration: line-through;
+}
+
+.promo-price__new {
+  font-size: 1rem;
+  color: #0f7a45;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .lab-promos__head {
+    flex-direction: column;
+  }
+
+  .lab-promos__grid {
+    grid-template-columns: 1fr;
+  }
+}

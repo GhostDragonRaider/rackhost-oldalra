@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LabShell, { ProvenanceBadge } from "../../../components/admin/lab/LabShell";
 import FormsFlowsPanel from "../../../components/admin/lab/FormsFlowsPanel";
+import PromosPanel from "../../../components/admin/lab/PromosPanel";
 import { getLabModule } from "../../../lib/lab/registry";
 import type { LabActionItem } from "../../../lib/lab/types";
 import type { DataProvenance } from "../../../lib/lab/integrity";
@@ -222,6 +223,10 @@ export default function LabModulePage() {
 
         if (meta.id === "forms-flows") {
           return <FormsFlowsPanel bumpIdle={bumpIdle} />;
+        }
+
+        if (meta.id === "promo-offers") {
+          return <PromosPanel bumpIdle={bumpIdle} />;
         }
 
         if (meta.id === "action-center") {
