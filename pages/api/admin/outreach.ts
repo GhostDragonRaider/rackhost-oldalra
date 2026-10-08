@@ -5,6 +5,10 @@ import {
   getOutreachMailConfig,
   getOutreachMailPublicStatus,
 } from "../../../lib/outreach-mail";
+import {
+  composeOutreachEmail,
+  getOutreachSignaturePublic,
+} from "../../../lib/outreach-signature";
 import { listQuotes } from "../../../lib/quotes-store";
 import {
   addOutreachContact,
@@ -30,7 +34,7 @@ const STATUSES = new Set<OutreachContactStatus>([
 async function sendViaSmtp(params: {
   to: string;
   subject: string;
-  text: string;
+  bodyText: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const cfg = getOutreachMailConfig();
   if (!cfg.pass) {
@@ -41,6 +45,10 @@ async function sendViaSmtp(params: {
     };
   }
   try {
+    const composed = composeOutreachEmail({
+      bodyText: params.bodyText,
+      mailbox: cfg.mailbox,
+    });
     const transporter = nodemailer.createTransport({
       host: cfg.host,
       port: cfg.port,
@@ -51,7 +59,8 @@ async function sendViaSmtp(params: {
       from: cfg.from,
       to: params.to,
       subject: params.subject,
-      text: params.text,
+      text: composed.text,
+      html: composed.html,
       replyTo: cfg.mailbox,
     });
     return { ok: true };
@@ -79,6 +88,7 @@ export default async function handler(
         logs: listOutreachLogs(80),
         smtpConfigured: mail.configured,
         mailbox: mail,
+        signature: getOutreachSignaturePublic(mail.mailbox),
       });
     }
 
@@ -178,11 +188,11 @@ export default async function handler(
         let skipped = 0;
 
         for (const contact of targets) {
-          const text = renderOutreachBody(campaign.body, contact);
+          const bodyText = renderOutreachBody(campaign.body, contact);
           const result = await sendViaSmtp({
             to: contact.email,
             subject: campaign.subject,
-            text,
+            bodyText,
           });
           if (result.ok) {
             markOutreachSent({
@@ -220,6 +230,7 @@ export default async function handler(
           logs: listOutreachLogs(80),
           smtpConfigured: mail.configured,
           mailbox: mail,
+          signature: getOutreachSignaturePublic(mail.mailbox),
         });
       }
 

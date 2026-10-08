@@ -3805,6 +3805,19 @@ body.admin-active[data-theme="dark"] .audit-loading {
   color: #8a5a12;
 }
 
+.admin-outreach__signature-preview {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 40, 80, 0.12);
+  background: #f8fbff;
+  color: #0b1b36;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 900px) {
   .admin-outreach__grid {
     grid-template-columns: 1fr;

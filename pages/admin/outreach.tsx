@@ -34,12 +34,28 @@ type MailboxStatus = {
   configured: boolean;
 };
 
+type SignatureStatus = {
+  text: string;
+  preview: {
+    closing: string;
+    name: string;
+    title: string;
+    company: string;
+    tagline: string;
+    email: string;
+    phone: string;
+    website: string;
+    websiteLabel: string;
+  };
+};
+
 function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
   const [contacts, setContacts] = useState<OutreachContact[]>([]);
   const [campaign, setCampaign] = useState<OutreachCampaign | null>(null);
   const [logs, setLogs] = useState<OutreachSendLog[]>([]);
   const [smtpConfigured, setSmtpConfigured] = useState(false);
   const [mailbox, setMailbox] = useState<MailboxStatus | null>(null);
+  const [signature, setSignature] = useState<SignatureStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -70,6 +86,9 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
     setSmtpConfigured(Boolean(data.smtpConfigured));
     if (data.mailbox && typeof data.mailbox === "object") {
       setMailbox(data.mailbox as MailboxStatus);
+    }
+    if (data.signature && typeof data.signature === "object") {
+      setSignature(data.signature as SignatureStatus);
     }
     const c = data.campaign as OutreachCampaign;
     setCampaign(c);
@@ -114,6 +133,9 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
       }
       if (data.mailbox && typeof data.mailbox === "object") {
         setMailbox(data.mailbox as MailboxStatus);
+      }
+      if (data.signature && typeof data.signature === "object") {
+        setSignature(data.signature as SignatureStatus);
       }
       return data;
     } catch {
@@ -279,6 +301,28 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
             </p>
           </div>
 
+          <div className="admin-outreach__panel admin-outreach__panel--wide admin-outreach__signature">
+            <h3>Cégszerű aláírás</h3>
+            <p className="admin-muted">
+              Minden kiküldött levél végére automatikusan kerül — a
+              kampányszövegbe ne írd be újra.
+            </p>
+            <pre className="admin-outreach__signature-preview">
+              {signature?.text ||
+                [
+                  "Üdvözlettel,",
+                  "",
+                  "Milei Sándor Antal",
+                  "Alapító és fejlesztő · AntiCode",
+                  "Üzletszerző weboldalak · webshopok · egyedi rendszerek",
+                  "",
+                  "sandor@anticode.hu",
+                  "+36 30 485 5517",
+                  "https://anticode.hu",
+                ].join("\n")}
+            </pre>
+          </div>
+
           <form className="admin-outreach__panel lab-form" onSubmit={onAdd}>
             <h3>Új e-mail cím</h3>
             <label>
@@ -341,7 +385,8 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
               />
             </label>
             <p className="admin-muted">
-              Helyettesítők: {"{{name}}"}, {"{{email}}"}, {"{{company}}"}
+              Helyettesítők: {"{{name}}"}, {"{{email}}"}, {"{{company}}"}. Az
+              aláírás automatikusan a levél végére kerül.
             </p>
             <label>
               Időköz (nap)
