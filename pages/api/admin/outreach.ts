@@ -1,22 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../../../lib/admin-auth";
-import { SITE_EMAIL } from "../../../lib/site";
+import {
+  getOutreachMailConfig,
+  getOutreachMailPublicStatus,
+} from "../../../lib/outreach-mail";
+import {
+  composeOutreachEmail,
+  getOutreachSignaturePublic,
+} from "../../../lib/outreach-signature";
 import { listQuotes } from "../../../lib/quotes-store";
 import {
   addOutreachContact,
   deleteOutreachContact,
   getActiveOutreachContacts,
   getOutreachCampaign,
+  ensureBusinessSeedIfEmpty,
   importEmails,
   listOutreachContacts,
   listOutreachLogs,
   markOutreachSent,
+  parseBusinessContactRows,
   renderOutreachBody,
   updateOutreachCampaign,
   updateOutreachContact,
+  upsertBusinessContacts,
   type OutreachContactStatus,
 } from "../../../lib/outreach-store";
+import { OUTREACH_BUSINESS_SEED } from "../../../lib/outreach-business-seed";
 
 const STATUSES = new Set<OutreachContactStatus>([
   "active",
@@ -27,29 +38,41 @@ const STATUSES = new Set<OutreachContactStatus>([
 async function sendViaSmtp(params: {
   to: string;
   subject: string;
-  text: string;
+  bodyText: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const smtpUser = process.env.SMTP_USER || SITE_EMAIL;
-  const smtpPass = process.env.SMTP_PASS;
-  if (!smtpPass) {
+  const cfg = getOutreachMailConfig();
+  if (!cfg.pass) {
     return {
       ok: false,
       error:
-        "SMTP_PASS nincs beállítva — a levél nem lett elküldve (csak naplózva skip).",
+        `OUTREACH_SMTP_PASS nincs beállítva a(z) ${cfg.mailbox} postafiókhoz — a levél nem lett elküldve (csak naplózva skip).`,
     };
   }
   try {
+    const composed = composeOutreachEmail({
+      bodyText: params.bodyText,
+      mailbox: cfg.mailbox,
+    });
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.rackhost.hu",
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: { user: smtpUser, pass: smtpPass },
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: { user: cfg.user, pass: cfg.pass },
     });
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || `AntiCode <${SITE_EMAIL}>`,
+      from: cfg.from,
       to: params.to,
       subject: params.subject,
-      text: params.text,
+      text: composed.text,
+      html: composed.html,
+      replyTo: cfg.mailbox,
+      attachments: composed.attachments.map((a) => ({
+        filename: a.filename,
+        path: a.path,
+        cid: a.cid,
+        contentType: a.contentType,
+        contentDisposition: "inline" as const,
+      })),
     });
     return { ok: true };
   } catch (err) {
@@ -68,12 +91,17 @@ export default async function handler(
 
   try {
     if (req.method === "GET") {
+      const seed = ensureBusinessSeedIfEmpty();
+      const mail = getOutreachMailPublicStatus();
       return res.status(200).json({
         ok: true,
         contacts: listOutreachContacts(),
         campaign: getOutreachCampaign(),
         logs: listOutreachLogs(80),
-        smtpConfigured: Boolean(process.env.SMTP_PASS),
+        smtpConfigured: mail.configured,
+        mailbox: mail,
+        signature: getOutreachSignaturePublic(mail.mailbox),
+        seeded: seed,
       });
     }
 
@@ -85,6 +113,7 @@ export default async function handler(
           email: req.body?.email,
           name: req.body?.name,
           company: req.body?.company,
+          location: req.body?.location,
           notes: req.body?.notes,
           source: req.body?.source || "manual",
         });
@@ -104,6 +133,7 @@ export default async function handler(
         const contact = updateOutreachContact(id, {
           name: req.body?.name,
           company: req.body?.company,
+          location: req.body?.location,
           notes: req.body?.notes,
           status,
         });
@@ -154,6 +184,45 @@ export default async function handler(
         });
       }
 
+      if (action === "import-business") {
+        const rows = parseBusinessContactRows(String(req.body?.text || ""));
+        if (!rows.length) {
+          return res.status(400).json({
+            ok: false,
+            error:
+              "Nem találtam érvényes sort. Formátum: Vállalkozás | E-mail | Telephely",
+          });
+        }
+        const result = importEmails(
+          rows.map((r) => ({
+            email: r.email,
+            company: r.company,
+            location: r.location,
+            source: "business-list",
+          }))
+        );
+        return res.status(200).json({
+          ok: true,
+          ...result,
+          parsed: rows.length,
+          contacts: listOutreachContacts(),
+        });
+      }
+
+      if (action === "seed-businesses") {
+        const result = upsertBusinessContacts(
+          OUTREACH_BUSINESS_SEED.map((row) => ({
+            ...row,
+            source: "business-seed",
+          }))
+        );
+        return res.status(200).json({
+          ok: true,
+          ...result,
+          contacts: listOutreachContacts(),
+        });
+      }
+
       if (action === "send") {
         const campaign = getOutreachCampaign();
         const contactId = String(req.body?.contactId || "").trim();
@@ -173,11 +242,11 @@ export default async function handler(
         let skipped = 0;
 
         for (const contact of targets) {
-          const text = renderOutreachBody(campaign.body, contact);
+          const bodyText = renderOutreachBody(campaign.body, contact);
           const result = await sendViaSmtp({
             to: contact.email,
             subject: campaign.subject,
-            text,
+            bodyText,
           });
           if (result.ok) {
             markOutreachSent({
@@ -191,7 +260,7 @@ export default async function handler(
           } else {
             const detail =
               "error" in result ? result.error : "SMTP hiba";
-            const skippedSmtp = !process.env.SMTP_PASS;
+            const skippedSmtp = !getOutreachMailConfig().pass;
             markOutreachSent({
               contactId: contact.id,
               email: contact.email,
@@ -204,6 +273,7 @@ export default async function handler(
           }
         }
 
+        const mail = getOutreachMailPublicStatus();
         return res.status(200).json({
           ok: true,
           sent,
@@ -212,7 +282,9 @@ export default async function handler(
           contacts: listOutreachContacts(),
           campaign: getOutreachCampaign(),
           logs: listOutreachLogs(80),
-          smtpConfigured: Boolean(process.env.SMTP_PASS),
+          smtpConfigured: mail.configured,
+          mailbox: mail,
+          signature: getOutreachSignaturePublic(mail.mailbox),
         });
       }
 
