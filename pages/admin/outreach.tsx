@@ -4,7 +4,6 @@ import AdminShell from "../../components/admin/AdminShell";
 import type {
   OutreachCampaign,
   OutreachContact,
-  OutreachContactStatus,
   OutreachSendLog,
 } from "../../lib/outreach-store";
 
@@ -20,12 +19,6 @@ function formatWhen(iso: string | null | undefined): string {
     minute: "2-digit",
   });
 }
-
-const STATUS_LABEL: Record<OutreachContactStatus, string> = {
-  active: "Aktív",
-  paused: "Szünetel",
-  unsubscribed: "Leiratkozott",
-};
 
 type MailboxStatus = {
   mailbox: string;
@@ -230,10 +223,6 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
         `Egyedi kiküldés: ${data.sent} sikeres, ${data.failed} sikertelen, ${data.skipped} kihagyva.`
       );
     }
-  }
-
-  async function setStatus(id: string, status: OutreachContactStatus) {
-    await post("update", { id, status });
   }
 
   async function removeContact(id: string) {
@@ -510,7 +499,6 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                     <th>Vállalkozás</th>
                     <th>E-mail-cím</th>
                     <th>Telephely</th>
-                    <th>Státusz</th>
                     <th>Utolsó levél</th>
                     <th />
                   </tr>
@@ -523,32 +511,13 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
                       </td>
                       <td>{c.email}</td>
                       <td>{c.location || "—"}</td>
-                      <td>
-                        <select
-                          value={c.status}
-                          onChange={(e) =>
-                            void setStatus(
-                              c.id,
-                              e.target.value as OutreachContactStatus
-                            )
-                          }
-                        >
-                          {(
-                            Object.keys(STATUS_LABEL) as OutreachContactStatus[]
-                          ).map((s) => (
-                            <option key={s} value={s}>
-                              {STATUS_LABEL[s]}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
                       <td>{formatWhen(c.lastEmailedAt)}</td>
                       <td>
                         <div className="admin-quotes__actions">
                           <button
                             type="button"
                             className="admin-ghost"
-                            disabled={busy || c.status !== "active"}
+                            disabled={busy}
                             onClick={() => void onSendOne(c.id)}
                           >
                             Küldés
