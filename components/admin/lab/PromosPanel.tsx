@@ -1,7 +1,9 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   applyDiscount,
+  PROMO_GROUP_LABELS,
   type PromoCatalogItem,
+  type PromoGroupId,
   type PromoTier,
 } from "../../../lib/promos-catalog";
 import type { PromoOffer, PromosState } from "../../../lib/promos-store";
@@ -12,18 +14,24 @@ const TIER_LABEL: Record<PromoTier, string> = {
   complex: "Komplex",
 };
 
+const GROUP_ORDER: PromoGroupId[] = ["websites", "custom", "support"];
+
 function PromoPriceMark({
   original,
   promo,
   badge,
+  percent,
 }: {
   original: string;
   promo: string;
   badge: string;
+  percent: number;
 }) {
   return (
     <span className="promo-price">
-      <span className="promo-price__badge">{badge}</span>
+      <span className="promo-price__badge">
+        {badge} −{percent}%
+      </span>
       <span className="promo-price__stack">
         <s className="promo-price__old">{original}</s>
         <strong className="promo-price__new">{promo}</strong>
@@ -65,8 +73,7 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
     void load().finally(() => setLoading(false));
   }, [load]);
 
-  async function save() {
-    if (!state) return;
+  async function postAction(action: string, payload: Record<string, unknown> = {}) {
     bumpIdle();
     setBusy(true);
     setError("");
@@ -76,20 +83,28 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "save", ...state }),
+        body: JSON.stringify({ action, ...payload }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError(data.error || "Mentés sikertelen.");
-        return;
+        setError(data.error || "Művelet sikertelen.");
+        return null;
       }
+      setCatalog(data.catalog || catalog);
       setState(data.state);
-      setMsg("Akciós ajánlatok mentve.");
+      return data;
     } catch {
       setError("Hálózati hiba.");
+      return null;
     } finally {
       setBusy(false);
     }
+  }
+
+  async function save() {
+    if (!state) return;
+    const data = await postAction("save", { ...state });
+    if (data) setMsg("Akciós ajánlatok mentve.");
   }
 
   async function onSave(e: FormEvent) {
@@ -97,14 +112,58 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
     await save();
   }
 
+  async function onResetDefaults() {
+    const data = await postAction("reset-defaults");
+    if (data) {
+      setMsg(
+        "Alap akciók beállítva: weboldalak 25%, egyedi funkciók 10%, támogatás nélkül."
+      );
+    }
+  }
+
   function patchOffer(serviceId: string, patch: Partial<PromoOffer>) {
     setState((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        offers: prev.offers.map((o) =>
-          o.serviceId === serviceId ? { ...o, ...patch, tiers: { ...o.tiers, ...(patch.tiers || {}) } } : o
-        ),
+        offers: prev.offers.map((o) => {
+          if (o.serviceId !== serviceId) return o;
+          const next = {
+            ...o,
+            ...patch,
+            tiers: { ...o.tiers, ...(patch.tiers || {}) },
+          };
+          if (typeof patch.discountPercent === "number") {
+            next.discountPercent = patch.discountPercent;
+            if (patch.discountPercent <= 0) next.enabled = false;
+          }
+          return next;
+        }),
+      };
+    });
+  }
+
+  function setGroupPercent(groupId: PromoGroupId, percent: number) {
+    const pct = Math.max(0, Math.min(90, Math.round(percent)));
+    setState((prev) => {
+      if (!prev) return prev;
+      const ids = new Set(
+        catalog.filter((c) => c.groupId === groupId).map((c) => c.id)
+      );
+      return {
+        ...prev,
+        offers: prev.offers.map((o) => {
+          if (!ids.has(o.serviceId)) return o;
+          const enabled = pct > 0;
+          return {
+            ...o,
+            enabled,
+            discountPercent: pct,
+            tiers: enabled
+              ? { start: true, standard: true, complex: true }
+              : o.tiers,
+          };
+        }),
       };
     });
   }
@@ -117,6 +176,14 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
     return { item, offer };
   }, [catalog, previewServiceId, state]);
 
+  const grouped = useMemo(() => {
+    return GROUP_ORDER.map((groupId) => ({
+      groupId,
+      label: PROMO_GROUP_LABELS[groupId],
+      items: catalog.filter((c) => c.groupId === groupId),
+    })).filter((g) => g.items.length > 0);
+  }, [catalog]);
+
   if (loading || !state) {
     return <p className="lab-muted">Betöltés…</p>;
   }
@@ -125,11 +192,11 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
     <div className="lab-promos">
       <header className="lab-promos__head">
         <div>
-          <p className="lab-kicker">Árazás</p>
+          <p className="lab-kicker">Tartalom</p>
           <h2>Akciós ajánlatok</h2>
           <p className="lab-muted">
-            Itt kapcsolod be a kedvezményes jelölést, és itt látod előre, hogyan
-            jelenik meg az akciós ár.
+            Weboldalak 25%, egyedi funkciók 10%, folyamatos támogatás nélkül.
+            Az előnézetben látod az akciós ár jelzését.
           </p>
         </div>
         <label className="lab-promos__master">
@@ -142,7 +209,7 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
               )
             }
           />
-          <span>Akciók aktívak a weboldalon</span>
+          <span>Akciók aktívak</span>
         </label>
       </header>
 
@@ -155,9 +222,9 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
 
       <div className="lab-promos__grid">
         <form className="lab-card lab-form" onSubmit={onSave}>
-          <h3>Kampány beállítások</h3>
+          <h3>Kampány</h3>
           <label>
-            Jelvény szöveg
+            Jelvény
             <input
               required
               value={state.badge}
@@ -166,31 +233,10 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
                   prev ? { ...prev, badge: e.target.value } : prev
                 )
               }
-              placeholder="Akció"
             />
           </label>
           <label>
-            Kedvezmény (%)
-            <input
-              type="number"
-              min={1}
-              max={90}
-              required
-              value={state.discountPercent}
-              onChange={(e) =>
-                setState((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        discountPercent: Number(e.target.value) || 1,
-                      }
-                    : prev
-                )
-              }
-            />
-          </label>
-          <label>
-            Kampány cím
+            Cím
             <input
               value={state.headline}
               onChange={(e) =>
@@ -212,30 +258,67 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
               }
             />
           </label>
-          <button
-            type="submit"
-            className="lab-btn lab-btn--primary"
-            disabled={busy}
-          >
-            Mentés
-          </button>
+
+          <div className="lab-promos__group-rates">
+            <h4>Csoportos kedvezmény</h4>
+            {GROUP_ORDER.map((groupId) => {
+              const sample = state.offers.find((o) =>
+                catalog.some(
+                  (c) => c.id === o.serviceId && c.groupId === groupId
+                )
+              );
+              return (
+                <label key={groupId}>
+                  {PROMO_GROUP_LABELS[groupId]} (%)
+                  <input
+                    type="number"
+                    min={0}
+                    max={90}
+                    value={sample?.discountPercent ?? 0}
+                    onChange={(e) =>
+                      setGroupPercent(groupId, Number(e.target.value) || 0)
+                    }
+                  />
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="admin-quotes__actions">
+            <button
+              type="submit"
+              className="lab-btn lab-btn--primary"
+              disabled={busy}
+            >
+              Mentés
+            </button>
+            <button
+              type="button"
+              className="lab-btn"
+              disabled={busy}
+              onClick={() => void onResetDefaults()}
+            >
+              Alap akciók (25% / 10% / 0%)
+            </button>
+          </div>
         </form>
 
         <section className="lab-card lab-promos__preview-card">
           <h3>Akciós ár jelzése — előnézet</h3>
-          <p className="lab-muted">
-            Így jelenik meg a kedvezményes ár a választott szolgáltatásnál.
-          </p>
           <label>
-            Előnézet szolgáltatás
+            Szolgáltatás
             <select
               value={previewServiceId}
               onChange={(e) => setPreviewServiceId(e.target.value)}
             >
-              {catalog.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
+              {grouped.map((g) => (
+                <optgroup key={g.groupId} label={g.label}>
+                  {g.items.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
@@ -243,7 +326,9 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
           {preview ? (
             <div
               className={`lab-promos__preview ${
-                state.active && preview.offer.enabled
+                state.active &&
+                preview.offer.enabled &&
+                preview.offer.discountPercent > 0
                   ? "lab-promos__preview--on"
                   : "lab-promos__preview--off"
               }`}
@@ -251,11 +336,16 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
               <div className="lab-promos__preview-top">
                 <div>
                   <strong>{preview.item.name}</strong>
-                  <div className="lab-muted">{preview.item.detail}</div>
+                  <div className="lab-muted">
+                    {PROMO_GROUP_LABELS[preview.item.groupId]} ·{" "}
+                    {preview.item.detail}
+                  </div>
                 </div>
-                {state.active && preview.offer.enabled ? (
+                {state.active &&
+                preview.offer.enabled &&
+                preview.offer.discountPercent > 0 ? (
                   <span className="promo-price__badge promo-price__badge--lg">
-                    {state.badge} −{state.discountPercent}%
+                    {state.badge} −{preview.offer.discountPercent}%
                   </span>
                 ) : (
                   <span className="lab-promos__off-pill">Nincs akció</span>
@@ -267,12 +357,14 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
                   const original = preview.item.prices[tier];
                   const discounted = applyDiscount(
                     original,
-                    state.discountPercent
+                    preview.offer.discountPercent
                   );
                   const showPromo =
                     state.active &&
                     preview.offer.enabled &&
-                    preview.offer.tiers[tier];
+                    preview.offer.discountPercent > 0 &&
+                    preview.offer.tiers[tier] &&
+                    discounted.amount != null;
                   return (
                     <div key={tier} className="lab-promos__tier">
                       <span className="lab-promos__tier-label">
@@ -283,6 +375,7 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
                           original={discounted.original}
                           promo={discounted.promo}
                           badge={state.badge}
+                          percent={preview.offer.discountPercent}
                         />
                       ) : (
                         <strong className="lab-promos__plain">{original}</strong>
@@ -291,131 +384,99 @@ export default function PromosPanel({ bumpIdle }: { bumpIdle: () => void }) {
                   );
                 })}
               </div>
-
-              {state.active && preview.offer.enabled && state.note ? (
-                <p className="lab-promos__preview-note">{state.note}</p>
-              ) : null}
             </div>
           ) : null}
-
-          <div className="lab-promos__inline-demo" aria-label="Ártábla minta">
-            <div className="lab-promos__inline-demo-head">
-              Ártábla-jelölés minta
-            </div>
-            <table className="lab-table lab-promos__mini-table">
-              <thead>
-                <tr>
-                  <th>Szolgáltatás</th>
-                  <th>Induló</th>
-                  <th>Jellemző</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(preview ? [preview.item] : catalog.slice(0, 1)).map((item) => {
-                  const offer =
-                    state.offers.find((o) => o.serviceId === item.id) ||
-                    state.offers[0];
-                  const start = applyDiscount(
-                    item.prices.start,
-                    state.discountPercent
-                  );
-                  const standard = applyDiscount(
-                    item.prices.standard,
-                    state.discountPercent
-                  );
-                  const show =
-                    state.active && offer?.enabled;
-                  return (
-                    <tr key={item.id}>
-                      <td>
-                        <strong>{item.name}</strong>
-                      </td>
-                      <td>
-                        {show && offer.tiers.start ? (
-                          <PromoPriceMark
-                            original={start.original}
-                            promo={start.promo}
-                            badge={state.badge}
-                          />
-                        ) : (
-                          item.prices.start
-                        )}
-                      </td>
-                      <td>
-                        {show && offer.tiers.standard ? (
-                          <PromoPriceMark
-                            original={standard.original}
-                            promo={standard.promo}
-                            badge={state.badge}
-                          />
-                        ) : (
-                          item.prices.standard
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
         </section>
 
         <section className="lab-card lab-card--wide">
-          <h3>Szolgáltatások</h3>
-          <p className="lab-muted">
-            Kapcsold be, mely tételeken jelenjen meg az akciós ár, és mely
-            keretekre (induló / jellemző / komplex).
-          </p>
-          <table className="lab-table">
-            <thead>
-              <tr>
-                <th>Szolgáltatás</th>
-                <th>Akció</th>
-                <th>Induló</th>
-                <th>Jellemző</th>
-                <th>Komplex</th>
-              </tr>
-            </thead>
-            <tbody>
-              {catalog.map((item) => {
-                const offer = state.offers.find((o) => o.serviceId === item.id);
-                if (!offer) return null;
-                return (
-                  <tr key={item.id}>
-                    <td>
-                      <strong>{item.name}</strong>
-                      <div className="lab-muted">{item.detail}</div>
-                    </td>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={offer.enabled}
-                        onChange={(e) =>
-                          patchOffer(item.id, { enabled: e.target.checked })
-                        }
-                        aria-label={`${item.name} akció`}
-                      />
-                    </td>
-                    {(Object.keys(TIER_LABEL) as PromoTier[]).map((tier) => (
-                      <td key={tier}>
-                        <input
-                          type="checkbox"
-                          checked={offer.tiers[tier]}
-                          disabled={!offer.enabled}
-                          onChange={(e) =>
-                            patchOffer(item.id, {
-                              tiers: { ...offer.tiers, [tier]: e.target.checked },
-                            })
-                          }
-                          aria-label={`${item.name} ${TIER_LABEL[tier]}`}
-                        />
-                      </td>
-                    ))}
+          <h3>Szolgáltatások csoportonként</h3>
+          {grouped.map((group) => (
+            <div key={group.groupId} className="lab-promos__group-block">
+              <h4>
+                {group.label}
+                <span className="lab-muted">
+                  {" "}
+                  ·{" "}
+                  {group.groupId === "websites"
+                    ? "25%"
+                    : group.groupId === "custom"
+                      ? "10%"
+                      : "nincs akció"}
+                </span>
+              </h4>
+              <table className="lab-table">
+                <thead>
+                  <tr>
+                    <th>Szolgáltatás</th>
+                    <th>Akció</th>
+                    <th>%</th>
+                    <th>Induló</th>
+                    <th>Jellemző</th>
+                    <th>Komplex</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {group.items.map((item) => {
+                    const offer = state.offers.find(
+                      (o) => o.serviceId === item.id
+                    );
+                    if (!offer) return null;
+                    return (
+                      <tr key={item.id}>
+                        <td>
+                          <strong>{item.name}</strong>
+                          <div className="lab-muted">{item.detail}</div>
+                        </td>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={offer.enabled && offer.discountPercent > 0}
+                            disabled={offer.discountPercent <= 0}
+                            onChange={(e) =>
+                              patchOffer(item.id, { enabled: e.target.checked })
+                            }
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            min={0}
+                            max={90}
+                            style={{ width: 72 }}
+                            value={offer.discountPercent}
+                            onChange={(e) =>
+                              patchOffer(item.id, {
+                                discountPercent: Number(e.target.value) || 0,
+                              })
+                            }
+                          />
+                        </td>
+                        {(Object.keys(TIER_LABEL) as PromoTier[]).map(
+                          (tier) => (
+                            <td key={tier}>
+                              <input
+                                type="checkbox"
+                                checked={offer.tiers[tier]}
+                                disabled={!offer.enabled || offer.discountPercent <= 0}
+                                onChange={(e) =>
+                                  patchOffer(item.id, {
+                                    tiers: {
+                                      ...offer.tiers,
+                                      [tier]: e.target.checked,
+                                    },
+                                  })
+                                }
+                              />
+                            </td>
+                          )
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ))}
           <div style={{ marginTop: 14 }}>
             <button
               type="button"

@@ -3922,18 +3922,23 @@ body.admin-active[data-theme="dark"] .audit-loading {
   font-weight: 600;
 }
 
-.lab-promos__inline-demo {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(15, 40, 80, 0.1);
+.lab-promos__group-rates {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 14px;
 }
 
-.lab-promos__inline-demo-head {
-  margin-bottom: 8px;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(15, 40, 80, 0.55);
+.lab-promos__group-rates h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.lab-promos__group-block {
+  margin-top: 18px;
+}
+
+.lab-promos__group-block h4 {
+  margin: 0 0 10px;
 }
 
 .promo-price {

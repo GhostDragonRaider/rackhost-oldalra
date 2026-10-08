@@ -128,6 +128,10 @@ export default function LabModulePage() {
       void router.replace("/admin/website-audit");
       return;
     }
+    if (moduleParam === "content") {
+      void router.replace("/admin/lab/promo-offers");
+      return;
+    }
     if (moduleParam === "monitor") {
       void router.replace("/admin");
     }

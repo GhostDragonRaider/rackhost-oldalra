@@ -4,12 +4,17 @@
 
 import fs from "fs";
 import path from "path";
-import { PROMO_CATALOG } from "./promos-catalog";
+import {
+  PROMO_CATALOG,
+  PROMO_GROUP_DEFAULT_PERCENT,
+  type PromoGroupId,
+} from "./promos-catalog";
 
 export type PromoOffer = {
   serviceId: string;
   enabled: boolean;
-  /** Which price columns get the promo mark */
+  /** Per-service discount; 0 = no promo */
+  discountPercent: number;
   tiers: {
     start: boolean;
     standard: boolean;
@@ -18,10 +23,8 @@ export type PromoOffer = {
 };
 
 export type PromosState = {
-  /** Master switch — if false, no public promo marks */
   active: boolean;
   badge: string;
-  discountPercent: number;
   headline: string;
   note: string;
   offers: PromoOffer[];
@@ -31,27 +34,63 @@ export type PromosState = {
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "promos.json");
 
-function defaultOffers(): PromoOffer[] {
-  return PROMO_CATALOG.map((item, index) => ({
-    serviceId: item.id,
-    enabled: index === 0 || index === 1,
+function defaultOfferFor(
+  serviceId: string,
+  groupId: PromoGroupId
+): PromoOffer {
+  const percent = PROMO_GROUP_DEFAULT_PERCENT[groupId];
+  const enabled = percent > 0;
+  return {
+    serviceId,
+    enabled,
+    discountPercent: percent,
     tiers: {
-      start: true,
-      standard: true,
-      complex: false,
+      start: enabled,
+      standard: enabled,
+      complex: enabled,
     },
-  }));
+  };
+}
+
+function defaultOffers(): PromoOffer[] {
+  return PROMO_CATALOG.map((item) =>
+    defaultOfferFor(item.id, item.groupId)
+  );
 }
 
 function emptyState(): PromosState {
   return {
     active: true,
     badge: "Akció",
-    discountPercent: 15,
-    headline: "Tavaszi induló kedvezmény",
+    headline: "Aktuális kedvezmények",
     note: "Az akciós ár a választott keretre vonatkozik. Az ajánlat írásos egyeztetés után érvényes.",
     offers: defaultOffers(),
     updatedAt: null,
+  };
+}
+
+function normalizeOffer(
+  serviceId: string,
+  groupId: PromoGroupId,
+  existing?: Partial<PromoOffer>
+): PromoOffer {
+  const fallback = defaultOfferFor(serviceId, groupId);
+  if (!existing) return fallback;
+
+  const rawPct = Number(existing.discountPercent);
+  const discountPercent = Number.isFinite(rawPct)
+    ? Math.max(0, Math.min(90, Math.round(rawPct)))
+    : fallback.discountPercent;
+
+  return {
+    serviceId,
+    enabled: Boolean(existing.enabled) && discountPercent > 0,
+    discountPercent,
+    tiers: {
+      start: Boolean(existing.tiers?.start ?? fallback.tiers.start),
+      standard: Boolean(existing.tiers?.standard ?? fallback.tiers.standard),
+      complex: Boolean(existing.tiers?.complex ?? fallback.tiers.complex),
+    },
   };
 }
 
@@ -63,7 +102,9 @@ function ensureState(): PromosState {
     return empty;
   }
   try {
-    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, "utf8")) as PromosState;
+    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, "utf8")) as PromosState & {
+      discountPercent?: number;
+    };
     const base = emptyState();
     const byId = new Map(
       (Array.isArray(parsed.offers) ? parsed.offers : []).map((o) => [
@@ -71,28 +112,24 @@ function ensureState(): PromosState {
         o,
       ])
     );
+
+    // Migrate old global discountPercent onto offers lacking per-service value
+    const legacyGlobal = Number(parsed.discountPercent);
+
     return {
       ...base,
-      ...parsed,
       badge: String(parsed.badge || base.badge).trim().slice(0, 24) || base.badge,
-      discountPercent: Number.isFinite(Number(parsed.discountPercent))
-        ? Math.max(1, Math.min(90, Math.round(Number(parsed.discountPercent))))
-        : base.discountPercent,
       headline: String(parsed.headline || base.headline).trim().slice(0, 120),
       note: String(parsed.note || base.note).trim().slice(0, 400),
       active: Boolean(parsed.active),
-      offers: base.offers.map((offer) => {
-        const existing = byId.get(offer.serviceId);
-        if (!existing) return offer;
-        return {
-          serviceId: offer.serviceId,
-          enabled: Boolean(existing.enabled),
-          tiers: {
-            start: Boolean(existing.tiers?.start),
-            standard: Boolean(existing.tiers?.standard),
-            complex: Boolean(existing.tiers?.complex),
-          },
-        };
+      offers: PROMO_CATALOG.map((item) => {
+        const existing = byId.get(item.id);
+        if (!existing) return defaultOfferFor(item.id, item.groupId);
+        const withLegacy =
+          existing.discountPercent == null && Number.isFinite(legacyGlobal)
+            ? { ...existing, discountPercent: legacyGlobal }
+            : existing;
+        return normalizeOffer(item.id, item.groupId, withLegacy);
       }),
       updatedAt: parsed.updatedAt || null,
     };
@@ -112,11 +149,18 @@ export function getPromosState(): PromosState {
   return ensureState();
 }
 
+/** Reset to group defaults: websites 25%, custom 10%, support none. */
+export function resetPromosToGroupDefaults(): PromosState {
+  const next = emptyState();
+  next.updatedAt = new Date().toISOString();
+  writeState(next);
+  return next;
+}
+
 export function updatePromosState(
   patch: Partial<{
     active: boolean;
     badge: string;
-    discountPercent: number;
     headline: string;
     note: string;
     offers: PromoOffer[];
@@ -134,13 +178,6 @@ export function updatePromosState(
     if (!badge) throw new Error("Az akciós jelvény szövege nem lehet üres.");
     next.badge = badge;
   }
-  if (patch.discountPercent != null) {
-    const pct = Number(patch.discountPercent);
-    if (!Number.isFinite(pct) || pct < 1 || pct > 90) {
-      throw new Error("A kedvezmény 1–90% között legyen.");
-    }
-    next.discountPercent = Math.round(pct);
-  }
   if (patch.headline != null) {
     next.headline = String(patch.headline).trim().slice(0, 120);
   }
@@ -149,18 +186,9 @@ export function updatePromosState(
   }
   if (Array.isArray(patch.offers)) {
     const byId = new Map(patch.offers.map((o) => [o.serviceId, o]));
-    next.offers = current.offers.map((offer) => {
-      const incoming = byId.get(offer.serviceId);
-      if (!incoming) return offer;
-      return {
-        serviceId: offer.serviceId,
-        enabled: Boolean(incoming.enabled),
-        tiers: {
-          start: Boolean(incoming.tiers?.start),
-          standard: Boolean(incoming.tiers?.standard),
-          complex: Boolean(incoming.tiers?.complex),
-        },
-      };
+    next.offers = PROMO_CATALOG.map((item) => {
+      const incoming = byId.get(item.id);
+      return normalizeOffer(item.id, item.groupId, incoming || undefined);
     });
   }
 
