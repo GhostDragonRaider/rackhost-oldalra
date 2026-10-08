@@ -36,6 +36,8 @@ type MailboxStatus = {
 
 type SignatureStatus = {
   text: string;
+  imagePath?: string;
+  imageUrl?: string;
   preview: {
     closing: string;
     name: string;
@@ -44,6 +46,7 @@ type SignatureStatus = {
     tagline: string;
     email: string;
     phone: string;
+    location?: string;
     website: string;
     websiteLabel: string;
   };
@@ -304,23 +307,22 @@ function OutreachWorkspace({ bumpIdle }: { bumpIdle: () => void }) {
           <div className="admin-outreach__panel admin-outreach__panel--wide admin-outreach__signature">
             <h3>Cégszerű aláírás</h3>
             <p className="admin-muted">
-              Minden kiküldött levél végére automatikusan kerül — a
+              A branded AntiCode aláírás minden kiküldött levél végére
+              automatikusan kerül (HTML kép + szöveges tartalék) — a
               kampányszövegbe ne írd be újra.
             </p>
-            <pre className="admin-outreach__signature-preview">
-              {signature?.text ||
-                [
-                  "Üdvözlettel,",
-                  "",
-                  "Milei Sándor Antal",
-                  "Alapító és fejlesztő · AntiCode",
-                  "Üzletszerző weboldalak · webshopok · egyedi rendszerek",
-                  "",
-                  "sandor@anticode.hu",
-                  "+36 30 485 5517",
-                  "https://anticode.hu",
-                ].join("\n")}
-            </pre>
+            <div className="admin-outreach__signature-card">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className="admin-outreach__signature-image"
+                src={
+                  signature?.imagePath || "/email/anticode-signature.png"
+                }
+                alt="AntiCode e-mail aláírás — Milei Sándor"
+                width={640}
+                height={231}
+              />
+            </div>
           </div>
 
           <form className="admin-outreach__panel lab-form" onSubmit={onAdd}>

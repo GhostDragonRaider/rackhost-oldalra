@@ -62,6 +62,13 @@ async function sendViaSmtp(params: {
       text: composed.text,
       html: composed.html,
       replyTo: cfg.mailbox,
+      attachments: composed.attachments.map((a) => ({
+        filename: a.filename,
+        path: a.path,
+        cid: a.cid,
+        contentType: a.contentType,
+        contentDisposition: "inline" as const,
+      })),
     });
     return { ok: true };
   } catch (err) {
