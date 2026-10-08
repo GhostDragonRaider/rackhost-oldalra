@@ -97,19 +97,20 @@ export function formatOutreachSignatureHtml(sig: OutreachSignature): string {
   // Prefer CID (embedded) in outbound mail; absolute URL is the fallback/src for preview.
   const src = `cid:${sig.imageCid}`;
   return `
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="left" style="margin-top:22px;margin-left:0;margin-right:auto;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;text-align:left;">
   <tr>
-    <td style="padding:0 0 14px 0;font-size:15px;line-height:1.5;color:#111111;">${escapeHtml(sig.closing)}</td>
+    <td align="left" style="padding:0 0 14px 0;font-size:15px;line-height:1.5;color:#111111;text-align:left;">${escapeHtml(sig.closing)}</td>
   </tr>
   <tr>
-    <td style="padding:0;">
+    <td align="left" style="padding:0;text-align:left;">
       <a href="${escapeHtml(sig.website)}" style="text-decoration:none;border:0;">
         <img
           src="${src}"
           alt="${alt}"
           width="${sig.imageWidth}"
           height="${sig.imageHeight}"
-          style="display:block;width:100%;max-width:${sig.imageWidth}px;height:auto;border:0;outline:none;text-decoration:none;"
+          align="left"
+          style="display:block;margin:0;width:100%;max-width:${sig.imageWidth}px;height:auto;border:0;outline:none;text-decoration:none;"
         />
       </a>
     </td>
@@ -131,7 +132,7 @@ export function outreachBodyToHtml(text: string): string {
   return blocks
     .map((block) => {
       const lines = escapeHtml(block).replaceAll("\n", "<br/>");
-      return `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.55;color:#111111;font-family:Arial,Helvetica,sans-serif;">${lines}</p>`;
+      return `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.55;color:#111111;font-family:Arial,Helvetica,sans-serif;text-align:left;">${lines}</p>`;
     })
     .join("\n");
 }
@@ -173,8 +174,8 @@ export function composeOutreachEmail(params: {
   const html = `<!DOCTYPE html>
 <html lang="hu">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/></head>
-<body style="margin:0;padding:20px;background:#ffffff;">
-  <div style="max-width:${OUTREACH_SIGNATURE_WIDTH}px;margin:0 auto;">
+<body style="margin:0;padding:20px;background:#ffffff;text-align:left;">
+  <div style="max-width:${OUTREACH_SIGNATURE_WIDTH}px;margin:0;text-align:left;">
     ${outreachBodyToHtml(body)}
     ${formatOutreachSignatureHtml(signature)}
   </div>
