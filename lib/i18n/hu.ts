@@ -191,7 +191,7 @@ export const hu: Dictionary = {
       {
         id: "minimalcar",
         tabLabel: "01 / MINIMAL CAR",
-        tabSub: "Éles autókereskedői oldal",
+        tabSub: "minimalcar.hu",
         tag: "MINIMAL CAR / ÉLES PROJEKT",
         title: "Az első éles projekt: tiszta, gyors autókereskedői jelenlét.",
         text: "A minimalcar.hu élő weboldal — járműkínálat, átlátható struktúra és kapcsolatfelvétel, ahogy egy valódi autókereskedőnek működnie kell online.",

@@ -191,7 +191,7 @@ export const de: Dictionary = {
       {
         id: "minimalcar",
         tabLabel: "01 / MINIMAL CAR",
-        tabSub: "Live-Autohändler-Website",
+        tabSub: "minimalcar.hu",
         tag: "MINIMAL CAR / LIVE-PROJEKT",
         title: "Das erste Live-Projekt: klare, schnelle Autohändler-Präsenz.",
         text: "minimalcar.hu ist eine Live-Website — Fahrzeugangebot, klare Struktur und Kontaktwege für einen echten Autohändler online.",

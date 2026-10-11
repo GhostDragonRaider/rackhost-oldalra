@@ -671,7 +671,15 @@ export default function LandingPage() {
                       onKeyDown={(e) => onProjectKeyDown(e, index)}
                     >
                       <b>{project.tabLabel}</b>
-                      {project.tabSub}
+                      <span
+                        className={
+                          project.demoHref.startsWith("http")
+                            ? "project-live-url"
+                            : undefined
+                        }
+                      >
+                        {project.tabSub}
+                      </span>
                     </button>
                   );
                 })}
