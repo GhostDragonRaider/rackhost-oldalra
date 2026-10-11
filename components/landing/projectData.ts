@@ -16,8 +16,25 @@ export type ReferenceProject = {
 
 export const REFERENCE_PROJECTS: ReferenceProject[] = [
   {
+    id: "minimalcar",
+    tabLabel: "01 / MINIMAL CAR",
+    tabSub: "Éles autókereskedői oldal",
+    tag: "MINIMAL CAR / ÉLES PROJEKT",
+    title: "Az első éles projekt: tiszta, gyors autókereskedői jelenlét.",
+    text: "A minimalcar.hu élő weboldal — járműkínálat, átlátható struktúra és kapcsolatfelvétel, ahogy egy valódi autókereskedőnek működnie kell online.",
+    brief: [
+      ["PROBLÉMA", "Éles autókereskedői online jelenlét"],
+      ["DÖNTÉS", "Gyors, letisztult weboldal"],
+      ["MEGOLDÁS", "Élő minimalcar.hu"],
+    ],
+    preview: "/projects/minimalcar/preview.png?v=20261011",
+    previewAlt: "Minimal Car éles autókereskedői oldal előnézete",
+    demoHref: "https://minimalcar.hu",
+    demoLabel: "Oldal megnyitása",
+  },
+  {
     id: "corporate",
-    tabLabel: "01 / CORPORATE WEBSITE",
+    tabLabel: "02 / CORPORATE WEBSITE",
     tabSub: "B2B bemutatkozó oldal",
     tag: "CORPORATE WEBSITE / PORTFÓLIÓ DEMO",
     title: "Vállalati jelenlét, amely a bizalmat és a kapcsolatfelvételt szolgálja.",
@@ -34,7 +51,7 @@ export const REFERENCE_PROJECTS: ReferenceProject[] = [
   },
   {
     id: "booking",
-    tabLabel: "02 / IDŐPONTFOGLALÓ",
+    tabLabel: "03 / IDŐPONTFOGLALÓ",
     tabSub: "Foglalás és adminisztráció",
     tag: "IDŐPONTFOGLALÓ / PORTFÓLIÓ DEMO",
     title: "Foglalós rendszer: ügyfélút és háttérkezelés egy helyen.",
@@ -51,7 +68,7 @@ export const REFERENCE_PROJECTS: ReferenceProject[] = [
   },
   {
     id: "novadrive",
-    tabLabel: "03 / NOVADRIVE MOTORS",
+    tabLabel: "04 / NOVADRIVE MOTORS",
     tabSub: "Autókatalógus platform",
     tag: "NOVADRIVE MOTORS / PORTFÓLIÓ DEMO",
     title: "Autós katalógus, ahol a járműadatok és a böngészés egy rendszerben van.",
@@ -68,7 +85,7 @@ export const REFERENCE_PROJECTS: ReferenceProject[] = [
   },
   {
     id: "virtualcockpit",
-    tabLabel: "04 / VIRTUAL COCKPIT",
+    tabLabel: "05 / VIRTUAL COCKPIT",
     tabSub: "Digitális műszerfal demó",
     tag: "VIRTUAL COCKPIT / PORTFÓLIÓ DEMO",
     title: "Digitális műszerfal analóg autókhoz — prémium cluster a böngészőben.",
@@ -85,7 +102,7 @@ export const REFERENCE_PROJECTS: ReferenceProject[] = [
   },
   {
     id: "kepeskartyak",
-    tabLabel: "05 / KÉPESKÁRTYÁK",
+    tabLabel: "06 / KÉPESKÁRTYÁK",
     tabSub: "Egyedi vizuális támogatás",
     tag: "KÉPESKÁRTYÁK / KORÁBBI ÉLES PROJEKT",
     title: "Egyedi képeskártyák — vizuális támogatás, amely a mindennapokat könnyíti.",

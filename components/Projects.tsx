@@ -5,6 +5,11 @@ export default function Projects() {
 
   const projects = [
     {
+      name: "Minimal Car",
+      image: "/projects/minimalcar/preview.png",
+      link: "https://minimalcar.hu",
+    },
+    {
       name: "Corporate Website",
       image: "/projects/project-1/preview.png",
       link: "/projects/project-1/project-1.html",

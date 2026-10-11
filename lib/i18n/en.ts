@@ -85,7 +85,7 @@ export const en: Dictionary = {
       title: "Behind every project is a business problem to solve.",
       primary: {
         label: "Proof",
-        text: "Live demos: corporate, booking, catalogue, cockpit, and picture cards — not promises, examples.",
+        text: "First live site: minimalcar.hu — then demos: corporate, booking, catalogue, cockpit, picture cards.",
       },
       accent: {
         label: "Result",
@@ -183,14 +183,30 @@ export const en: Dictionary = {
   },
   references: {
     eyebrow: "My work",
-    h2: "Mini case studies with live demos.",
+    h2: "A live project and mini case studies with demos.",
     lead:
-      "Problem → design decision → solution → live demo. Five own examples: corporate, booking, catalogue, cockpit, and picture cards.",
+      "First: minimalcar.hu — the first shipped live site. Then: corporate, booking, catalogue, cockpit, and picture cards.",
     listAria: "Reference projects",
     projects: [
       {
+        id: "minimalcar",
+        tabLabel: "01 / MINIMAL CAR",
+        tabSub: "Live car dealership site",
+        tag: "MINIMAL CAR / LIVE PROJECT",
+        title: "The first live project: a clean, fast car dealership presence.",
+        text: "minimalcar.hu is a live website — vehicle inventory, clear structure, and contact paths for a real dealership online.",
+        brief: [
+          ["PROBLEM", "Live dealership online presence"],
+          ["DECISION", "Fast, clean website"],
+          ["SOLUTION", "Live minimalcar.hu"],
+        ],
+        previewAlt: "Minimal Car live dealership site preview",
+        demoLabel: "Open site",
+        demoOpenAria: "Open Minimal Car site",
+      },
+      {
         id: "corporate",
-        tabLabel: "01 / CORPORATE WEBSITE",
+        tabLabel: "02 / CORPORATE WEBSITE",
         tabSub: "B2B introduction site",
         tag: "CORPORATE WEBSITE / PORTFOLIO DEMO",
         title: "A corporate presence that builds trust and drives contact.",
@@ -206,7 +222,7 @@ export const en: Dictionary = {
       },
       {
         id: "booking",
-        tabLabel: "02 / APPOINTMENT BOOKING",
+        tabLabel: "03 / APPOINTMENT BOOKING",
         tabSub: "Booking and administration",
         tag: "APPOINTMENT BOOKING / PORTFOLIO DEMO",
         title: "A booking system: customer journey and back-office in one place.",
@@ -222,7 +238,7 @@ export const en: Dictionary = {
       },
       {
         id: "novadrive",
-        tabLabel: "03 / NOVADRIVE MOTORS",
+        tabLabel: "04 / NOVADRIVE MOTORS",
         tabSub: "Vehicle catalogue platform",
         tag: "NOVADRIVE MOTORS / PORTFOLIO DEMO",
         title: "A car catalogue where vehicle data and browsing live in one system.",
@@ -238,7 +254,7 @@ export const en: Dictionary = {
       },
       {
         id: "virtualcockpit",
-        tabLabel: "04 / VIRTUAL COCKPIT",
+        tabLabel: "05 / VIRTUAL COCKPIT",
         tabSub: "Digital instrument cluster demo",
         tag: "VIRTUAL COCKPIT / PORTFOLIO DEMO",
         title: "A digital instrument cluster for analogue cars — a premium cluster in the browser.",
@@ -254,7 +270,7 @@ export const en: Dictionary = {
       },
       {
         id: "kepeskartyak",
-        tabLabel: "05 / PICTURE CARDS",
+        tabLabel: "06 / PICTURE CARDS",
         tabSub: "Custom visual support",
         tag: "PICTURE CARDS / PREVIOUS LIVE PROJECT",
         title: "Custom picture cards — visual support that makes everyday life easier.",
