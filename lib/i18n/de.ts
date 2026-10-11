@@ -85,7 +85,7 @@ export const de: Dictionary = {
       title: "Hinter jedem Projekt steht eine zu lösende Geschäftssituation.",
       primary: {
         label: "Beweis",
-        text: "Live-Demos: Corporate, Buchung, Katalog, Cockpit und Bildkarten — keine Versprechen, sondern Beispiele.",
+        text: "Erstes Live-Projekt: minimalcar.hu — danach Demos: Corporate, Buchung, Katalog, Cockpit, Bildkarten.",
       },
       accent: {
         label: "Ergebnis",
@@ -183,14 +183,30 @@ export const de: Dictionary = {
   },
   references: {
     eyebrow: "Meine Arbeiten",
-    h2: "Mini-Fallstudien mit Live-Demo.",
+    h2: "Ein Live-Projekt und Mini-Fallstudien mit Demos.",
     lead:
-      "Problem → Designentscheidung → Lösung → Live-Demo. Fünf eigene Beispiele: Corporate, Buchung, Katalog, Cockpit und Bildkarten.",
+      "Zuerst minimalcar.hu — die erste fertige Live-Seite. Danach: Corporate, Buchung, Katalog, Cockpit und Bildkarten.",
     listAria: "Referenzprojekte",
     projects: [
       {
+        id: "minimalcar",
+        tabLabel: "01 / MINIMAL CAR",
+        tabSub: "minimalcar.hu",
+        tag: "MINIMAL CAR / LIVE-PROJEKT",
+        title: "Das erste Live-Projekt: klare, schnelle Autohändler-Präsenz.",
+        text: "minimalcar.hu ist eine Live-Website — Fahrzeugangebot, klare Struktur und Kontaktwege für einen echten Autohändler online.",
+        brief: [
+          ["PROBLEM", "Live-Online-Präsenz für Autohändler"],
+          ["ENTSCHEIDUNG", "Schnelle, klare Website"],
+          ["LÖSUNG", "Live minimalcar.hu"],
+        ],
+        previewAlt: "Vorschau der Live-Website Minimal Car",
+        demoLabel: "Seite öffnen",
+        demoOpenAria: "Minimal-Car-Seite öffnen",
+      },
+      {
         id: "corporate",
-        tabLabel: "01 / CORPORATE WEBSITE",
+        tabLabel: "02 / CORPORATE WEBSITE",
         tabSub: "B2B-Vorstellungsseite",
         tag: "CORPORATE WEBSITE / PORTFOLIO-DEMO",
         title: "Unternehmenspräsenz, die Vertrauen und Kontaktaufnahme unterstützt.",
@@ -206,7 +222,7 @@ export const de: Dictionary = {
       },
       {
         id: "booking",
-        tabLabel: "02 / TERMINBUCHUNG",
+        tabLabel: "03 / TERMINBUCHUNG",
         tabSub: "Buchung und Verwaltung",
         tag: "TERMINBUCHUNG / PORTFOLIO-DEMO",
         title: "Buchungssystem: Kundenreise und Backoffice an einem Ort.",
@@ -222,7 +238,7 @@ export const de: Dictionary = {
       },
       {
         id: "novadrive",
-        tabLabel: "03 / NOVADRIVE MOTORS",
+        tabLabel: "04 / NOVADRIVE MOTORS",
         tabSub: "Fahrzeugkatalog-Plattform",
         tag: "NOVADRIVE MOTORS / PORTFOLIO-DEMO",
         title: "Autokatalog, in dem Fahrzeugdaten und Navigation in einem System liegen.",
@@ -238,7 +254,7 @@ export const de: Dictionary = {
       },
       {
         id: "virtualcockpit",
-        tabLabel: "04 / VIRTUAL COCKPIT",
+        tabLabel: "05 / VIRTUAL COCKPIT",
         tabSub: "Digitale Instrumententafel-Demo",
         tag: "VIRTUAL COCKPIT / PORTFOLIO-DEMO",
         title: "Digitale Instrumententafel für analoge Autos — Premium-Cluster im Browser.",
@@ -254,7 +270,7 @@ export const de: Dictionary = {
       },
       {
         id: "kepeskartyak",
-        tabLabel: "05 / BILDKARTEN",
+        tabLabel: "06 / BILDKARTEN",
         tabSub: "Individuelle visuelle Unterstützung",
         tag: "BILDKARTEN / FRÜHERES LIVE-PROJEKT",
         title: "Individuelle Bildkarten — visuelle Unterstützung für den Alltag.",
